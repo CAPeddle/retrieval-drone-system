@@ -1,85 +1,100 @@
 # Retrieval Drone System — Workspace Instructions
 
-## Project Status
-This project is **actively being formulated**. Technical direction and way-of-work are still being established. Prefer to surface design trade-offs and ask clarifying questions rather than making unilateral architectural choices.
+## Project Identity
 
-## What This Project Is
-An autonomous ball-retrieval drone system. Development is iterative, starting from the simplest working slice and expanding scope progressively.
+An autonomous ball-retrieval drone system: fixed-camera tracking core, steerable laser pointer, and drone. The **Tracking & Visualisation Core** is the current focus — a C++ pipeline that detects the ball and laser, publishes state over ZeroMQ, and gates actuation via the `safe_for_control` predicate.
 
-### Current Phase (Phase 1): Camera Streaming
-**Goal:** Stream camera video from a Raspberry Pi 3B to a Raspberry Pi 5.
+### Current Phase
 
-Key open questions still being resolved:
-- The **pan-tilt head** (for laser aiming) may need to be mounted on the Pi 3B rather than the Pi 5 — physical mounting and I/O constraints are undecided.
-- Overall system topology (which compute node owns what) is still being designed.
+**Phase 1: Camera Streaming** — stream video from Pi 3B → Pi 5. Keep implementations minimal and Pi-compatible.
 
-### Longer-Term Components (design artefacts exist, not yet built)
-- **Tracking & Visualisation Core** (`tracking-system/`) — C++ tracking pipeline + Python viewer; ZeroMQ PUB/SUB transport. See `tracking-system/README.md`.
-- **Laser controller** — pan-tilt servo assembly for precise spot aiming. See `CopilotServoCOntrol.md`.
-- **Drone flight controller** — out of scope for current phase.
+**v0.3 target (tracking core):** one camera, one laser, one ball, single-camera floor-plane tracking at ≥ 60 fps on Pi 5.
 
 ## Repository Layout
+
 ```
-.github/                        # Workspace instructions (this file)
-Claude Synthesised/             # ADRs — authoritative "why" for tracking subsystem decisions
-tracking-system/                # Scaffold: C++ core + Python viewer (not yet deployed)
+.github/                        # Workspace & file-scoped instructions
+  instructions/                 # On-demand instruction files (coding standards, review, ADR governance)
+Claude Synthesised/             # ADRs — authoritative architecture decisions
+tracking-system/                # C++ core + Python viewer scaffold
   src/core/                     # C++17 tracking pipeline (OpenCV + ZeroMQ PUB)
   src/viewer/                   # Python ZeroMQ SUB viewer
   tests/cpp_unit/               # GTest unit tests
   tests/python_integration/     # Python integration tests
   tools/                        # Utility scripts (e.g. record_camera.py)
-*.md                            # Design research docs (ChatGPT, Gemini, Copilot sessions)
+*.md (repo root)                # Design research docs — reference, not specification
+CLAUDE.md                       # Full agent operating contract (deep reference)
 ```
 
-## Architecture Decisions
-All accepted decisions are in `Claude Synthesised/` as ADRs. Read these before proposing architectural changes. Key decisions:
-- **ADR-001**: Hybrid C++17 core / Python tooling — C++ for the hot path, Python for viewers/tools/tests.
-- **ADR-002**: ZeroMQ PUB/SUB is the only inter-process transport. No in-process bindings.
-- **ADR-003**: Graceful coordinate degradation — system must work even without full calibration.
-- **ADR-006**: Floor-plane 2D world frame.
-- **ADR-007**: `safe_for_control` geometric predicate gates actuation.
+## Architecture Governance
 
-New architectural proposals should be written as ADRs following the conventions in `Claude Synthesised/README.md`.
+**Source of truth:** accepted ADRs in `Claude Synthesised/`. Read before proposing changes.
 
-## Build & Test (`tracking-system/`)
+| Rule | Detail |
+|------|--------|
+| ADRs are binding | Accepted ADRs are not reopened without explicit user invitation. |
+| Cite by ID | Reference decisions as "ADR-007 clause 3", not paraphrases. |
+| State assumptions | If a recommendation depends on a premise, name it explicitly. |
+| Contradiction protocol | If a request contradicts an accepted ADR, surface the conflict and update the ADR/docs *before* implementing. |
+| New decisions | Architecturally significant choices get a new ADR (next free number, never reused). See `.github/instructions/adr-governance.instructions.md`. |
 
-**C++ core:**
+### Locked Decisions (do not relitigate)
+
+| ADR | Locks |
+|-----|-------|
+| 001 | C++ core, Python tooling, ZMQ bridge. No pybind11 in runtime. |
+| 002 | ZMQ PUB/SUB. Core BINDs, consumers CONNECT. `SNDHWM=1`, `CONFLATE=1`, `LINGER=0`. |
+| 003 | Three-tier coordinate degradation. v0.3 ships `Plane2D_World` only. |
+| 004 | Three-phase calibration lifecycle. |
+| 005 | 15 Hz laser modulation, 4-frame PSD correlation. IR preferred. |
+| 006 | FloorPlane2D world frame. Origin at primary Charuco corner. |
+| 007 | `safe_for_control` — 8 clauses, single-snapshot, asymmetric hysteresis. |
+| 008 | LaserController is a separate Python process with failsafe-off. |
+| 010 | Per-class Z compensation in CoordinateMapper. |
+
+ADR-009 (active calibration refinement) is **Proposed only** — do not reference in code or design docs.
+
+## Core Boundary Invariants
+
+- The tracking core **never** speaks MAVLink — wrap in an adapter.
+- The tracking core **never** commands the laser — the LaserController adapter owns that.
+- Every external system is a **separate process** communicating via ZMQ (ADR-001). No pybind11/shared-memory shortcuts.
+- The core publishes a **heartbeat ≥ 1 Hz** even when the data plane is silent. ZMQ silence = process dead.
+- No SD-card writes on the hot path. Logging is async ring-buffer only.
+
+## Build & Test
+
 ```bash
+# C++ core
 cmake -S tracking-system -B tracking-system/build
 cmake --build tracking-system/build
-```
 
-**Run:**
-```bash
-# Terminal 1 — tracking core (camera 0, publishes on tcp://*:5556)
+# Run tracking core (camera 0, publishes tcp://*:5556)
 ./tracking-system/build/src/core/tracking_core
 
-# Terminal 2 — Python viewer
+# Python viewer
+pip install -r tracking-system/requirements.txt
 python3 tracking-system/src/viewer/viewer.py
 ```
 
-**Python dependencies:**
-```bash
-pip install -r tracking-system/requirements.txt
-```
-Dependencies: `opencv-python`, `pyzmq`, `numpy`.
+Tests: `tracking-system/tests/cpp_unit/` (GTest), `tracking-system/tests/python_integration/` (pytest). Add tests alongside new code.
 
-## Hardware Context
-- **Raspberry Pi 3B** — camera node (currently: streaming source; possibly also pan-tilt controller).
-- **Raspberry Pi 5** — primary compute node (tracking pipeline, viewer).
-- **Pan-tilt head** — dual-axis servo assembly for laser aiming. Mounting node TBD.
-- Camera interface: undecided for Phase 1 (options include MJPEG over HTTP, GStreamer, ZeroMQ).
+## Hardware
+
+- **Pi 3B** — camera node (streaming source; possibly pan-tilt controller, TBD).
+- **Pi 5** — primary compute (tracking pipeline, viewer). 8 GB, 64-bit Pi OS. ~60-70% CPU budget for tracking.
+- **Camera** — 5 MP NoIR CSI (OV5647). Rolling shutter. Focus ring must be physically locked.
+- **Laser** — IR preferred, modulated by MCU per ADR-005/008.
+- No internet dependency. No cloud calls.
 
 ## Conventions
-- C++ standard: **C++17**. No exceptions from this without an ADR.
-- ZeroMQ message frames always carry a `schema_version` field to prevent silent schema drift.
-- ADR file naming: `ADR-NNN-short-title-with-hyphens.md`. No apostrophes, no spaces. Numbers never reused.
-- Design research conversations (ChatGPT, Gemini, Copilot sessions) are kept as `.md` files in the repo root — treat them as reference, not specification.
-- Specs and binding decisions go in ADRs.
 
-## Agent Guidance
-- **Phase 1 work** (camera streaming) is the immediate priority. Keep implementations minimal and Pi-compatible.
-- When the pan-tilt mount node is unknown, surface the constraint rather than assuming an answer.
-- Prefer `pybind11`-free solutions (see ADR-001); ZeroMQ is the correct inter-process bridge.
-- Tests live in `tests/cpp_unit/` (GTest) and `tests/python_integration/`. Add tests alongside new code.
-- Do not invent new transport mechanisms without an ADR.
+- C++17 minimum. No exceptions without an ADR.
+- ZMQ messages always carry `schema_version`.
+- ADR naming: `ADR-NNN-short-title-with-hyphens.md`. Numbers never reused.
+- Root `.md` files are design research — reference, not specification.
+- Coding standards: see `.github/instructions/cpp-hot-path.instructions.md` and `.github/instructions/python-tooling.instructions.md`.
+
+## Deeper Context
+
+For the full operating contract (persona, physical environment detail, system boundaries, testing gates, risk register, glossary): see `CLAUDE.md`.

@@ -10,13 +10,24 @@ An autonomous ball-retrieval drone system: fixed-camera tracking core, steerable
 
 **v0.3 target (tracking core):** one camera, one laser, one ball, single-camera floor-plane tracking at ≥ 60 fps on Pi 5.
 
+## Work Tracking
+
+Work flows through [BOARD.md](../BOARD.md), a flat kanban. Each ticket has a story file at `docs/tickets/<ID>-<slug>.md` holding its plan, status, and history.
+
+- **BOARD.md** is a thin index. One-line changes only. Rules in [`instructions/board.instructions.md`](instructions/board.instructions.md).
+- **Story files** hold all ticket detail. Schema in [`instructions/tickets.instructions.md`](instructions/tickets.instructions.md).
+- **Three tiers:** `mechanical` (script + commit), `small` (plan inline, hand-execute), `design` (spec + plan files, then implement).
+- **Helpers:** [`tools/board/`](../tools/board/) provides Python scripts (`ticket_new.py`, `ticket_move.py`, `board_check.py`, `ticket_archive.py`) that perform ticket scaffolding, column moves, linting, and archival atomically. Prefer scripts over hand-editing BOARD.md and story files; see [`tools/board/README.md`](../tools/board/README.md).
+
+Before starting a ticket: read its story file. Before changing status: update the story file's `status:` front-matter, append a `## Log` entry, and move the line in BOARD.md — all in one commit. The `tools/board/ticket_move.py` script does all of this atomically.
+
 ## Repository Layout
 
 ```
 .github/                        # Workspace & file-scoped instructions
   instructions/                 # On-demand instruction files (coding standards, review, ADR governance)
 Claude Synthesised/             # ADRs — authoritative architecture decisions
-tracking-system/                # C++ core + Python viewer scaffold
+tracking-core/                  # C++ core + Python viewer scaffold
   src/core/                     # C++17 tracking pipeline (OpenCV + ZeroMQ PUB)
   src/viewer/                   # Python ZeroMQ SUB viewer
   tests/cpp_unit/               # GTest unit tests
@@ -66,18 +77,18 @@ ADR-009 (active calibration refinement) is **Proposed only** — do not referenc
 
 ```bash
 # C++ core
-cmake -S tracking-system -B tracking-system/build
-cmake --build tracking-system/build
+cmake -S tracking-core -B tracking-core/build
+cmake --build tracking-core/build
 
 # Run tracking core (camera 0, publishes tcp://*:5556)
-./tracking-system/build/src/core/tracking_core
+./tracking-core/build/src/core/tracking_core
 
 # Python viewer
-pip install -r tracking-system/requirements.txt
-python3 tracking-system/src/viewer/viewer.py
+pip install -r tracking-core/requirements.txt
+python3 tracking-core/src/viewer/viewer.py
 ```
 
-Tests: `tracking-system/tests/cpp_unit/` (GTest), `tracking-system/tests/python_integration/` (pytest). Add tests alongside new code.
+Tests: `tracking-core/tests/cpp_unit/` (GTest), `tracking-core/tests/python_integration/` (pytest). Add tests alongside new code.
 
 ## Hardware
 

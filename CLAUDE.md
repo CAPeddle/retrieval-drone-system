@@ -687,6 +687,17 @@ The agent does NOT need to perform a long context-recovery ritual at the start o
 
 At the end of a session, the agent does NOT summarise the conversation unprompted. If the session produced load-bearing decisions that did not get committed to ADRs, the agent surfaces this *during* the conversation, not at the end, and offers to draft the ADR before the session closes.
 
+### 11.7 Repo tooling
+
+The `tools/board/` directory contains stdlib-only Python helpers that automate the common kanban operations defined by [.github/instructions/board.instructions.md](.github/instructions/board.instructions.md) and [.github/instructions/tickets.instructions.md](.github/instructions/tickets.instructions.md). Prefer the scripts over hand-editing BOARD.md or story files — they perform the atomic update of `status:`, `updated:`, the `## Log` entry, and the BOARD line in one operation, which hand-editing routinely splits or forgets.
+
+- `python tools/board/ticket_new.py PREFIX-NNN "Title" [--tier mechanical|small|design]` — scaffold a new ticket.
+- `python tools/board/ticket_move.py PREFIX-NNN <status> [--note "..."]` — column transition with full bookkeeping.
+- `python tools/board/board_check.py` — lint BOARD.md against story files; exits 1 on mismatch.
+- `python tools/board/ticket_archive.py [--keep N]` — trim Done (recent) to `docs/board-archive.md`.
+
+Full usage and known limitations in [`tools/board/README.md`](tools/board/README.md). Hand-edits remain permitted for anything the scripts cannot express, but the scripts are the default.
+
 ---
 
 ## 12. Glossary

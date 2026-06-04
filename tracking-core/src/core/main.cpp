@@ -8,7 +8,7 @@
 #include <opencv2/videoio.hpp>
 #include <zmq.hpp>
 
-#include "include/tracking_pipeline.hpp"
+#include "tracking_pipeline.hpp"
 
 int main() {
     cv::VideoCapture camera(0);

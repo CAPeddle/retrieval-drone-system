@@ -1,4 +1,4 @@
-#include "include/tracking_pipeline.hpp"
+#include "tracking_pipeline.hpp"
 
 namespace tracking {
 

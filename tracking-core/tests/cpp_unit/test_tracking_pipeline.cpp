@@ -2,7 +2,7 @@
 
 #include <opencv2/core.hpp>
 
-#include "include/tracking_pipeline.hpp"
+#include "tracking_pipeline.hpp"
 
 TEST(DetectorTest, ReturnsEmptyForEmptyFrame) {
     tracking::Detector detector;

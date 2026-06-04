@@ -1,5 +1,5 @@
 ---
-applyTo: "tracking-system/src/viewer/**,tracking-system/tools/**,tracking-system/tests/python_integration/**"
+applyTo: "tracking-core/src/viewer/**,tracking-core/tools/**,tracking-core/tests/python_integration/**"
 description: "Python tooling conventions for viewers, tools, and test harnesses in the tracking system."
 ---
 # Python Tooling Conventions

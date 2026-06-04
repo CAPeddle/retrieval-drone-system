@@ -1,5 +1,5 @@
 ---
-applyTo: "tracking-system/src/core/**"
+applyTo: "tracking-core/src/core/**"
 description: "C++ hot-path discipline and general conventions for the tracking core pipeline. Use when writing or reviewing C++ code in the tracking core."
 ---
 # C++ Tracking Core — Coding Standards

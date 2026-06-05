@@ -1,11 +1,10 @@
 ---
 id: META-010
-status: backlog
+status: done
 subsystem: meta
 tier: small
 created: 2026-06-05
 updated: 2026-06-05
-depends_on: []
 spec: null
 plan: null
 blockers: []
@@ -33,3 +32,4 @@ U5. Manual smoke test: generate one throwaway ADR and one throwaway solution doc
 ## Log
 
 - 2026-06-05: created. Status: backlog. Source: agent-native audit CRUD-completeness finding (highest-ROI gap).
+- 2026-06-05: backlog → done. ADR and solution scaffolding scripts added and documented.

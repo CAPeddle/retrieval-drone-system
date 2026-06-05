@@ -1,11 +1,10 @@
 ---
 id: META-013
-status: backlog
+status: done
 subsystem: meta
 tier: mechanical
 created: 2026-06-05
 updated: 2026-06-05
-depends_on: []
 spec: null
 plan: null
 blockers: []
@@ -29,3 +28,4 @@ U3. Validate JSON (parse) and sanity-check that a non-listed `python tools/board
 ## Log
 
 - 2026-06-05: created. Status: backlog. Source: agent-native audit tools-as-primitives finding (glob allow-list).
+- 2026-06-05: backlog → done. OpenCode bash allow-list tightened to explicit board scripts.

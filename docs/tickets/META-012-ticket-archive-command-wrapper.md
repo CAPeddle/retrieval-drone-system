@@ -1,11 +1,10 @@
 ---
 id: META-012
-status: backlog
+status: done
 subsystem: meta
 tier: mechanical
 created: 2026-06-05
 updated: 2026-06-05
-depends_on: []
 spec: null
 plan: null
 blockers: []
@@ -29,3 +28,4 @@ U3. Confirm the command name and behaviour are consistent with the README Script
 ## Log
 
 - 2026-06-05: created. Status: backlog. Source: agent-native audit action-parity finding (missing command wrapper).
+- 2026-06-05: backlog → done. Ticket archive OpenCode command added.

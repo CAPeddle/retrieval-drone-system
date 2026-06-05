@@ -22,9 +22,10 @@ The Drone Ball Retrieval System — a multi-subsystem hobbyist project: ground-b
 |---|---|---|
 | **Claude Code** | [CLAUDE.md](CLAUDE.md) | Authoritative; already in your context |
 | **GitHub Copilot** | [.github/copilot-instructions.md](.github/copilot-instructions.md), plus file-scoped [`.github/instructions/*.instructions.md`](.github/instructions/) matching the file you're editing | Both authoritative; auto-loaded when relevant |
-| **Cursor / Codex / OpenCode / others** | This file (`AGENTS.md`) | Follow this file; load [CLAUDE.md](CLAUDE.md) on demand for deeper context |
+| **OpenCode** | This file (`AGENTS.md`), plus `CLAUDE.md` + `.github/instructions/*` via the `instructions` field in [opencode.json](opencode.json) | Follow this file; see [docs/opencode-startup.md](docs/opencode-startup.md) for bootstrap, model routing, and the agent/command scaffold |
+| **Cursor / Codex / others** | This file (`AGENTS.md`) | Follow this file; load [CLAUDE.md](CLAUDE.md) on demand for deeper context |
 
-If you're a Claude Code or Copilot session, your auto-loaded docs are already in your context — this file is reinforcement, not duplication.
+If you're a Claude Code or Copilot session, your auto-loaded docs are already in your context — this file is reinforcement, not duplication. **OpenCode users:** bootstrap via [docs/opencode-startup.md](docs/opencode-startup.md).
 
 ## Workflow at a glance
 

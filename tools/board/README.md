@@ -12,6 +12,8 @@ Both Claude Code and GitHub Copilot can invoke these via shell.
 | `ticket_move.py PREFIX-NNN <status> [--note "reason"]` | Move ticket: update story `status:` + `updated:`, append Log, move BOARD line |
 | `board_check.py` | Lint: BOARD lines ↔ story files agree on status. Exit 1 on mismatch. |
 | `ticket_archive.py [--keep 10]` | Trim Done (recent) > N to `docs/board-archive.md`, grouped by year-month |
+| `adr_new.py [NNN] "Title" [--status Proposed\|Accepted]` | Scaffold an ADR and append a row to the ADR README index |
+| `solution_new.py "Title" --category <category> --tags a,b [--applies-to x]` | Scaffold a solution-library entry and append a row to `docs/solutions/README.md` |
 
 ## Valid statuses
 
@@ -50,6 +52,12 @@ python tools/board/board_check.py
 
 # Archive old Done items (keep newest 10)
 python tools/board/ticket_archive.py --keep 10
+
+# Scaffold the next ADR number automatically
+python tools/board/adr_new.py "Camera Timestamp Source"
+
+# Scaffold a solution-library recipe
+python tools/board/solution_new.py "OpenCode handoff checklist" --category workflow --applies-to meta --tags opencode,handoff --problem-type recipe
 ```
 
 ## Design notes

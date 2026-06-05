@@ -1,11 +1,10 @@
 ---
 id: META-011
-status: backlog
+status: done
 subsystem: meta
 tier: small
 created: 2026-06-05
 updated: 2026-06-05
-depends_on: []
 spec: null
 plan: null
 blockers: []
@@ -31,3 +30,4 @@ U4. Cross-check both against the live files so the listings do not drift.
 ## Log
 
 - 2026-06-05: created. Status: backlog. Source: agent-native audit capability-discovery finding (5/7).
+- 2026-06-05: backlog → done. OpenCode help and agents commands added.

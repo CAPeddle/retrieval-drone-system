@@ -24,6 +24,7 @@ _None._
 - [x] META-007 — Plant board-script discovery pointers and create AGENTS.md (2026-05-31)
 - [x] TRK-001 — Rename `tracking-system/` to `tracking-core/` (2026-06-01)
 - [x] META-010 — ADR and solution doc scaffolding scripts (2026-06-05)
+- [x] META-011 — OpenCode help and agents discovery commands (2026-06-05)
 
 ## Backlog
 
@@ -125,6 +126,5 @@ _None._
 
 - [ ] META-008 — Install procedure documentation → [story](docs/tickets/META-008-install-procedure.md)
 - [ ] META-009 — Operator startup script → [story](docs/tickets/META-009-operator-startup-script.md)
-- [ ] META-011 — OpenCode help and agents discovery commands → [story](docs/tickets/META-011-opencode-help-and-agents-discovery-commands.md)
 - [ ] META-012 — Ticket-archive command wrapper → [story](docs/tickets/META-012-ticket-archive-command-wrapper.md)
 - [ ] META-013 — Explicit bash allow-list in opencode.json → [story](docs/tickets/META-013-explicit-bash-allow-list-in-opencodejson.md)

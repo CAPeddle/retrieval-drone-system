@@ -26,6 +26,7 @@ See [`.github/instructions/solutions.instructions.md`](../../.github/instruction
 
 | Date | File | Type | Applies to | Tags |
 |---|---|---|---|---|
+| 2026-06-14 | [workflow/multi-agent-code-review-workflow.md](workflow/2026-06-14-multi-agent-code-review-workflow.md) | workflow_issue | * | code-review, multi-agent, opencode, workflow-improvement, agent-configuration |
 | 2026-06-04 | [workflow/session-decision-log-2026-05-31.md](workflow/session-decision-log-2026-05-31.md) | reference | * | agent-workflow, decision-log, questions, session-history |
 | 2026-06-04 | [workflow/tracking-core-rename-and-build-overhaul-handoff.md](workflow/2026-06-04-tracking-core-rename-and-build-overhaul-handoff.md) | recipe | tracking-core | workflow, build-system, handoff, ticket-state, validation |
 | 2026-05-31 | [external-reviews/compound-engineering-plugin-review.md](external-reviews/2026-05-31-compound-engineering-plugin-review.md) | review | * | agent-workflow, plan-driven-development, parallel-subagents, kanban |

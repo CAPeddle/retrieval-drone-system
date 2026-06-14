@@ -1,7 +1,7 @@
 ---
 description: External best-practice and API research. Searches the web and official docs for proven patterns (SPSC queues, PSD correlation, V4L2, ZeroMQ, OpenCV APIs) and returns a recommendation with sources. Use before implementing a novel component.
 mode: subagent
-model: opencode/qwen3-coder
+model: opencode/qwen3.6-plus
 temperature: 0.2
 permission:
   edit: deny

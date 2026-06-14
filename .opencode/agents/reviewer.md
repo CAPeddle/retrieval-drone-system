@@ -1,7 +1,7 @@
 ---
 description: First-pass code review of a diff for correctness, maintainability, and hot-path performance. Read-only. Returns severity-ranked findings with file:line references. Final sign-off on design-tier or safety-critical work escalates to Claude Code.
 mode: subagent
-model: opencode/qwen3-coder
+model: opencode/claude-sonnet-4-6
 temperature: 0.1
 permission:
   edit: deny

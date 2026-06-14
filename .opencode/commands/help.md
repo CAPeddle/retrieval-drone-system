@@ -9,7 +9,7 @@ Available slash commands:
 |---|---|---|
 | `/board` | You need current kanban state | Run `board_check.py`, show BOARD.md, and summarise active work. |
 | `/next-ticket` | You are ready to pick work | Find the next ready ticket whose `depends_on:` entries are done. |
-| `/start-ticket ID` | You are about to execute a ticket | Tier-gate, run `@explore`, move the ticket to `in-progress`, then pause for go-ahead. |
+| `/start-ticket ID` | You are about to execute a ticket | Tier-gate, run `@explore` for a context-packet brief, move the ticket to `in-progress`, then pause for go-ahead. |
 | `/finish-ticket ID` | Implementation is complete | Verify, review, move the ticket to `done`, and lint the board. |
 | `/ticket-archive` | Done (recent) is getting noisy | Run `ticket_archive.py --keep 10` and summarise archived tickets. |
 | `/review` | You want a first-pass diff review | Dispatch `@reviewer`, and `@safety-reviewer` when safety-critical areas are touched. |

@@ -104,6 +104,7 @@ Rules:
 - Steps are sequentially ordered — U2 depends on U1, etc.
 - An agent dispatched to "execute TRK-006" works through U1→U2→...→UN in order.
 - U-IDs are stable identifiers for progress tracking ("completed through U4, resuming at U5").
+- Do one exploratory read/search pass before starting U1, then move to execution. Do not keep re-searching once the controlling code path and discriminating check are known if execution reveals complexity that requires new searching, stop and describe the gap before continuing.
 
 ### `design` tier: child tickets
 

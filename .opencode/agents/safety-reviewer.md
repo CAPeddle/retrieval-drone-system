@@ -1,7 +1,7 @@
 ---
 description: Adversarial review for safety-critical and physical-environment failure modes — the safe_for_control predicate (ADR-007), coordinate mapping, calibration, and detection. Read-only. Applies the four-domain "What if?" test. Use on any ticket touching ADR-007, ADR-005, ADR-006, or ADR-010.
 mode: subagent
-model: opencode/qwen3-coder
+model: opencode/claude-sonnet-4-6
 temperature: 0.1
 permission:
   edit: deny

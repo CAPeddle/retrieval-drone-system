@@ -1,3 +1,12 @@
+---
+title: Session Decision Log Template (worked example 2026-05-31)
+captured: 2026-05-31
+applies_to: ["*"]
+tags: [workflow, session-log, planning, decision-tracking, template]
+problem_type: reference
+source: internal
+---
+
 # Session Decision Log — 2026-05-31 / 2026-06-04
 
 **Session ID:** `f5e37142-9fa3-4d53-82b5-92b6213deb8c`

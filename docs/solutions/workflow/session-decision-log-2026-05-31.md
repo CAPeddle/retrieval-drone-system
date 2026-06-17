@@ -3,7 +3,7 @@ title: Session Decision Log Template (worked example 2026-05-31)
 captured: 2026-05-31
 applies_to: ["*"]
 tags: [workflow, session-log, planning, decision-tracking, template]
-problem_type: reference
+problem_type: template
 source: internal
 ---
 

@@ -43,6 +43,9 @@
     }
   },
   "agent": {
+    "build": {
+      "model": "opencode/big-pickle"
+    },
     "plan": {
       "model": "opencode/claude-opus-4-6"
     }

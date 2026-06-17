@@ -85,7 +85,7 @@ Provider prefix is `opencode/`. Suggested tiering (edit `opencode.json` to match
 | `@explore`, `@researcher` (agent frontmatter) | High-volume read-only | A cheap/fast model — they read a lot and are disposable. |
 | `@reviewer`, `@safety-reviewer` | First-pass review | A stronger-reasoning model; review quality matters more than speed. |
 
-The placeholders use one ID everywhere (`opencode/qwen3-coder`) so the config loads and runs out of the box; split the tiers once you have confirmed real IDs. **Claude models now appear in `opencode.json`** for roles where review or planning quality demands a stronger model than the Zen catalogue's cheapest option — currently `claude-sonnet-4-6` for `@reviewer`/`@safety-reviewer` subagents and `claude-opus-4-6` for `agent.plan`. Design-tier work (brainstorming → spec → plan) still routes to **Claude Code** via the `/start-ticket` tier gate.
+The placeholders use one ID everywhere (`opencode/qwen3-coder`) so the config loads and runs out of the box; split the tiers once you have confirmed real IDs. The **Claude tier is deliberately absent from `opencode.json`** — that work lives in Claude Code, so OpenCode never needs an `anthropic/*` or `opencode/claude-*` entry.
 
 ---
 

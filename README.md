@@ -90,4 +90,4 @@ The "currently …" notes mark cleanup steps not yet executed. The target layout
 - **Operating contract:** [CLAUDE.md](CLAUDE.md) — read before any non-trivial work.
 - **Architecture decisions:** [`docs/adr/`](docs/adr/).
 - **Workspace instructions for agents:** [.github/copilot-instructions.md](.github/copilot-instructions.md) and [.github/instructions/](.github/instructions/).
-- **Historical design research:** the large `.md` files at repo root (→ `docs/research/`).
+- **Historical design research:** [`docs/research/`](docs/research/).

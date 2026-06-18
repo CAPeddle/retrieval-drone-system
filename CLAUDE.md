@@ -297,7 +297,7 @@ When a user instruction in the current session appears to contradict an ADR, the
 The project knowledge base contains both authoritative and historical content:
 
 - The ADR files and the v0.3 design document, when present in the project knowledge: authoritative (rank 2 and rank 3).
-- The v0.2-era documents (`Gemini_Drone_Ball_Retrieval_System_Design_Review.md`, `Gemini_Building_a_Home_Drone_-_Design_Brainstorm.md`, `CopilotServoCOntrol.md`, `DIY_Drone_Electronics_for_Ball_Retrieval.md`, `ChatGPT_Tracking_Visualisation_System_Design.md`): rank 5 reference material.
+- The v0.2-era documents (`docs/research/Gemini_Drone_Ball_Retrieval_System_Design_Review.md`, `docs/research/Gemini_Building_a_Home_Drone_-_Design_Brainstorm.md`, `docs/research/CopilotServoCOntrol.md`, `docs/research/DIY_Drone_Electronics_for_Ball_Retrieval.md`, `docs/research/ChatGPT_Tracking_Visualisation_System_Design.md`): rank 5 reference material.
 - Any new document added to project knowledge: read its content to determine rank. New ADRs and design docs are rank 2–3; brainstorm documents, transcripts, and old reviews are rank 5.
 
 When the user uploads a new document, do not assume rank. Read it and place it.

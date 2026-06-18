@@ -47,4 +47,4 @@ Most ADRs are added with status `Accepted` because by the time an ADR is written
 ## See also
 
 - Consolidated v0.3 design document: `../design/v0.3-tracking-visualisation-system-design.md`
-- Original v0.2 baseline (as historical reference): the prose-form `Gemini Drone Ball Retrieval System Design Review.md` in the project knowledge.
+- Original v0.2 baseline (as historical reference): the prose-form `docs/research/Gemini Drone Ball Retrieval System Design Review.md` in the project knowledge.

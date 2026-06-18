@@ -1,10 +1,10 @@
 ---
 id: DOCS-002
-status: next
+status: done
 subsystem: docs
 tier: mechanical
 created: 2026-05-31
-updated: 2026-05-31
+updated: 2026-06-18
 spec: null
 plan: null
 blockers: []
@@ -12,7 +12,7 @@ blockers: []
 
 ## Context
 
-Five large brainstorm `.md` files sit at the repo root from v0.2-era thinking. They are rank-5 reference material per [CLAUDE.md §6](../../CLAUDE.md), not specification. Mixing them at root makes it harder to tell governance docs (CLAUDE.md, README.md, BOARD.md) from historical research. Move to `docs/research/` where they're clearly marked as reference.
+Five large brainstorm `.md` files sat at the repo root from v0.2-era thinking. They are rank-5 reference material per [CLAUDE.md §6](../../CLAUDE.md), not specification. Mixing them at root made it harder to tell governance docs (CLAUDE.md, README.md, BOARD.md) from historical research. Moved to `docs/research/` where they're clearly marked as reference.
 
 The files to move:
 
@@ -28,7 +28,7 @@ The files to move:
 - The repo root contains only governance `.md` files: `CLAUDE.md`, `README.md`, `BOARD.md`.
 - `git log --follow` on any moved file shows pre-move history.
 - References to the moved filenames in `CLAUDE.md` (search for `Gemini`, `ChatGPT`, `DIY Drone`, `CopilotServoCOntrol`) and `README.md` are updated to the new `docs/research/` paths.
-- `rg "Gemini Drone Ball|Gemini Building a Home|DIY Drone Electronics|CopilotServoCOntrol|ChatGPT Tracking"` returns no stale path references.
+- `rg "Gemini Drone Ball|Gemini Building a Home|DIY Drone Electronics|CopilotServoCOntrol|ChatGPT Tracking"` returns no stale path references outside this story file and the moved files themselves.
 
 ## Plan
 
@@ -45,3 +45,4 @@ The files to move:
 ## Log
 
 - 2026-05-31: created. Status: next.
+- 2026-06-18: next → done. All 5 v0.2 research .md files moved from repo root to docs/research/ and all path references updated.

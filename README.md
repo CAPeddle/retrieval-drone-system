@@ -73,7 +73,7 @@ Drone/
   docs/
     adr/                Architecture Decision Records
     design/             Consolidated design snapshots (currently missing)
-    research/           Historical brainstorm .md files (currently at repo root)
+    research/           Historical brainstorm .md files
   tracking-core/        Pi 5 tracking subsystem
   viewer/               Floor-plane visualisation (currently inside tracking-core/)
   camera-node/          Future: Pi 3B camera streamer

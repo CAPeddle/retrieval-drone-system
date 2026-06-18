@@ -6,7 +6,7 @@ description: "Use when drafting ADRs, proposing architectural changes, editing d
 ## Source of Truth Hierarchy
 
 1. Current conversation with the user.
-2. Accepted ADRs in `Claude Synthesised/`.
+2. Accepted ADRs in `docs/adr/`.
 3. Consolidated design document (when it exists).
 4. Code and committed configuration.
 5. Proposed ADRs and historical docs (rank 5 reference material).

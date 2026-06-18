@@ -6,7 +6,7 @@ Documented patterns, recipes, reviews, and recovery procedures captured from wor
 
 | Doc collection | Role |
 |---|---|
-| [`docs/adr/`](../adr/) (currently [`Claude Synthesised/`](../../Claude%20Synthesised/)) | Architectural **decisions** — WHY we chose what we chose |
+| [`docs/adr/`](../adr/) | Architectural **decisions** — WHY we chose what we chose |
 | `docs/solutions/` (this dir) | **Patterns, recipes, reviews, learnings** — HOW to do things, or what we observed |
 | [`docs/research/`](../research/) (currently at repo root) | Historical v0.2 brainstorms — rank-5 reference per [CLAUDE.md §6](../../CLAUDE.md) |
 

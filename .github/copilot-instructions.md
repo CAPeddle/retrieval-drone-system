@@ -26,7 +26,7 @@ Before starting a ticket: read its story file. Before changing status: update th
 ```
 .github/                        # Workspace & file-scoped instructions
   instructions/                 # On-demand instruction files (coding standards, review, ADR governance)
-Claude Synthesised/             # ADRs — authoritative architecture decisions
+docs/adr/                       # ADRs — authoritative architecture decisions
 tracking-core/                  # C++ core + Python viewer scaffold
   src/core/                     # C++17 tracking pipeline (OpenCV + ZeroMQ PUB)
   src/viewer/                   # Python ZeroMQ SUB viewer
@@ -39,7 +39,7 @@ CLAUDE.md                       # Full agent operating contract (deep reference)
 
 ## Architecture Governance
 
-**Source of truth:** accepted ADRs in `Claude Synthesised/`. Read before proposing changes.
+**Source of truth:** accepted ADRs in `docs/adr/`. Read before proposing changes.
 
 | Rule | Detail |
 |------|--------|

@@ -1,10 +1,10 @@
 ---
 id: DOCS-001
-status: next
+status: done
 subsystem: docs
 tier: mechanical
 created: 2026-05-31
-updated: 2026-05-31
+updated: 2026-06-18
 spec: null
 plan: null
 blockers: []
@@ -12,14 +12,14 @@ blockers: []
 
 ## Context
 
-[CLAUDE.md §8.7](../../CLAUDE.md) prescribes `docs/adr/` as the home for Architecture Decision Records. The ADRs currently live in `Claude Synthesised/` — the literal name from when they were dumped into the repo. The mismatch causes path drift across CLAUDE.md, [.github/copilot-instructions.md](../../.github/copilot-instructions.md), [.github/instructions/adr-governance.instructions.md](../../.github/instructions/adr-governance.instructions.md), README.md, and BOARD.md. Sequenced first because every other DOCS ticket touches ADR references.
+[CLAUDE.md §8.7](../../CLAUDE.md) prescribes `docs/adr/` as the home for Architecture Decision Records. The ADRs were previously in `Claude Synthesised/` — the literal name from when they were dumped into the repo. The mismatch caused path drift across CLAUDE.md, [.github/copilot-instructions.md](../../.github/copilot-instructions.md), [.github/instructions/adr-governance.instructions.md](../../.github/instructions/adr-governance.instructions.md), README.md, and BOARD.md. Sequenced first because every other DOCS ticket touches ADR references.
 
 ## Acceptance
 
 - `docs/adr/` exists with all 10 ADR files plus `README.md` (the ADR index).
 - `Claude Synthesised/` no longer exists in the working tree.
 - `git log --follow docs/adr/ADR-001-hybrid-cpp-python.md` shows pre-move history (i.e. `git mv` was used, not delete+add).
-- `rg "Claude Synthesised"` returns no matches in tracked files except in this story file's `## Log` and `docs/board-archive.md` (if it exists).
+- `rg "Claude Synthesised"` returns no matches in tracked files.
 - The ADR README's "See also" link to the consolidated design doc is preserved.
 
 ## Plan
@@ -34,3 +34,4 @@ blockers: []
 ## Log
 
 - 2026-05-31: created. Status: next. Sequenced first; every other DOCS ticket references this path.
+- 2026-06-18: next → done. All ADR files moved from Claude Synthesised/ to docs/adr/ and all references updated across the repo.

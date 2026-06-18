@@ -50,7 +50,7 @@ When adding a new solution, append a row to the index table in [`docs/solutions/
 
 ## Distinction from ADRs
 
-ADRs (`docs/adr/`, currently `Claude Synthesised/`) record architectural *decisions* — WHY we chose what we chose, with Alternatives Considered. Solutions record *patterns and learnings* — HOW to do things or what we observed.
+ADRs (`docs/adr/`) record architectural *decisions* — WHY we chose what we chose, with Alternatives Considered. Solutions record *patterns and learnings* — HOW to do things or what we observed.
 
 When in doubt:
 

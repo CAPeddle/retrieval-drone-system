@@ -6,7 +6,6 @@ Workflow defined in [README.md → Workflow](README.md#workflow). Risk register 
 
 ## Next
 
-- [ ] DOCS-001 — Move ADRs from `Claude Synthesised/` to `docs/adr/` → [story](docs/tickets/DOCS-001-move-adrs-to-docs-adr.md)
 - [ ] DOCS-002 — Move root brainstorm `.md` files to `docs/research/` → [story](docs/tickets/DOCS-002-move-research-md-files.md)
 
 ## In Progress
@@ -27,6 +26,7 @@ _None._
 - [x] META-011 — OpenCode help and agents discovery commands (2026-06-05)
 - [x] META-012 — Ticket-archive command wrapper (2026-06-05)
 - [x] META-013 — Explicit bash allow-list in opencode.json (2026-06-05)
+- [x] DOCS-001 — Move ADRs from `Claude Synthesised/` to `docs/adr/` (2026-06-18)
 
 ## Backlog
 

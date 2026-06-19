@@ -5,8 +5,7 @@ Usage:
     python tools/board/adr_new.py "Short Title"
     python tools/board/adr_new.py 011 "Short Title" [--status Accepted]
 
-The script writes to docs/adr/ when that canonical directory exists; until
-DOCS-001 lands, it writes to Claude Synthesised/.
+The script writes to docs/adr/ (the canonical ADR directory).
 """
 from __future__ import annotations
 
@@ -23,10 +22,7 @@ VALID_STATUSES = ("Proposed", "Accepted")
 
 
 def adr_dir() -> Path:
-    docs_adr = REPO_ROOT / "docs" / "adr"
-    if docs_adr.exists():
-        return docs_adr
-    return REPO_ROOT / "Claude Synthesised"
+    return REPO_ROOT / "docs" / "adr"
 
 
 def used_numbers(directory: Path) -> set[int]:

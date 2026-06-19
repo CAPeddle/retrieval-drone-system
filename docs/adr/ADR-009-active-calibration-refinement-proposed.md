@@ -23,7 +23,7 @@ We will implement active calibration refinement as an *additive layer* on top of
 
 1. **Laser pose model is identifiable.** Given the planned sweep pattern, anchor configuration, and servo accuracy, the optimisation problem of jointly solving for laser emitter pose, camera pose, and pixel→floor mapping must be shown to be observable (i.e., the Jacobian is full-rank at the operating point). This will be demonstrated by simulation before any physical implementation.
 
-2. **Servo angular repeatability is characterised.** The pan/tilt mechanism's angular repeatability over a representative sweep must be measured. Repeatability worse than 0.05° at the laser emitter renders the active-probe approach inferior to a careful manual Charuco calibration. The repeatability budget must be established empirically against the planned hardware (MID or PRO build per the CopilotServoCOntrol document) before the ADR moves out of Proposed status.
+2. **Servo angular repeatability is characterised.** The pan/tilt mechanism's angular repeatability over a representative sweep must be measured. Repeatability worse than 0.05° at the laser emitter renders the active-probe approach inferior to a careful manual Charuco calibration. The repeatability budget must be established empirically against the planned hardware (MID or PRO build per the `docs/research/CopilotServoCOntrol.md` document) before the ADR moves out of Proposed status.
 
 3. **Anchor sensitivity is bounded.** The accuracy of the recovered pixel→floor mapping must degrade gracefully (not catastrophically) as anchor positions are perturbed. A configuration that requires sub-millimetre anchor placement is operationally fragile; one that tolerates ±5 mm anchor placement is acceptable.
 

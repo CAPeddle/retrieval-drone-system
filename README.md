@@ -71,9 +71,9 @@ Drone/
   README.md             This file — orientation
   BOARD.md              Kanban — what's being worked on (under construction)
   docs/
-    adr/                Architecture Decision Records (currently in "Claude Synthesised/")
+    adr/                Architecture Decision Records
     design/             Consolidated design snapshots (currently missing)
-    research/           Historical brainstorm .md files (currently at repo root)
+    research/           Historical brainstorm .md files
   tracking-core/        Pi 5 tracking subsystem
   viewer/               Floor-plane visualisation (currently inside tracking-core/)
   camera-node/          Future: Pi 3B camera streamer
@@ -88,6 +88,6 @@ The "currently …" notes mark cleanup steps not yet executed. The target layout
 ## Pointers
 
 - **Operating contract:** [CLAUDE.md](CLAUDE.md) — read before any non-trivial work.
-- **Architecture decisions:** [Claude Synthesised/](Claude%20Synthesised/) (→ `docs/adr/`).
+- **Architecture decisions:** [`docs/adr/`](docs/adr/).
 - **Workspace instructions for agents:** [.github/copilot-instructions.md](.github/copilot-instructions.md) and [.github/instructions/](.github/instructions/).
-- **Historical design research:** the large `.md` files at repo root (→ `docs/research/`).
+- **Historical design research:** [`docs/research/`](docs/research/).

@@ -10,7 +10,7 @@ The Drone Ball Retrieval System — a multi-subsystem hobbyist project: ground-b
 
 ## Cardinal rules
 
-1. **Architecture is governed by ADRs.** Accepted ADRs live in [`Claude Synthesised/`](Claude%20Synthesised/) (→ `docs/adr/` after [DOCS-001](docs/tickets/DOCS-001-move-adrs-to-docs-adr.md) lands). They are not relitigated without explicit user invitation. Reference by ID (e.g. "ADR-007 clause 3"), not paraphrase.
+1. **Architecture is governed by ADRs.** Accepted ADRs live in [`docs/adr/`](docs/adr/). They are not relitigated without explicit user invitation. Reference by ID (e.g. "ADR-007 clause 3"), not paraphrase.
 2. **Story files are the source of truth for tickets.** [BOARD.md](BOARD.md) is a thin index. Detail, status, and history all live in `docs/tickets/<ID>-<slug>.md`.
 3. **Use the board scripts.** [`tools/board/ticket_new.py`](tools/board/ticket_new.py), [`ticket_move.py`](tools/board/ticket_move.py), [`board_check.py`](tools/board/board_check.py), [`ticket_archive.py`](tools/board/ticket_archive.py) perform atomic status + log + board updates. See [tools/board/README.md](tools/board/README.md). Hand-edits are allowed when the script can't express the change, but scripts are the default.
 4. **Never commit unless the user asks.** Even when you've written files. Even after a "looks good".

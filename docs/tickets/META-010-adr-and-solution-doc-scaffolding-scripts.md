@@ -24,7 +24,7 @@ The agent-native audit found that tickets and the board have Create tooling (`ti
 ## Plan
 
 U1. Read CLAUDE.md §8.2/§8.4 (ADR template, numbering rules) and `.github/instructions/solutions.instructions.md` (solution frontmatter schema) to pin the exact output formats.
-U2. Write `tools/board/adr_new.py`: resolve canonical ADR dir (honour DOCS-001 target `docs/adr/` if present, else `Claude Synthesised/`), compute next free number, render template, write file, append README index row. Block on collision.
+U2. Write `tools/board/adr_new.py`: resolve canonical ADR dir (`docs/adr/`), compute next free number, render template, write file, append README index row. Block on collision.
 U3. Write `tools/board/solution_new.py`: accept `--title`, `--category`, `--applies-to`, `--tags`; render frontmatter + section skeleton; write to dated slug path; append README index row. Validate category folder exists.
 U4. Add both scripts to the Scripts table and Examples in `tools/board/README.md`.
 U5. Manual smoke test: generate one throwaway ADR and one throwaway solution doc, confirm index rows and section completeness, then delete the throwaways.

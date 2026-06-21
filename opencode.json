@@ -31,15 +31,7 @@
       "ctest *": "allow",
       "pytest *": "allow",
       "python -m pytest *": "allow",
-      "git status": "allow",
-      "git status *": "allow",
-      "git diff": "allow",
-      "git diff *": "allow",
-      "git log *": "allow",
-      "git add *": "ask",
-      "git commit *": "ask",
-      "git push": "deny",
-      "git push *": "deny"
+      "git *": "allow"
     }
   },
   "agent": {

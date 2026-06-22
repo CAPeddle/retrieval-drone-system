@@ -6,8 +6,6 @@ An autonomous ball-retrieval drone system: fixed-camera tracking core, steerable
 
 ### Current Phase
 
-**Phase 1: Camera Streaming** — stream video from Pi 3B → Pi 5. Keep implementations minimal and Pi-compatible.
-
 **v0.3 target (tracking core):** one camera, one laser, one ball, single-camera floor-plane tracking at ≥ 60 fps on Pi 5.
 
 ## Work Tracking
@@ -27,14 +25,17 @@ Before starting a ticket: read its story file. Before changing status: update th
 .github/                        # Workspace & file-scoped instructions
   instructions/                 # On-demand instruction files (coding standards, review, ADR governance)
 docs/adr/                       # ADRs — authoritative architecture decisions
-tracking-core/                  # C++ core + Python viewer scaffold
-  src/core/                     # C++17 tracking pipeline (OpenCV + ZeroMQ PUB)
-  src/viewer/                   # Python ZeroMQ SUB viewer
-  tests/cpp_unit/               # GTest unit tests
-  tests/python_integration/     # Python integration tests
-  tools/                        # Utility scripts (e.g. record_camera.py)
-*.md (repo root)                # Design research docs — reference, not specification
-CLAUDE.md                       # Full agent operating contract (deep reference)
+docs/design/                    # Architectural snapshots
+docs/superpowers/specs/         # Design-tier specification files
+docs/superpowers/plans/         # Design-tier implementation plan files
+docs/tickets/                   # Ticket story files with context, plan, and history
+docs/research/                  # Historical/reference research, not current specification
+tools/board/                    # Repository workflow helpers (ticket_new, ticket_move, board_check, archive)
+tracking-core/                  # Active Pi 5 tracking subsystem (v0.3)
+viewer/                         # Future floor-plane visualisation (currently inside tracking-core/)
+laser-controller/               # Future laser MCU + adapter subsystem
+mavlink-adapter/                # Future ZMQ → MAVLink adapter subsystem
+drone/                          # Future drone subsystem artefacts
 ```
 
 ## Architecture Governance
@@ -103,7 +104,7 @@ Tests: `tracking-core/tests/cpp_unit/` (GTest), `tracking-core/tests/python_inte
 - C++17 minimum. No exceptions without an ADR.
 - ZMQ messages always carry `schema_version`.
 - ADR naming: `ADR-NNN-short-title-with-hyphens.md`. Numbers never reused.
-- Root `.md` files are design research — reference, not specification.
+- Root `.md` files: `AGENTS.md`, `CLAUDE.md`, `README.md`, `BOARD.md` are authoritative or canonical index files. See `README.md` for the full layout map.
 - Coding standards: see `.github/instructions/cpp-hot-path.instructions.md` and `.github/instructions/python-tooling.instructions.md`.
 
 ## Deeper Context

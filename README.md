@@ -73,6 +73,7 @@ Drone/
   docs/
     adr/                Architecture Decision Records
     design/             Consolidated design snapshots (currently missing)
+    superpowers/        Design-tier specs and plans
     research/           Historical brainstorm .md files
   tracking-core/        Pi 5 tracking subsystem
   viewer/               Floor-plane visualisation (currently inside tracking-core/)

@@ -46,7 +46,7 @@ Route through `calibration_status`: `INVALID` / `DEGRADED` / `VALID`.
 
 ## The "Small Python Adapter" Trap
 
-When a new external system needs integration, do NOT bolt a helper onto the core via pybind11 or shared memory. ADR-001 forbids this. Each adapter is its own process under `services/`, communicates via ZMQ, and fails independently.
+When a new external system needs integration, do NOT bolt a helper onto the core via pybind11 or shared memory. ADR-001 forbids this. Each adapter is its own process in its owning top-level subsystem directory, communicates via ZMQ, and fails independently.
 
 ## Historical Note
 

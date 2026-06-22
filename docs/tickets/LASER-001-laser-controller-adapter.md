@@ -23,7 +23,7 @@ Key constraints per ADR-008:
 
 ## Acceptance
 
-- A Python service at `services/laser_controller/` that:
+- A Python service under the top-level `laser-controller/` subsystem that:
   - Subscribes to the tracking core's ZMQ PUB stream.
   - Opens serial connection to the laser MCU.
   - When `safe_for_control = true`: commands laser ON with modulation parameters.

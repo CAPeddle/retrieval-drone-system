@@ -33,6 +33,7 @@ docs/research/                  # Historical/reference research, not current spe
 tools/board/                    # Repository workflow helpers (ticket_new, ticket_move, board_check, archive)
 tracking-core/                  # Active Pi 5 tracking subsystem (v0.3)
 viewer/                         # Future floor-plane visualisation (currently inside tracking-core/)
+camera-node/                    # Future Pi 3B camera streaming subsystem
 laser-controller/               # Future laser MCU + adapter subsystem
 mavlink-adapter/                # Future ZMQ → MAVLink adapter subsystem
 drone/                          # Future drone subsystem artefacts

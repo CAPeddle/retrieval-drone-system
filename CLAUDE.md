@@ -488,6 +488,7 @@ docs/adr/                       ← Source of truth for architecture decisions
 docs/design/                    ← Readable architectural snapshots
 docs/research/                  ← Historical/reference research, not current specification
 docs/tickets/                   ← Ticket story files and append-only work history
+docs/plans/                     ← Numbered operational/work plan files
 docs/superpowers/specs/          ← Design-tier specification files
 docs/superpowers/plans/          ← Design-tier implementation plan files
 tools/board/                    ← Repository kanban, ADR, and solution helper scripts

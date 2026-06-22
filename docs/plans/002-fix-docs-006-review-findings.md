@@ -99,7 +99,7 @@ Implementation steps:
 1. Run `git status --short` from `.worktrees/fix/docs-006-layout`.
 2. Confirm the four files above appear in the working tree and are intended.
 3. Do not delete, rename, or move them.
-4. If preparing a commit later, stage these three files along with the tracked
+4. If preparing a commit later, stage these four files along with the tracked
    documentation edits.
 
 Verification for U2:

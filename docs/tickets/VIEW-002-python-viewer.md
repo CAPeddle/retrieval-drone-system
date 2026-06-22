@@ -18,7 +18,7 @@ The Python viewer subscribes to the tracking core's ZMQ stream and displays trac
 
 ## Acceptance
 
-- A Python script at `tracking-core/src/viewer/viewer.py` (or promoted location per VIEW-001).
+- A Python viewer script at the location established by `VIEW-001`: currently `tracking-core/src/viewer/viewer.py`, target `viewer/` after promotion.
 - Connects to configurable ZMQ endpoint (default `tcp://localhost:5555`).
 - Sets subscriber socket options per ADR-002: `RCVHWM=1`, `CONFLATE=1`.
 - Validates incoming JSON against the v0.3 schema using pydantic (schema_version check, field validation).

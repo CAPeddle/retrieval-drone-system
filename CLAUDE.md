@@ -366,7 +366,7 @@ Python tooling has no determinism contract. The rules are lighter and focused on
 - **Use `pydantic` (or equivalent) for ZMQ message schemas on the consumer side.** Schema drift between C++ producer and Python consumer is a recurring failure mode; the `schema_version` field is the first defence and runtime validation is the second.
 - **Use `pyzmq` (or equivalent) for ZMQ bindings.**
 - **Avoid frameworks for small tools.** A 200-line viewer does not need FastAPI, Django, or Flask. Use the standard library where possible.
-- **Replay tools and test harnesses live under `tools/`. Production tooling (the LaserController adapter, the MAVLink adapter, the viewer) lives under `services/`.**
+- **Replay tools and test harnesses for the tracking subsystem live under `tracking-core/tools/`. Production tooling lives in its owning top-level subsystem directory** (`viewer/`, `laser-controller/`, `mavlink-adapter/`, etc.) once promoted out of `tracking-core/`.
 
 ### 7.4 When to deviate from these rules
 
@@ -480,18 +480,27 @@ Doxygen-style comments are not required for v0.3 but are encouraged on public-fa
 ### 8.7 What lives where
 
 ```
-docs/adr/                       ← Source of truth for decisions
-docs/design/                    ← Readable architectural snapshot
-docs/                           ← Other docs (this CLAUDE.md, runbooks)
-core/                           ← C++ tracking core
-services/                       ← Python production tooling
-                                   (LaserController, MAVLink adapter, viewer)
-tools/                          ← Python dev tools (replay, calibration, test)
-tests/                          ← Test suites (C++ and Python)
-config/                         ← YAML configuration files
+AGENTS.md                       ← Cross-vendor entry point for AI agents
+CLAUDE.md                       ← Full operating contract for Claude/OpenCode context
+README.md                       ← Repository orientation and subsystem map
+BOARD.md                        ← Thin kanban index; story detail lives in docs/tickets/
+docs/adr/                       ← Source of truth for architecture decisions
+docs/design/                    ← Readable architectural snapshots
+docs/research/                  ← Historical/reference research, not current specification
+docs/tickets/                   ← Ticket story files and append-only work history
+docs/plans/                     ← Numbered operational/work plan files
+docs/superpowers/specs/          ← Design-tier specification files
+docs/superpowers/plans/          ← Design-tier implementation plan files
+tools/board/                    ← Repository kanban, ADR, and solution helper scripts
+tracking-core/                  ← Active Pi 5 tracking subsystem
+viewer/                         ← Future/promoted floor-plane visualisation subsystem
+camera-node/                    ← Future Pi 3B camera streaming subsystem
+laser-controller/               ← Future laser MCU + adapter subsystem
+mavlink-adapter/                ← Future ZMQ → MAVLink adapter subsystem
+drone/                          ← Future drone subsystem artefacts
 ```
 
-Files in `docs/adr/` and `docs/design/` are read-after-write authoritative. Files in `core/`, `services/`, `tools/`, `tests/`, `config/` are the implementation — they must be consistent with `docs/`, but they are not the source of truth.
+Files in `docs/adr/` and `docs/design/` are read-after-write authoritative. Files under implementation subsystem directories such as `tracking-core/`, `viewer/`, `laser-controller/`, and `mavlink-adapter/` must be consistent with `docs/`, but they are not the source of truth. Some target directories are intentionally future placeholders; `README.md` records the current transition notes.
 
 ---
 
@@ -588,7 +597,7 @@ This pitfall has two halves: don't make consumers wrong, and don't let the core 
 
 ### 10.5 The "small Python adapter" trap
 
-When a new external system needs integration (the laser MCU, the drone FC, a hypothetical web UI), the temptation is to bolt a small Python helper directly onto the C++ core via `pybind11` or shared memory. ADR-001 forbids this. Every external system is a separate process, communicating with the core through ZMQ. The "small adapter" is its own service under `services/`, owns its own concerns, and fails independently.
+When a new external system needs integration (the laser MCU, the drone FC, a hypothetical web UI), the temptation is to bolt a small Python helper directly onto the C++ core via `pybind11` or shared memory. ADR-001 forbids this. Every external system is a separate process, communicating with the core through ZMQ. The "small adapter" belongs to its owning top-level subsystem directory, owns its own concerns, and fails independently.
 
 The cost of the discipline is one extra process and one ZMQ subscriber. The cost of violating it is non-deterministic core behaviour and a tangled deployment topology.
 
@@ -647,17 +656,18 @@ When producing a substantial deliverable — a design document, a new ADR pack, 
 1. **Propose a structure.** Table of contents, file list, or outline. Get the user's sign-off on the structure before drafting content.
 2. **Draft section by section** (or file by file). Each draft is small enough for the user to react to.
 3. **Lock each section before moving to the next.** A locked section may need clerical edits at assembly time, but its substance is committed. The user's "accepted" is the lock signal.
-4. **Assemble at the end.** When all sections are locked, produce the consolidated artifact. The assembled version is the deliverable; the section drafts are the working medium.
+4. **Assemble at the end.** When all sections are locked, produce the consolidated artefact. The assembled version is the deliverable; the section drafts are the working medium.
 
-This workflow was used to produce this very CLAUDE.md document, and to produce the v0.3 ADR pack. It is the default for any artifact exceeding ~500 lines or any artifact whose structure is itself under design.
+This workflow was used to produce this very CLAUDE.md document, and to produce the v0.3 ADR pack. It is the default for any artefact exceeding ~500 lines or any artefact whose structure is itself under design.
 
 Small deliverables (a single ADR drafted from an already-decided position, a bug fix, a one-file change) do not need the checkpoint workflow. Deliver directly.
 
 ### 11.3 File creation conventions
 
-- **Real files for real deliverables.** When the user asks for a document, a code file, an ADR, or any artifact they will refer to later, the agent creates an actual file using the file tools and presents it via `present_files`. Inline content is for conversational answers, not for deliverables.
-- **Outputs go under `/mnt/user-data/outputs/`** mirroring the project's intended directory layout (Section 8.7). The agent does not invent ad-hoc output paths.
-- **Drafts go inline.** A section draft offered for review is inline markdown in the conversation, not a file. Only the assembled final artifact becomes a file.
+- **Real files for real deliverables.** When the user asks for a document, a code file, an ADR, or any artefact they will refer to later, the agent creates an actual file using the file tools and presents it via `present_files`. Inline content is for conversational answers, not for deliverables.
+- **Repository workflow artefacts live in their documented repo paths.** For design-tier tickets, specs go under `docs/superpowers/specs/` and plans under `docs/superpowers/plans/`, linked from the story file's `spec:` and `plan:` frontmatter.
+- **External delivery outputs** that are not meant to be committed to the repo go under `/mnt/user-data/outputs/`, mirroring the intended project layout. The agent does not invent ad-hoc output paths.
+- **Drafts go inline.** A section draft offered for review is inline markdown in the conversation, not a file. Only the assembled final artefact becomes a file.
 - **`present_files` is called once per delivery batch**, with the index-or-summary file listed first if one exists. Multiple related files in one batch is the right pattern; ten separate `present_files` calls is not.
 
 ### 11.4 Reasoning visibility

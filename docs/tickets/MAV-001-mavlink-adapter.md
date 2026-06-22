@@ -27,7 +27,7 @@ Key constraints per architecture:
 
 ## Acceptance
 
-- A Python service at `services/mavlink_adapter/` that:
+- A Python service under the top-level `mavlink-adapter/` subsystem that:
   - Subscribes to the tracking core's ZMQ PUB stream.
   - Monitors heartbeat messages (timeout → failsafe).
   - When `safe_for_control = true`: extracts drone position, transforms to NED, publishes `VISION_POSITION_ESTIMATE`.

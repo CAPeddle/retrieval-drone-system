@@ -6,11 +6,11 @@ Split the monolithic CLAUDE.md (~870 lines) into a Claude-native modular
 structure enabling incremental discovery. The goal: reduce per-session context
 overhead while preserving all guidance.
 
-**Target structure:**
+**Target structure** (consolidated per D10 — resolves the fan-out concern):
 - `CLAUDE.md` (~210 lines): Always-read core — identity, safety, workflow, dispatch
-- `.claude/rules/` (8 files): Auto-applied by file path
-- `.claude/skills/` (6 files): Invoked on demand or by model
-- `docs/agent-reference/` (8 files): Detailed reference material
+- `.claude/rules/` (3 files): Path-scoped, auto-applied when editing matching files
+- `.claude/skills/` (2 files): Invoked on demand or by model
+- `docs/agent-reference/` (1 file): Detailed reference material, consulted on demand
 
 ## Design Decisions
 
@@ -20,7 +20,7 @@ Use Claude-native mechanisms matched to content type:
 
 | Content Type | Mechanism | Rationale |
 |--------------|-----------|-----------|
-| Coding standards, architecture boundaries | `.claude/rules/` with `applyTo` | Auto-applies when editing relevant paths |
+| Coding standards, architecture boundaries | `.claude/rules/` with `paths` | Auto-applies when editing relevant paths |
 | Multi-step procedures | `.claude/skills/` | Explicit invocation for workflows |
 | Reference material | `docs/agent-reference/` | Consulted on demand, not loaded by default |
 | Safety contract, identity, dispatch | `CLAUDE.md` | Always-read, non-negotiable |
@@ -59,44 +59,62 @@ commands real hardware (laser, drone, servos).
 
 ### D5: Rule File Path Patterns
 
-| Rule | `applyTo` Pattern |
+| Rule | `paths` Pattern |
 |------|-------------------|
-| cpp-hot-path | `tracking-core/**/*.cpp`, `tracking-core/**/*.hpp`, `tracking-core/**/*.h` |
-| python-tooling | `services/**/*.py`, `tools/**/*.py`, `viewer/**/*.py` |
-| tracking-core-boundaries | `tracking-core/src/**/*.cpp`, `tracking-core/src/**/*.hpp` |
-| coordinate-calibration | `tracking-core/src/**/coordinate*.cpp`, `tracking-core/src/**/calibrat*.cpp`, `tracking-core/src/**/mapper*.cpp`, `tracking-core/src/**/homograph*.cpp` |
-| actuator-safety | `laser-controller/**`, `mavlink-adapter/**`, `drone/**` |
-| testing-validation | `tests/**`, `*_test.cpp`, `*_test.py`, `*_bench*` |
-| adr-conventions | `docs/adr/*.md` |
-| ticket-board | `docs/tickets/*.md`, `BOARD.md` |
+| cpp.md | `tracking-core/**/*.cpp`, `tracking-core/**/*.hpp`, `tracking-core/**/*.h` |
+| python.md | `tracking-core/src/viewer/**/*.py`, `tracking-core/tools/**/*.py`, `tracking-core/tests/python_integration/**/*.py` |
+| project-docs.md | `docs/adr/*.md`, `docs/tickets/*.md`, `BOARD.md` |
 
-Patterns are comma-separated OR conditions. Each pattern is a glob. Patterns
+Each pattern is a glob; a rule's `paths:` list is an OR of its globs. Patterns
 include file extensions to avoid over-triggering on docs or unrelated files.
+Globs target the current repository layout (`tracking-core/src/...`,
+`tracking-core/tests/...`, `tracking-core/tools/...`), reusing the patterns
+already encoded in `.github/instructions/`. Do not treat CLAUDE.md §8.7's
+aspirational `services/`/`tools/`/`tests/` layout as authoritative; §8.7 is
+currently inconsistent with the real `tracking-core/`-rooted tree.
+
+The `actuator-safety` rule from earlier drafts is intentionally **not** created
+now: its target dirs (`laser-controller/`, `mavlink-adapter/`, `drone/`) do not
+exist until Phase 3+/4+, and the safety-critical actuation block lives in
+always-read CLAUDE.md (D8) plus a PreToolUse hook for hard enforcement. Add the
+rule when those subsystems land.
 
 ### D6: File Format Schema
 
 All `.claude/rules/` and `.claude/skills/` files use YAML frontmatter:
 
-**Rule file frontmatter:**
+**Rule file frontmatter:** (field name confirmed against Claude Code docs —
+`paths:`, not `applyTo:`; a rule with no `paths:` field loads every session at
+`.claude/CLAUDE.md` priority, a rule with `paths:` loads only when Claude reads
+a matching file)
 ```yaml
 ---
 description: "One-line description for discovery"
-applyTo:
+paths:
   - "path/pattern/*.ext"
   - "another/pattern/**"
 ---
 ```
 
-**Skill file frontmatter:**
+**Skill file layout and frontmatter:**
+
+Each skill is a directory `.claude/skills/<skill-name>/SKILL.md` (not a flat
+`.md` file — flat files are the legacy `commands/` format and would not be
+discovered as skills). Frontmatter:
 ```yaml
 ---
+name: "skill-name"
 description: "One-line description for model invocation"
-alwaysApply: false
 ---
 ```
 
-The `description` field enables model selection of relevant skills.
-`alwaysApply: false` means the skill is invoked on demand, not automatically.
+The `name` + `description` fields enable model selection of relevant skills.
+There is no `alwaysApply` field in Claude Code skills (that is a Cursor-rules
+field). To make `real-hardware-actuation` explicit-invocation-only, set
+`disable-model-invocation: true` in its frontmatter — the documented Claude Code
+field that lets only the user invoke the skill (`/real-hardware-actuation`) and
+prevents Claude from ever auto-loading it. Its description is then kept out of
+context until the user invokes it.
 
 ### D7: Skill Invocation Triggers
 
@@ -138,50 +156,72 @@ These rules are stated in CLAUDE.md and cannot be overridden:
 - `real-hardware-actuation.md` (skill): Workflow procedure for transitioning
   from dry-run to real actuation, including pre-flight checklist.
 
+**Enforcement caveat (confirmed against Claude Code docs):** CLAUDE.md, rules,
+and skills are loaded as *context, not enforced configuration* — "Claude treats
+them as context... To block an action regardless of what Claude decides, use a
+PreToolUse hook instead." So D3/D8's "cannot be overridden" is a behavioural
+convention, not a hard guarantee. Any truly non-negotiable actuation block
+(e.g. never fire the laser without the explicit skill + flag) must be backed by
+a `PreToolUse` hook, not by rule/skill text alone.
+
+### D10: Consolidated Split (resolves P4 — cap the fan-out)
+
+The original per-topic granularity (8 rules + 6 skills + 8 reference = 22 files)
+multiplies the single-maintainer sync surface. Consolidate to a smaller, more
+general set — grouped by audience and trigger, not by source section — and make
+ADR-derived content *pointers to the ADRs*, not synced copies, so there is one
+source of truth:
+
+| File | Trigger | Consolidates |
+|------|---------|--------------|
+| `.claude/rules/cpp.md` | `paths:` tracking-core C++ | §7.1 hot-path, §7.2 general C++, §7.4 deviations, §5 boundaries, §7/ADR-003/006/010 coordinate & Z, §8.6 code docs |
+| `.claude/rules/python.md` | `paths:` tracking-core Python | §7.3 |
+| `.claude/rules/project-docs.md` | `paths:` docs/adr, docs/tickets, BOARD.md | §8.3-8.5 ADR conventions, §11.7 ticket board |
+| `.claude/skills/adr-creation/SKILL.md` | model-invoked | §8.1-8.2 |
+| `.claude/skills/tracking-review/SKILL.md` | model-invoked | §10 pitfalls, §9.4 four-domain test |
+| `docs/agent-reference/agent-reference.md` | on-demand read | §3 baseline (as ADR pointers), §4 hardware/environment, coordinate frames, §4/ADR-004 calibration, §13 risks, §8.7 layout, §9 testing detail, §12 glossary, §10 pitfalls detail, §11.2/11.3/11.6 workflow |
+
+Total: **6 satellite files** (3 rules + 2 skills + 1 reference), down from 22,
+plus always-read `CLAUDE.md`. `actuator-safety` is NOT created now — its target
+dirs (`laser-controller/`, `mavlink-adapter/`, `drone/`) do not exist until
+Phase 3+/4+; the safety-critical actuation block lives in always-read CLAUDE.md
+(D8) and, for hard enforcement, a PreToolUse hook. Testing conventions (§9) move
+to the reference file; the ADR-007 ship-gate summary stays always-read
+(Evidence & Validation). The D5 and Content Allocation tables below are written
+against this consolidated set.
+
 ## Directory Structure
 
 ```
 .claude/
   rules/
-    cpp-hot-path.md                    # ~50 lines
-    python-tooling.md                  # ~20 lines
-    tracking-core-boundaries.md        # ~55 lines
-    coordinate-calibration.md          # ~50 lines
-    actuator-safety.md                 # ~45 lines
-    testing-validation.md              # ~50 lines
-    adr-conventions.md                 # ~40 lines
-    ticket-board.md                    # ~55 lines
+    cpp.md                             # ~110 lines  (§7.1/7.2/7.4, §5, §7+ADR-003/006/010, §8.6)
+    python.md                          # ~20 lines   (§7.3)
+    project-docs.md                    # ~55 lines   (§8.3-8.5, §11.7)
 
   skills/
-    adr-creation.md                    # ~70 lines
-    experiment-design.md               # ~80 lines
-    hardware-change-assessment.md      # ~70 lines
-    tracking-review.md                 # ~75 lines
-    bench-validation.md                # ~65 lines
-    real-hardware-actuation.md         # ~80 lines
+    adr-creation/SKILL.md              # ~70 lines
+    tracking-review/SKILL.md           # ~75 lines
+    # experiment-design, hardware-change-assessment, bench-validation,
+    # real-hardware-actuation — deferred to a follow-up plan (see scope note)
 
 docs/
   agent-reference/
-    glossary.md                        # ~90 lines
-    hardware-environment.md            # ~75 lines
-    coordinate-frames.md               # ~70 lines
-    calibration-lifecycle.md           # ~75 lines
-    risks-and-debt.md                  # ~120 lines
-    architectural-baseline.md          # ~70 lines
-    common-pitfalls.md                 # ~100 lines
-    workflow-conventions.md            # ~60 lines (§11.2-11.3, 11.6)
+    agent-reference.md                 # ~500 lines  (§3, §4 detail, coordinate frames,
+                                       #   §4+ADR-004 calibration, §13, §8.7, §9 detail,
+                                       #   §12 glossary, §10 pitfalls detail, §11.2/11.3/11.6)
 
 CLAUDE.md                              # ~210 lines (down from ~870)
 ```
 
-**Total modular content:** ~1,420 lines across 22 files + 210 line CLAUDE.md
+**Total modular content:** ~830 lines across 6 satellite files + ~210 line CLAUDE.md
 **Original:** ~870 lines in single file
 
-The increase is due to:
-- Explicit frontmatter in each file
-- Clearer section structure for standalone reading
-- Procedure details in skills that were implicit before
-- New skills documenting implicit workflows
+The satellite files are grouped by trigger (path-scoped rules, model-invoked
+skills, on-demand reference) rather than one-per-topic, so the always-read
+surface drops from ~870 to ~210 lines while total authored content stays close
+to the original — the reference file holds lookup detail and ADR pointers rather
+than synced copies.
 
 ## Content Allocation
 
@@ -195,7 +235,7 @@ The increase is due to:
 | Physical Safety Contract | ~35 | §4 (subset) | See D9 below for exact content |
 | Workflow Essentials | ~30 | §11.1, §11.4, §11.5 | Ask-vs-deliver (condensed), reasoning visibility, tooling habits |
 | Evidence & Validation | ~20 | §9.2-9.3 (summary) | Ship gates, burden of proof |
-| Dispatch Table | ~50 | (new) | Rules, skills, reference mapping (21 files) |
+| Dispatch Table | ~50 | (new) | Rules, skills, reference mapping (6 files) |
 | What's Not Here | ~15 | (new) | Pointer to modular files, guidance on when to read them |
 
 **Total: ~210 lines**
@@ -214,6 +254,9 @@ non-negotiable safety rules:
 - Thermal throttling behavior requirement (§4.hardware.thermal)
 - IR laser preferred for eye safety (§4.hardware.laser)
 - No internet dependency (§4.network)
+- Laser specular-reflection ghost risk (R-04) and camera focus-drift invalidation (R-05)
+- Floor non-planarity bias near rugs/thresholds (R-02)
+- The "Z=0 is not universal" and "brightest pixel is not the laser" pitfalls (§10)
 
 **Moves to hardware-environment.md:**
 - Pi 5 specs (RAM, OS, GPU absence)
@@ -224,49 +267,97 @@ non-negotiable safety rules:
 - Power supply details
 - Environmental conditions detail (lighting, reflections, floor)
 
-### Moves to `.claude/rules/`
+### Moves to `.claude/rules/` (3 files, per D10)
 
 | Original Section | Target Rule | Key Content |
 |------------------|-------------|-------------|
-| §7.1 + §7.2 C++ conventions | cpp-hot-path.md | Hot-path discipline (§7.1) + general conventions (§7.2) |
-| §7.3 Python conventions | python-tooling.md | Formatting, typing, framework avoidance |
-| §5 System Boundaries | tracking-core-boundaries.md | Core responsibilities, adapters, ZMQ contract |
-| §7 + ADR-003/006/010 | coordinate-calibration.md | Z compensation, projection pipeline |
-| §5 + ADR-008 | actuator-safety.md | Failsafe-off, dry-run, MAVLink contract |
-| §9 Testing | testing-validation.md | Categories, ADR-007 gate, performance budgets |
-| §8.2-8.4 ADR conventions | adr-conventions.md | Template, anti-patterns, file naming |
-| §11.7 + existing | ticket-board.md | Story schema, U-IDs, transitions |
+| §7.1 + §7.2 + §7.4 C++ | cpp.md | Hot-path discipline, general conventions, deviation rules |
+| §5 System Boundaries | cpp.md | Core responsibilities, adapters, ZMQ contract |
+| §7 + ADR-003/006/010 | cpp.md | Z compensation, projection pipeline |
+| §8.6 Code documentation | cpp.md | Doc-comment conventions (brief) |
+| §7.3 Python conventions | python.md | Formatting, typing, framework avoidance |
+| §8.3-8.5 ADR conventions | project-docs.md | Anti-patterns, file naming, design-doc sync |
+| §11.7 Repo tooling | project-docs.md | Story schema, U-IDs, transitions |
 
-Note: `cpp-hot-path.md` contains both §7.1 (hot-path specific) and §7.2
-(general C++ conventions). The file name reflects the primary concern; both
-apply when editing tracking-core C++ files.
+`cpp.md` is the single rule that loads when editing tracking-core C++ — it
+carries everything a C++ edit needs (hot-path discipline, boundaries, coordinate
+mapping, code docs). The §5 + ADR-008 actuator-safety content is deferred with
+the `actuator-safety` rule (see D5/D10). §9 testing detail moves to the
+reference file; the ADR-007 ship-gate summary stays always-read.
 
-### Moves to `.claude/skills/`
+### Moves to `.claude/skills/` (2 files, per D10)
 
 | Original Section | Target Skill | Key Content |
 |------------------|--------------|-------------|
-| §8.1-8.2 When/how to write ADR | adr-creation.md | Triggers, template, validation |
-| (New) | experiment-design.md | Hypothesis, variables, recording |
-| (New) | hardware-change-assessment.md | Calibration/safety/contract impact |
-| §10 pitfalls + §9.4 | tracking-review.md | Four-domain test, pitfall checklist |
-| (New) | bench-validation.md | Test data, metrics, gate decision |
-| (New - safety critical) | real-hardware-actuation.md | Pre-flight, execution, recording |
+| §8.1-8.2 When/how to write ADR | adr-creation/SKILL.md | Triggers, template, validation |
+| §10 pitfalls + §9.4 | tracking-review/SKILL.md | Four-domain test, pitfall checklist |
 
-### Moves to `docs/agent-reference/`
+**Scope note:** Only `adr-creation` (from §8) and `tracking-review` (from
+§10/§9.4) are in scope — they reorganize existing CLAUDE.md content. The four
+skills from earlier drafts (`experiment-design`, `hardware-change-assessment`,
+`bench-validation`, `real-hardware-actuation`) author net-new workflow
+procedures that do not exist in the source and are **deferred to a separate
+follow-up plan** where each gets its own design review. Phases 3 and 6 build
+only the two in-scope skills.
 
-| Original Section | Target File | Key Content |
-|------------------|-------------|-------------|
-| §12 Glossary | glossary.md | Terms, acronyms |
-| §4 Physical Environment (detail) | hardware-environment.md | Pi 5 specs, camera, network, thermal (see D9) |
-| ADR-003/006/010 details | coordinate-frames.md | Tiers, FloorPlane2D, Z compensation |
-| §4 + ADR-004 | calibration-lifecycle.md | Phases, health states, drift |
-| §13 Risks & Debt | risks-and-debt.md | R-01–R-07, D-01–D-06 |
-| §3 Architectural Baseline | architectural-baseline.md | ADR table, locked/open decisions |
-| §10 Common Pitfalls | common-pitfalls.md | P-01–P-08 with failure modes |
-| §11.2, §11.3, §11.6 | workflow-conventions.md | Checkpoint workflow, file creation, session rituals |
+### Moves to `docs/agent-reference/agent-reference.md` (1 file, per D10)
+
+A single on-demand reference file with one `##` section per topic below. ADR
+summaries are **pointers to the ADR** (cite the ADR ID; do not restate its
+rationale), so there is one source of truth and no synced copy to drift.
+
+| Original Section | Section in agent-reference.md | Key Content |
+|------------------|-------------------------------|-------------|
+| §12 Glossary | Glossary | Terms, acronyms |
+| §4 Physical Environment (detail) | Hardware & environment | Pi 5 specs, camera, network, thermal (see D9) |
+| ADR-003/006/010 details | Coordinate frames | Tiers, FloorPlane2D, Z compensation (pointer to ADRs) |
+| §4 + ADR-004 | Calibration lifecycle | Phases, health states, drift |
+| §13 Risks & Debt | Risks & debt | R-01–R-07, D-01–D-06 |
+| §3 Architectural Baseline | Architectural baseline | ADR index + locked/open decisions (pointers to ADRs) |
+| §8.7 Directory layout | Architectural baseline | Real repo layout |
+| §9 Testing (detail) | Testing | Categories, performance-budget detail (ship-gate summary stays in CLAUDE.md) |
+| §10 Common Pitfalls (detail) | Common pitfalls | P-01–P-08 (safety subset also stays in CLAUDE.md) |
+| §11.2, §11.3, §11.6 | Workflow conventions | Checkpoint workflow, file creation, session rituals |
+
+**Safety-content retention (per D3):** the safety-load-bearing subset of §10
+and §13 — the pitfalls and risks listed under D9 "Stays in CLAUDE.md" — is
+summarised in always-read CLAUDE.md. The reference files hold the *detail and
+lookup material*, not the always-needed corrections an unprimed agent won't
+know to fetch. "Preserved in a file" is not "loaded when the reasoning
+happens"; the always-read summary is what guarantees an agent reasoning about a
+detector or laser change has the eye-safety, reflection, and floor-planarity
+context even in a session that never opens a reference doc.
 
 Note: §11.1 (ask-vs-deliver), §11.4 (reasoning visibility), and §11.5
 (tooling habits) stay in CLAUDE.md because they affect every session.
+
+## Alternatives Considered
+
+Three lower-risk alternatives were available. This section records them so the
+choice of the three-tier `.claude/` scheme is deliberate rather than
+path-dependent (per the project's anti-Groundhog-Day standard).
+
+- **(a) Trim the monolith in place.** Condense verbose prose to reach ~220
+  lines in a single always-read file, with reference detail below a fold in the
+  same file. Meets Success Criterion 1, preserves all content, and avoids the
+  unverified `.claude/rules/` mechanism entirely. It does not enable
+  path-scoped incremental discovery — but it is the cheapest path and remains
+  the fallback if the discovery mechanism is unverified.
+- **(b) Two files (core + reference).** Always-read `CLAUDE.md` plus a single
+  `docs/agent-reference.md` for lookup detail. Captures most of the size
+  reduction across 2 files instead of the original 22-file proposal, with a far
+  smaller sync surface.
+- **(c) Reuse the existing `.github/instructions/` mechanism.** The repo already
+  has 8 path-scoped instruction files using `applyTo`. Path-scoped rules could
+  route through that already-supported mechanism rather than inventing a
+  parallel `.claude/rules/` tier.
+
+The `.claude/rules/` mechanism is now verified (see Deferred / Open Questions —
+RESOLVED). The three-tier scheme is retained but consolidated per D10 to **6
+satellite files**, which brings it close to alternative (b) on sync surface
+while keeping (c)-style path-scoped auto-loading via `.claude/rules/`.
+Alternative (a) remains the fallback if the reorganization is judged not worth
+its cost.
 
 ## Implementation Plan
 
@@ -275,37 +366,24 @@ Note: §11.1 (ask-vs-deliver), §11.4 (reasoning visibility), and §11.5
 2. Create `.claude/skills/` directory
 3. Create `docs/agent-reference/` directory
 
-### Phase 2: Write rule files (8 files)
-1. cpp-hot-path.md
-2. python-tooling.md
-3. tracking-core-boundaries.md
-4. coordinate-calibration.md
-5. actuator-safety.md
-6. testing-validation.md
-7. adr-conventions.md
-8. ticket-board.md
+### Phase 2: Write rule files (3 files, per D10)
+1. cpp.md
+2. python.md
+3. project-docs.md
 
-### Phase 3: Write skill files (6 files)
-1. adr-creation.md
-2. experiment-design.md
-3. hardware-change-assessment.md
-4. tracking-review.md
-5. bench-validation.md
-6. real-hardware-actuation.md
+### Phase 3: Write skill files (2 files, per D10)
+1. adr-creation/SKILL.md
+2. tracking-review/SKILL.md
 
-### Phase 4: Write reference files (8 files)
-1. glossary.md
-2. hardware-environment.md
-3. coordinate-frames.md
-4. calibration-lifecycle.md
-5. risks-and-debt.md
-6. architectural-baseline.md
-7. common-pitfalls.md
-8. workflow-conventions.md
+### Phase 4: Write the reference file (1 file, per D10)
+1. agent-reference.md — one `##` section per topic (glossary, hardware &
+   environment, coordinate frames, calibration lifecycle, risks & debt,
+   architectural baseline, testing detail, common pitfalls, workflow
+   conventions), with ADR summaries as pointers to the ADRs
 
 ### Phase 5: Rewrite CLAUDE.md
 1. Backup current CLAUDE.md
-2. Write new slim CLAUDE.md (~180 lines)
+2. Write new slim CLAUDE.md (~210 lines)
 3. Verify dispatch table references correct files
 
 ### Phase 6: Validation
@@ -328,9 +406,11 @@ during implementation.
 **Mitigation:** Clear trigger criteria in each skill. Model invocation for
 routine skills. Explicit only for consequential ones.
 
-### R4: Reference docs become stale
-**Mitigation:** Reference docs contain durable information (glossary, hardware
-specs, ADR summaries). Maintenance rule in risks-and-debt.md.
+### R4: Reference doc becomes stale
+**Mitigation:** The single reference file holds durable information (glossary,
+hardware specs) and *pointers* to ADRs rather than synced copies, so ADR changes
+do not silently drift the reference. Consolidating to 6 satellite files (D10)
+keeps the sync surface small for a single maintainer.
 
 ## Success Criteria
 
@@ -342,6 +422,11 @@ specs, ADR summaries). Maintenance rule in risks-and-debt.md.
 6. No duplication between `.claude/` and `.github/instructions/`
 7. Safety-critical content (D8 rules) remains in always-read CLAUDE.md
 8. Every original section (§1-§13) has explicit destination documented
+9. A representative-session load test passes: for at least three task types
+   (e.g. "design a detector change", "edit config", "plan a laser experiment"),
+   enumerate which files actually load and assert every safety-relevant item
+   reachable in today's always-read CLAUDE.md is still reachable without the
+   agent having to already know to open a reference file
 
 ## Validation Checklist
 
@@ -352,38 +437,38 @@ not complete until this checklist is verified.
 |------------------|-------------|----------|
 | §1 Project Identity | CLAUDE.md | [ ] |
 | §2 Operating Persona | CLAUDE.md | [ ] |
-| §3 Architectural Baseline | docs/agent-reference/architectural-baseline.md | [ ] |
-| §4.hardware | docs/agent-reference/hardware-environment.md | [ ] |
+| §3 Architectural Baseline | agent-reference.md | [ ] |
+| §4.hardware | agent-reference.md | [ ] |
 | §4.safety (children, thermal, laser, no-internet) | CLAUDE.md | [ ] |
-| §5 System Boundaries | .claude/rules/tracking-core-boundaries.md | [ ] |
+| §5 System Boundaries | .claude/rules/cpp.md | [ ] |
 | §6 Source of Truth | CLAUDE.md | [ ] |
-| §7.1 C++ hot-path | .claude/rules/cpp-hot-path.md | [ ] |
-| §7.2 C++ general | .claude/rules/cpp-hot-path.md | [ ] |
-| §7.3 Python | .claude/rules/python-tooling.md | [ ] |
-| §7.4 Deviation rules | .claude/rules/cpp-hot-path.md | [ ] |
-| §8.1 When to write ADR | .claude/skills/adr-creation.md | [ ] |
-| §8.2 ADR template | .claude/skills/adr-creation.md | [ ] |
-| §8.3 ADR anti-patterns | .claude/rules/adr-conventions.md | [ ] |
-| §8.4 File naming | .claude/rules/adr-conventions.md | [ ] |
-| §8.5 Design doc sync | .claude/rules/adr-conventions.md | [ ] |
-| §8.6 Code documentation | .claude/rules/cpp-hot-path.md (brief) | [ ] |
-| §8.7 Directory layout | docs/agent-reference/architectural-baseline.md | [ ] |
-| §9.1 Test categories | .claude/rules/testing-validation.md | [ ] |
-| §9.2 ADR-007 replay test | .claude/rules/testing-validation.md + CLAUDE.md (summary) | [ ] |
-| §9.3 Performance budgets | .claude/rules/testing-validation.md + CLAUDE.md (summary) | [ ] |
-| §9.4 What to test | .claude/rules/testing-validation.md | [ ] |
-| §9.5 Test vs reality | .claude/rules/testing-validation.md | [ ] |
-| §10 Common Pitfalls | docs/agent-reference/common-pitfalls.md | [ ] |
+| §7.1 C++ hot-path | .claude/rules/cpp.md | [ ] |
+| §7.2 C++ general | .claude/rules/cpp.md | [ ] |
+| §7.3 Python | .claude/rules/python.md | [ ] |
+| §7.4 Deviation rules | .claude/rules/cpp.md | [ ] |
+| §8.1 When to write ADR | .claude/skills/adr-creation/SKILL.md | [ ] |
+| §8.2 ADR template | .claude/skills/adr-creation/SKILL.md | [ ] |
+| §8.3 ADR anti-patterns | .claude/rules/project-docs.md | [ ] |
+| §8.4 File naming | .claude/rules/project-docs.md | [ ] |
+| §8.5 Design doc sync | .claude/rules/project-docs.md | [ ] |
+| §8.6 Code documentation | .claude/rules/cpp.md (brief) | [ ] |
+| §8.7 Directory layout | agent-reference.md | [ ] |
+| §9.1 Test categories | agent-reference.md | [ ] |
+| §9.2 ADR-007 replay test | agent-reference.md + CLAUDE.md (summary) | [ ] |
+| §9.3 Performance budgets | agent-reference.md + CLAUDE.md (summary) | [ ] |
+| §9.4 What to test | .claude/skills/tracking-review/SKILL.md | [ ] |
+| §9.5 Test vs reality | agent-reference.md | [ ] |
+| §10 Common Pitfalls | agent-reference.md + CLAUDE.md (safety-critical subset); tracking-review skill (checklist) | [ ] |
 | §11.1 Ask-vs-deliver | CLAUDE.md | [ ] |
-| §11.2 Checkpoint workflow | docs/agent-reference/workflow-conventions.md | [ ] |
-| §11.3 File creation | docs/agent-reference/workflow-conventions.md | [ ] |
+| §11.2 Checkpoint workflow | agent-reference.md | [ ] |
+| §11.3 File creation | agent-reference.md | [ ] |
 | §11.4 Reasoning visibility | CLAUDE.md | [ ] |
 | §11.5 Tooling habits | CLAUDE.md | [ ] |
-| §11.6 Session opening/closing | docs/agent-reference/workflow-conventions.md | [ ] |
-| §11.7 Repo tooling | .claude/rules/ticket-board.md | [ ] |
-| §12 Glossary | docs/agent-reference/glossary.md | [ ] |
-| §13 Risks & Debt | docs/agent-reference/risks-and-debt.md | [ ] |
-| (Safety) real-hardware-actuation skill | .claude/skills/real-hardware-actuation.md | [ ] |
+| §11.6 Session opening/closing | agent-reference.md | [ ] |
+| §11.7 Repo tooling | .claude/rules/project-docs.md | [ ] |
+| §12 Glossary | agent-reference.md | [ ] |
+| §13 Risks & Debt | agent-reference.md + CLAUDE.md (R-02/R-04/R-05 safety subset) | [ ] |
+| (Safety) real-hardware-actuation skill | deferred to follow-up plan; actuation block in CLAUDE.md D8 + PreToolUse hook | [ ] |
 | (Safety) D8 blocking rules in CLAUDE.md | CLAUDE.md | [ ] |
 
 ## Out of Scope
@@ -393,3 +478,26 @@ not complete until this checklist is verified.
 - Changes to ADRs or design documents
 - Changes to ticket/board workflow
 - Changes to tools/board/ scripts
+- Authoring the four net-new skills (experiment-design, hardware-change-assessment, bench-validation, real-hardware-actuation) — these document workflows absent from the source CLAUDE.md and belong in a separate plan with its own review
+
+## Deferred / Open Questions
+
+### From 2026-07-06 review
+
+- **`.claude/rules/` auto-apply mechanism — RESOLVED (2026-07-06)** — D1/D6 (was P1, feasibility & adversarial)
+
+  Verified against the official Claude Code docs (code.claude.com/docs/en/memory#organize-rules-with-clauderules and /skills). The mechanism **exists and works as the design assumes** — feasibility was correct, adversarial's "Copilot/Cursor-only" concern is refuted. Corrections applied to the spec: rule frontmatter field is `paths:` not `applyTo:` (D5/D6 updated); skills are `<name>/SKILL.md` with `name`+`description` and the explicit-only skill uses `disable-model-invocation: true` (D6 updated). One residual, now captured in D8: rules/skills/CLAUDE.md are context, not enforcement — a hard actuation block requires a `PreToolUse` hook, not rule text. Loading model confirmed: `paths:`-scoped rules load only on a matching file read, so the safety content kept always-read per M2 remains the correct call.
+
+- **Split may relocate/grow per-session load rather than reduce it** — D1 (P1, product-lens & adversarial, confidence 100)
+
+  Rules and skill descriptions must be resident for the model to select them, so a normal coding session loads CLAUDE.md plus several rules plus the dispatch table plus every skill description — plausibly comparable to today's always-on cost — while total authored content nearly doubles (~870 → ~1,630 lines) and the plan authors net-new contract never in the validated original. The mechanism moves lines around and adds more without a demonstrated drop in what a working session actually loads. Quantify the expected loaded-line count for 2–3 representative sessions versus the monolith before committing.
+
+  **Partly mitigated (2026-07-06):** verification confirmed `paths:`-scoped rules load only on a matching file read, and D10 cuts total authored content to ~830 lines across 6 files (no longer a near-doubling). The always-read surface is now CLAUDE.md (~210) plus 2 skill descriptions; a C++ session adds only `cpp.md`. The quantify-for-representative-sessions ask (Success Criterion 9) still stands as the confirmation gate.
+
+- **Context-overhead problem — RESOLVED (2026-07-06)** — Overview (was P1, product-lens)
+
+  The maintainer confirmed the goal directly: reduce the size of the always-read CLAUDE.md. The premise is accepted as an explicit maintainer preference (a leaner always-read contract), independent of a measured token-budget failure. The reorganization is greenlit; D10's consolidated 6-file split is the committed approach, with alternative (a) trim-in-place available if the split proves not worth its cost.
+
+- **Fan-out sync burden — RESOLVED (2026-07-06)** — Risks / R4 (was P2, product-lens)
+
+  Resolved by D10: the split is consolidated from 22 satellite files to **6** (3 path-scoped rules, 2 skills, 1 reference), grouped by trigger rather than one-per-topic, and ADR-derived content is now *pointers to the ADRs* rather than synced copies. This removes the primary drift surface (the ADR-summary and boundary files that had to track upstream changes) and cuts the single-maintainer sync burden accordingly.

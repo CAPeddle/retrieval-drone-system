@@ -41,22 +41,34 @@ work.
 
 ### Directory layout (§8.7)
 
-Real repo layout (the authoritative one — CLAUDE.md §8.7's aspirational
-`services/`/`tools/`/`tests/` tree is not yet realised):
+Real repo layout (authoritative; production tooling lives in its owning
+top-level subsystem directory, not a shared `services/` tree):
 
 ```
-docs/adr/            Source of truth for decisions
-docs/design/         Readable architectural snapshot
-docs/agent-reference/ This file
-tracking-core/       C++ core + Python viewer/tools/tests
-  src/core/          C++ tracking core
-  src/viewer/        Python viewer
-  tools/             Python dev tools
-  tests/             cpp_unit/, python_integration/
+CLAUDE.md               Always-read operating contract (Claude Code)
+.claude/rules/          Path-scoped rules (auto-load by file path)
+.claude/skills/         Model-invoked skills
+README.md               Repository orientation and subsystem map
+BOARD.md                Thin kanban index; story detail in docs/tickets/
+docs/adr/               Source of truth for architecture decisions
+docs/design/            Readable architectural snapshots
+docs/agent-reference/   This file
+docs/research/          Historical/reference research
+docs/tickets/           Ticket story files + append-only history
+docs/plans/             Numbered operational/work plans
+docs/superpowers/specs/ Design-tier specs
+docs/superpowers/plans/ Design-tier implementation plans
+tools/board/            Kanban / ADR / solution helper scripts
+tracking-core/          Active Pi 5 tracking subsystem (src/core C++, src/viewer Python, tools/, tests/)
+viewer/                 Future: promoted floor-plane visualisation
+camera-node/            Future: Pi 3B camera streamer
+laser-controller/       Future: laser MCU + adapter
+mavlink-adapter/        Future: ZMQ → MAVLink adapter
+drone/                  Future: drone subsystem
 ```
 
-Intended future layout adds top-level `services/` (production Python: LaserController,
-MAVLink adapter) and `config/` (YAML). Rule globs target the *real* layout.
+Some subsystem directories are future placeholders; README.md records the
+transition notes. Rule globs target the real `tracking-core/`-rooted tree.
 
 ---
 

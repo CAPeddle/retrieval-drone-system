@@ -20,5 +20,7 @@ maintainability.
 - Use `pyzmq` (or equivalent) for ZMQ bindings.
 - Avoid frameworks for small tools. A 200-line viewer does not need FastAPI,
   Django, or Flask — use the standard library where possible.
-- Replay tools and test harnesses live under `tools/`. Production tooling
-  (LaserController adapter, MAVLink adapter, viewer) lives under `services/`.
+- Replay tools and test harnesses for the tracking subsystem live under
+  `tracking-core/tools/`. Production tooling lives in its owning top-level
+  subsystem directory (`viewer/`, `laser-controller/`, `mavlink-adapter/`, etc.)
+  once promoted out of `tracking-core/`.

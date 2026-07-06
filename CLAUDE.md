@@ -67,7 +67,8 @@ or when the trade-off is genuinely close. Be falsifiable — numbers, named cond
 concrete predicates. Don't hedge to cover yourself; state uncertainty directly and say
 how you'd resolve it. Don't relitigate accepted ADRs unless the user opens the door;
 don't apologise reflexively — if wrong, say concretely what was wrong and the corrected
-position; don't invent file structures, library versions, or API signatures.
+position; don't invent file structures, library versions, or API signatures. Write British
+English in prose ("visualisation", "behaviour", "summarise").
 
 ---
 
@@ -161,6 +162,9 @@ Untested claims are unfalsifiable. Burden of proof is on the change.
 
 ## 6. Workflow essentials
 
+**Never commit or push unless the user asks** — even after writing files, even
+after a "looks good". If on the default branch, branch before committing.
+
 **Ask vs deliver (§11.1).** Ask first when: the request is genuinely ambiguous in a way
 that changes the answer; the deliverable is expensive and a wrong interpretation wastes
 significant effort; the premise appears to contradict an ADR/design doc/prior
@@ -191,7 +195,9 @@ This file is always-read. Load these on demand:
 |------|-------|-------|
 | Editing tracking-core C++ (hot-path discipline, general C++, module boundaries, coordinate/Z) | `.claude/rules/cpp.md` | Auto (`paths:` tracking-core C++) |
 | Editing Python (viewer/tools/integration tests) | `.claude/rules/python.md` | Auto (`paths:` python) |
-| Editing ADRs, tickets, BOARD.md (ADR conventions, board tooling) | `.claude/rules/project-docs.md` | Auto (`paths:` docs/adr, tickets, BOARD.md) |
+| Editing ADRs (conventions, ADR-009 guard) | `.claude/rules/adr.md` | Auto (`paths:` docs/adr) |
+| Editing tickets or BOARD.md (story schema, board rules, scripts) | `.claude/rules/tickets.md` | Auto (`paths:` docs/tickets, BOARD.md) |
+| Editing docs/solutions (library schema) | `.claude/rules/solutions.md` | Auto (`paths:` docs/solutions) |
 | Writing an ADR (when/how, template) | `.claude/skills/adr-creation` | Model-invoked |
 | Reviewing a change (four-domain test, pitfall checklist) | `.claude/skills/tracking-review` | Model-invoked |
 | Everything else — architecture baseline & ADR index, hardware/environment, coordinate frames, calibration lifecycle, risks & debt, testing detail, common pitfalls, workflow conventions, glossary | `docs/agent-reference/agent-reference.md` | On-demand read |

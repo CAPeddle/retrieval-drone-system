@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Lint BOARD.md and docs/tickets/ for consistency.
 
-Rules (matching .github/instructions/board.instructions.md and tickets.instructions.md):
+Rules (matching .claude/rules/tickets.md):
   - Every BOARD line at status Next, In Progress, or Blocked MUST have a story file
     in docs/tickets/ whose frontmatter `status:` matches the column.
   - Every story file with status next | in-progress | blocked MUST have a BOARD line

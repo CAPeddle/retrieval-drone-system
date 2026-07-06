@@ -1,18 +1,15 @@
 ---
-description: ADR conventions (anti-patterns, file naming, design-doc sync) and ticket/board tooling. Applies when editing ADRs, tickets, or BOARD.md.
+description: ADR conventions — anti-patterns, file naming, and design-doc sync. Applies when editing ADRs.
 paths:
   - "docs/adr/*.md"
-  - "docs/tickets/*.md"
-  - "BOARD.md"
 ---
 
-# Project-Docs Rules
+# ADR Conventions
 
-Conventions for ADRs and the ticket board. How/when to *write* an ADR lives in
-the `adr-creation` skill; this rule covers the durable conventions that apply
-whenever you touch these files.
+How/when to *write* an ADR lives in the `adr-creation` skill; this rule covers
+the durable conventions that apply whenever you touch `docs/adr/`.
 
-## ADR anti-patterns — do not write these (§8.3)
+## ADR anti-patterns — do not write these
 
 - **Covering Your Assets:** vague decisions with escape clauses ("we might
   consider X if conditions warrant"). The Decision section must commit; hedging
@@ -27,7 +24,7 @@ Proposed, not authoritative. Do not reference it in new ADRs, code comments, or
 design docs; if active calibration becomes relevant, raise it with the user as an
 open question, not a planned feature.
 
-## ADR file naming & numbering (§8.4)
+## File naming & numbering
 
 - File name: `ADR-NNN-short-title-with-hyphens.md` (three-digit zero-padded,
   kebab-case title).
@@ -39,7 +36,7 @@ open question, not a planned feature.
   README is the only file in the directory edited as ADRs are added; ADR files
   themselves are append-only beyond status updates.
 
-## Design-doc sync (§8.5)
+## Design-doc sync
 
 The consolidated v0.3 design document restates ADR decisions in readable prose.
 When an ADR changes status, update the design document in the same commit:
@@ -48,19 +45,3 @@ When an ADR changes status, update the design document in the same commit:
   reference, frame it as "previously ADR-NNN, now superseded by ADR-MMM."
 - Design doc vs ADR conflict → the ADR wins; update the design doc. This is a
   documentation bug, not a design question.
-
-## Ticket / board tooling (§11.7)
-
-`tools/board/` holds stdlib-only Python helpers that automate the kanban
-operations defined in `.github/instructions/board.instructions.md` and
-`tickets.instructions.md`. Prefer the scripts over hand-editing BOARD.md or story
-files — they perform the atomic update of `status:`, `updated:`, the `## Log`
-entry, and the BOARD line in one operation.
-
-- `python tools/board/ticket_new.py PREFIX-NNN "Title" [--tier mechanical|small|design]`
-- `python tools/board/ticket_move.py PREFIX-NNN <status> [--note "..."]`
-- `python tools/board/board_check.py` — lints BOARD.md against story files; exits 1 on mismatch.
-- `python tools/board/ticket_archive.py [--keep N]`
-
-Full usage in `tools/board/README.md`. Hand-edits remain permitted for anything
-the scripts cannot express, but the scripts are the default.

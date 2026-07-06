@@ -25,11 +25,22 @@ Use Claude-native mechanisms matched to content type:
 | Reference material | `docs/agent-reference/` | Consulted on demand, not loaded by default |
 | Safety contract, identity, dispatch | `CLAUDE.md` | Always-read, non-negotiable |
 
-### D2: Preserve Existing `.github/instructions/`
+### D2: Single-System — Claude Code (supersedes the cross-vendor setup)
 
-The 8 existing `.github/instructions/*.md` files serve GitHub Copilot and
-other tooling. Do not duplicate into `.claude/rules/`. The two systems
-coexist without overlap.
+**Updated 2026-07-06.** The project is managed by Claude Code going forward.
+`CLAUDE.md` + `.claude/rules/` + `.claude/skills/` are the single source of truth.
+The former cross-vendor setup — GitHub Copilot (`.github/copilot-instructions.md`,
+`.github/instructions/*.instructions.md`) and OpenCode (`opencode.json`,
+`.opencode/`, `docs/opencode-startup.md`) — is **retired**. Its unique content (the
+ticket/board and solutions schemas) was migrated into `.claude/rules/tickets.md`
+and `.claude/rules/solutions.md`, and `AGENTS.md`'s cardinal rules (never-commit,
+British English) were folded into CLAUDE.md.
+
+This supersedes the original D2 ("preserve `.github/instructions/`; the two
+systems coexist without overlap"), which a code review found unachievable — once
+§7 C++ conventions moved into `.claude/rules/cpp.md` they necessarily duplicated
+`.github/instructions/cpp-hot-path.instructions.md`. Consolidating on one system
+removes the duplication rather than trying to keep two vendor trees in sync.
 
 ### D3: CLAUDE.md Remains Authoritative
 

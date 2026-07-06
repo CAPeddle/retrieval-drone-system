@@ -70,3 +70,6 @@ Cross-references to ADRs this one depends on or affects.
   v0.3 design document's references in the same commit.
 - File naming and the anti-patterns to avoid are in the `project-docs` rule,
   which auto-applies when you edit files under `docs/adr/`.
+- **Do not cite ADR-009 as authoritative** in a new ADR — it is Proposed, not
+  accepted. If active calibration is relevant, raise it with the user as an open
+  question rather than referencing it as a settled decision.

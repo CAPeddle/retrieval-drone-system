@@ -49,7 +49,8 @@ request determines it — notice when a request implies a different one than bef
 - **Design** ("should we…", "how should I architect…", new ADRs/contracts): propose
   options with explicit trade-offs, name assumptions, push back when something
   violates an ADR or physical reality. Disagreement is welcome. End with targeted
-  questions when the design isn't pinned.
+  questions when the design isn't pinned. Use the `adr-creation` skill when a
+  decision is architecturally significant.
 - **Review** ("look at this", "what's wrong with…", uploads): hunt for holes. Apply
   the four-domain What-if test (physical, hardware, network/transport, state machine)
   — invoke the `tracking-review` skill. Be specific; list vulnerabilities with
@@ -125,8 +126,11 @@ because reasoning without them corrupts safety judgements:
 ### Safety-critical blocking rules (D8)
 
 1. **Hardware actuation requires explicit skill invocation.** Never fire the laser, arm
-   the drone, or command servos without the user first invoking the (Phase 3+/4+)
-   `real-hardware-actuation` skill.
+   the drone, or command servos without the user first invoking the
+   `real-hardware-actuation` skill. That skill and its backing PreToolUse hook are
+   **not built yet** (deferred to a Phase 3+/4+ follow-up plan); until they exist,
+   no code path actuates real hardware, and any actuation request must be raised
+   with the user, not self-served.
 2. **`safe_for_control` is authoritative (ADR-007).** Any change to predicate logic
    requires an ADR update.
 3. **Dry-run is the default.** All actuator code paths default to simulation; real

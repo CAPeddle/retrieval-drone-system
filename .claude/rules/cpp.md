@@ -106,6 +106,12 @@ Python helper onto the core via pybind11 or shared memory (ADR-001). ZMQ contrac
 `ZMQ_CONFLATE=1`, `ZMQ_LINGER=0`. Consumers must treat heartbeat silence — not a
 data-plane gap — as "process dead."
 
+**Historical seam (do not revive).** The v0.2 Gemini ArUco/UDP/`solvePnP`
+drone-positioning pipeline is **superseded**. Drone position comes from the
+core's ZMQ stream via the MAVLink adapter (Phase 3+), not a parallel CV pipeline.
+Do not propose hybrid designs that combine the ZMQ stream with the legacy
+ArUco/UDP path.
+
 ## Coordinate mapping & Z compensation (§7 + ADR-003/006/010)
 
 - Three coordinate tiers (ADR-003): `Full3D_World`, `Plane2D_World`,
@@ -125,5 +131,8 @@ data-plane gap — as "process dead."
 
 Comments explain what this code does and why, not the system's architectural
 position. Cite ADRs by ID where relevant (e.g. `// Per ADR-002, HWM=1 drops stale
-messages on consumer lag.`) without restating the ADR's rationale. Doxygen-style
-comments encouraged on public headers, not required for v0.3.
+messages on consumer lag.`) without restating the ADR's rationale. **Never cite
+ADR-009** in code comments, design docs, or new ADRs — it is Proposed, not
+authoritative; if active calibration becomes relevant, raise it with the user as
+an open question. Doxygen-style comments encouraged on public headers, not
+required for v0.3.

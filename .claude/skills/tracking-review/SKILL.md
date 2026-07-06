@@ -1,6 +1,6 @@
 ---
 name: tracking-review
-description: Use when reviewing a tracking-core change, detector logic, or design for holes — "review this", "what's wrong with", "look at this", or a code/design upload. Applies the four-domain What-if test and the project pitfall checklist.
+description: Use when reviewing any tracking, detection, control, or design change for holes — "review this", "what's wrong with", "look at this", or a code/design upload (including ADRs, tickets, and design docs). Applies the four-domain What-if test and the project pitfall checklist.
 ---
 
 # Tracking Review

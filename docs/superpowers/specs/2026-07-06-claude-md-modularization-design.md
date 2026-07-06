@@ -215,6 +215,7 @@ CLAUDE.md                              # ~210 lines (down from ~870)
 ```
 
 **Total modular content:** ~830 lines across 6 satellite files + ~210 line CLAUDE.md
+**As-built (2026-07-06):** 684 satellite lines across 6 files (cpp.md 129, python.md 24, project-docs.md 61, adr-creation 72, tracking-review 61, agent-reference.md 337) + 202-line CLAUDE.md.
 **Original:** ~870 lines in single file
 
 The satellite files are grouped by trigger (path-scoped rules, model-invoked
@@ -293,7 +294,7 @@ reference file; the ADR-007 ship-gate summary stays always-read.
 | §10 pitfalls + §9.4 | tracking-review/SKILL.md | Four-domain test, pitfall checklist |
 
 **Scope note:** Only `adr-creation` (from §8) and `tracking-review` (from
-§10/§9.4) are in scope — they reorganize existing CLAUDE.md content. The four
+§10/§9.4) are in scope — they reorganise existing CLAUDE.md content. The four
 skills from earlier drafts (`experiment-design`, `hardware-change-assessment`,
 `bench-validation`, `real-hardware-actuation`) author net-new workflow
 procedures that do not exist in the source and are **deferred to a separate
@@ -356,7 +357,7 @@ The `.claude/rules/` mechanism is now verified (see Deferred / Open Questions �
 RESOLVED). The three-tier scheme is retained but consolidated per D10 to **6
 satellite files**, which brings it close to alternative (b) on sync surface
 while keeping (c)-style path-scoped auto-loading via `.claude/rules/`.
-Alternative (a) remains the fallback if the reorganization is judged not worth
+Alternative (a) remains the fallback if the reorganisation is judged not worth
 its cost.
 
 ## Implementation Plan
@@ -486,7 +487,7 @@ not complete until this checklist is verified.
 
 - **`.claude/rules/` auto-apply mechanism — RESOLVED (2026-07-06)** — D1/D6 (was P1, feasibility & adversarial)
 
-  Verified against the official Claude Code docs (code.claude.com/docs/en/memory#organize-rules-with-clauderules and /skills). The mechanism **exists and works as the design assumes** — feasibility was correct, adversarial's "Copilot/Cursor-only" concern is refuted. Corrections applied to the spec: rule frontmatter field is `paths:` not `applyTo:` (D5/D6 updated); skills are `<name>/SKILL.md` with `name`+`description` and the explicit-only skill uses `disable-model-invocation: true` (D6 updated). One residual, now captured in D8: rules/skills/CLAUDE.md are context, not enforcement — a hard actuation block requires a `PreToolUse` hook, not rule text. Loading model confirmed: `paths:`-scoped rules load only on a matching file read, so the safety content kept always-read per M2 remains the correct call.
+  Verified against the official Claude Code docs (code.claude.com/docs/en/memory#organise-rules-with-clauderules and /skills). The mechanism **exists and works as the design assumes** — feasibility was correct, adversarial's "Copilot/Cursor-only" concern is refuted. Corrections applied to the spec: rule frontmatter field is `paths:` not `applyTo:` (D5/D6 updated); skills are `<name>/SKILL.md` with `name`+`description` and the explicit-only skill uses `disable-model-invocation: true` (D6 updated). One residual, now captured in D8: rules/skills/CLAUDE.md are context, not enforcement — a hard actuation block requires a `PreToolUse` hook, not rule text. Loading model confirmed: `paths:`-scoped rules load only on a matching file read, so the safety content kept always-read per M2 remains the correct call.
 
 - **Split may relocate/grow per-session load rather than reduce it** — D1 (P1, product-lens & adversarial, confidence 100)
 
@@ -496,7 +497,7 @@ not complete until this checklist is verified.
 
 - **Context-overhead problem — RESOLVED (2026-07-06)** — Overview (was P1, product-lens)
 
-  The maintainer confirmed the goal directly: reduce the size of the always-read CLAUDE.md. The premise is accepted as an explicit maintainer preference (a leaner always-read contract), independent of a measured token-budget failure. The reorganization is greenlit; D10's consolidated 6-file split is the committed approach, with alternative (a) trim-in-place available if the split proves not worth its cost.
+  The maintainer confirmed the goal directly: reduce the size of the always-read CLAUDE.md. The premise is accepted as an explicit maintainer preference (a leaner always-read contract), independent of a measured token-budget failure. The reorganisation is greenlit; D10's consolidated 6-file split is the committed approach, with alternative (a) trim-in-place available if the split proves not worth its cost.
 
 - **Fan-out sync burden — RESOLVED (2026-07-06)** — Risks / R4 (was P2, product-lens)
 

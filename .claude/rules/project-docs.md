@@ -22,6 +22,11 @@ whenever you touch these files.
 - **Email-Driven:** load-bearing decisions captured only in conversation. If a
   decision qualifies for an ADR, the conversation is not enough — write the ADR.
 
+**Never cite ADR-009 as settled.** ADR-009 (active calibration refinement) is
+Proposed, not authoritative. Do not reference it in new ADRs, code comments, or
+design docs; if active calibration becomes relevant, raise it with the user as an
+open question, not a planned feature.
+
 ## ADR file naming & numbering (§8.4)
 
 - File name: `ADR-NNN-short-title-with-hyphens.md` (three-digit zero-padded,

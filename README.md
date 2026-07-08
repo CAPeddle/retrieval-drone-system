@@ -16,8 +16,8 @@ Work flows through [BOARD.md](BOARD.md) — a flat kanban with one-line tickets.
 
 | File | Holds | Edit rules |
 |---|---|---|
-| `BOARD.md` | Ticket lines, grouped by column | Single-line move per edit. No inline detail. See [`.github/instructions/board.instructions.md`](.github/instructions/board.instructions.md). |
-| `docs/tickets/<ID>-<slug>.md` | All ticket state, plan, history | Free to edit. Status front-matter must agree with BOARD column. See [`.github/instructions/tickets.instructions.md`](.github/instructions/tickets.instructions.md). |
+| `BOARD.md` | Ticket lines, grouped by column | Single-line move per edit. No inline detail. See [`.claude/rules/tickets.md`](.claude/rules/tickets.md). |
+| `docs/tickets/<ID>-<slug>.md` | All ticket state, plan, history | Free to edit. Status front-matter must agree with BOARD column. See [`.claude/rules/tickets.md`](.claude/rules/tickets.md). |
 
 This split means parallel agent sessions working on different tickets never contend on the same file.
 
@@ -46,7 +46,7 @@ This split means parallel agent sessions working on different tickets never cont
 - **Spec:** `docs/superpowers/specs/<ID>-<slug>-design.md`. Linked from the story file's `spec:` front-matter.
 - **Plan:** `docs/superpowers/plans/<ID>-<slug>-plan.md`. Linked from `plan:` front-matter.
 
-Claude users have `superpowers:brainstorming` and `superpowers:writing-plans` skills that automate these. Copilot users do them manually in chat. Either way, the artifacts live at the same paths and the story file links to them.
+Claude Code's `superpowers:brainstorming` and `superpowers:writing-plans` skills automate these; the artifacts live at the same paths and the story file links to them.
 
 **Tooling.** The [`tools/board/`](tools/board/) directory contains stdlib-only Python helpers — `ticket_new.py`, `ticket_move.py`, `board_check.py`, `ticket_archive.py` — that perform the status + log + BOARD updates above atomically. Prefer scripts over hand-editing; see [`tools/board/README.md`](tools/board/README.md) for usage.
 
@@ -82,7 +82,7 @@ Drone/
   laser-controller/     Future: laser MCU + adapter
   mavlink-adapter/      Future: drone bridge
   drone/                Future: drone subsystem
-  .github/              Workspace + file-scoped agent instructions
+  .claude/              Path-scoped rules + skills for Claude Code
 ```
 
 The "currently …" notes mark cleanup steps not yet executed. The target layout above is the source of truth; the current on-disk state is in transition.
@@ -91,5 +91,5 @@ The "currently …" notes mark cleanup steps not yet executed. The target layout
 
 - **Operating contract:** [CLAUDE.md](CLAUDE.md) — read before any non-trivial work.
 - **Architecture decisions:** [`docs/adr/`](docs/adr/).
-- **Workspace instructions for agents:** [.github/copilot-instructions.md](.github/copilot-instructions.md) and [.github/instructions/](.github/instructions/).
+- **Agent rules & skills:** path-scoped [`.claude/rules/`](.claude/rules/) and [`.claude/skills/`](.claude/skills/), dispatched from [CLAUDE.md](CLAUDE.md).
 - **Historical design research:** [`docs/research/`](docs/research/).

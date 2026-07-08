@@ -15,5 +15,12 @@ target_link_libraries(tracking_core_tests
         GTest::gtest_main
 )
 
+# Absolute path to the shipped config template, so the template-load smoke test
+# can verify it against the real loader regardless of the ctest working dir.
+target_compile_definitions(tracking_core_tests
+    PRIVATE
+        TRACKING_CORE_CONFIG_TEMPLATE="${CMAKE_SOURCE_DIR}/config/tracking_core.yaml"
+)
+
 include(GoogleTest)
 gtest_discover_tests(tracking_core_tests)

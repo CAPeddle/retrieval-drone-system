@@ -40,8 +40,10 @@ struct CalibrationConfig {
     std::string extrinsics_path;
 };
 
-// Runtime configuration, loaded once at startup from tracking_core.yaml and
-// immutable thereafter (pass by const reference; not hot-reloaded in v0.3).
+// Runtime configuration, loaded once at startup from tracking_core.yaml. Treated
+// as read-only after Config::load returns — pass by const reference. (Members are
+// public and non-const, so immutability is a convention, not a type guarantee.)
+// Not hot-reloaded in v0.3.
 struct Config {
     CameraConfig camera;
     LaserConfig laser;

@@ -1,15 +1,15 @@
-#include <chrono>
-#include <iostream>
-#include <string>
-#include <thread>
+#include "config.hpp"
+#include "tracking_pipeline.hpp"
 
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
 #include <opencv2/videoio.hpp>
 #include <zmq.hpp>
 
-#include "config.hpp"
-#include "tracking_pipeline.hpp"
+#include <chrono>
+#include <iostream>
+#include <string>
+#include <thread>
 
 int main(int argc, char** argv) {
     const std::string config_path =

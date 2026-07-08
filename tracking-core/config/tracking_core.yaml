@@ -24,7 +24,7 @@ ball:
   radius_m: 0.03            # Ball radius in metres (6 cm diameter).
 
 zmq:
-  bind_address: "tcp://*:5556"   # ADR-002: core BINDs; consumers CONNECT.
+  bind_address: "tcp://*:5555"   # ADR-002: core BINDs (default port 5555); consumers CONNECT.
 
 calibration:
   intrinsics_path: "config/intrinsics.json"    # Per-camera intrinsics (ADR-004 Phase 1).

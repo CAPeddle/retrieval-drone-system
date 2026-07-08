@@ -1,12 +1,10 @@
 ---
 id: TRK-003
-status: backlog
+status: done
 subsystem: tracking-core
 tier: small
 created: 2026-05-31
-updated: 2026-05-31
-depends_on:
-  - "TRK-002"
+updated: 2026-07-08
 spec: null
 plan: null
 blockers: []
@@ -38,3 +36,5 @@ U7. Document config fields in `tracking-core/README.md`.
 ## Log
 
 - 2026-05-31: created. Status: backlog. Depends on TRK-002 (yaml-cpp available).
+- 2026-07-08: backlog → in-progress. Starting config system: YAML template + typed Config loader + tests.
+- 2026-07-08: in-progress → done. Config loader (yaml-cpp) + typed Config struct + 5 unit tests; wired into main.cpp; YAML template and README documented. Verified on Linux: 7/7 ctest pass, binary loads real template. Also added top-level enable_testing() so ctest discovers tests. Public header placed in src/core/include/ per existing convention.

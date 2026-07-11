@@ -12,7 +12,6 @@ Workflow defined in [README.md → Workflow](README.md#workflow). Risk register 
 
 ## Blocked
 
-- [ ] TRK-002 — Build system overhaul → [story](docs/tickets/TRK-002-build-system-overhaul.md) (Implementation complete; validation blocked on missing OpenCV/libzmq/cv2 in local Windows environment. Requires Pi 5 or Linux dev machine.)
 
 ## Done (recent)
 
@@ -26,6 +25,7 @@ Workflow defined in [README.md → Workflow](README.md#workflow). Risk register 
 - [x] DOCS-001 — Move ADRs from `Claude Synthesised/` to `docs/adr/` (2026-06-18)
 - [x] DOCS-002 — Move root brainstorm `.md` files to `docs/research/` (2026-06-18)
 - [x] DOCS-006 — Reconcile [CLAUDE.md §8.7](CLAUDE.md) layout with chosen multi-subsystem structure (2026-06-21)
+- [x] TRK-002 — Build system overhaul (2026-07-08)
 - [x] TRK-003 — Configuration system (2026-07-08)
 
 ## Backlog

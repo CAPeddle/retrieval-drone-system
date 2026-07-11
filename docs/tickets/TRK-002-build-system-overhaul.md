@@ -1,14 +1,13 @@
 ---
 id: TRK-002
-status: blocked
+status: done
 subsystem: tracking-core
 tier: small
 created: 2026-05-31
-updated: 2026-06-04
+updated: 2026-07-08
 spec: null
 plan: null
-blockers:
-  - "Local Windows environment lacks OpenCV/libzmq/cv2 for build + test validation"
+blockers: []
 ---
 
 ## Context
@@ -50,3 +49,4 @@ U10. Run `tracking_core_tests` to confirm GTest scaffold passes.
 - 2026-05-31: created. Status: backlog. First v0.3 implementation ticket; depends on TRK-001 completing the rename.
 - 2026-06-01: backlog → in-progress. Starting build system overhaul.
 - 2026-06-04: in-progress → blocked. Implementation complete; validation blocked on missing OpenCV/libzmq/cv2 in local Windows environment. Requires Pi 5 or Linux dev machine.
+- 2026-07-08: blocked → done. Build + unit tests validated on x86_64 Linux (GCC 13.3, OpenCV 4.6, libzmq 4.3.5): 3 targets build warning-free, GTest scaffold 2/2 pass. Pi 5 aarch64 native build still to be confirmed on hardware.

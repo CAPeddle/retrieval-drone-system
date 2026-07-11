@@ -1,26 +1,38 @@
-#include <chrono>
-#include <iostream>
-#include <string>
-#include <thread>
+#include "config.hpp"
+#include "tracking_pipeline.hpp"
 
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
 #include <opencv2/videoio.hpp>
 #include <zmq.hpp>
 
-#include "tracking_pipeline.hpp"
+#include <chrono>
+#include <iostream>
+#include <string>
+#include <thread>
 
-int main() {
-    cv::VideoCapture camera(0);
+int main(int argc, char** argv) {
+    const std::string config_path =
+        (argc > 1) ? argv[1] : "config/tracking_core.yaml";
+    tracking::Config config;
+    try {
+        config = tracking::Config::load(config_path);
+    } catch (const tracking::ConfigError& e) {
+        std::cerr << "Config error: " << e.what() << std::endl;
+        return 1;
+    }
+
+    cv::VideoCapture camera(config.camera.device_id);
     if (!camera.isOpened()) {
-        std::cerr << "Unable to open camera device 0" << std::endl;
+        std::cerr << "Unable to open camera device " << config.camera.device_id
+                  << std::endl;
         return 1;
     }
 
     zmq::context_t context(1);
     zmq::socket_t publisher(context, zmq::socket_type::pub);
-    publisher.set(zmq::sockopt::sndhwm, 1);
-    publisher.bind("tcp://*:5556");
+    publisher.set(zmq::sockopt::sndhwm, 1);  // ADR-002: drop stale frames on lag.
+    publisher.bind(config.zmq.bind_address);
 
     tracking::Detector detector;
     tracking::Tracker tracker;

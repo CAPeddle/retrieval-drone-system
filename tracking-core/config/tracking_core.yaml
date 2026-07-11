@@ -1,0 +1,31 @@
+# tracking_core.yaml — runtime configuration for the tracking core (v0.3).
+#
+# Loaded once at startup by tracking::Config::load(). Not hot-reloaded: restart
+# the core to apply changes. All fields below are REQUIRED; a missing field or a
+# type mismatch aborts startup with an error naming the offending field.
+#
+# Pass an explicit path as the first CLI argument; defaults to this file's
+# location (config/tracking_core.yaml) relative to the working directory.
+
+camera:
+  device_id: 0            # V4L2 device index (int). 0 = /dev/video0.
+  target_fps: 60          # Capture rate (int). v0.3 targets >=60 fps end-to-end.
+
+laser:
+  modulation_frequency_hz: 15.0   # ADR-005: 15 Hz modulation.
+  modulation_duty_cycle: 0.5      # ADR-005: 50/50 duty (0.0-1.0).
+
+safe_for_control:               # ADR-007 predicate thresholds.
+  age_max_ms: 50                # Max snapshot age before the predicate goes false.
+  laser_settled_speed_m_per_s: 0.05   # Laser must be slower than this to be "settled".
+  alignment_tolerance_m: 0.02   # ALIGNMENT_TOLERANCE_M (2 cm default).
+
+ball:
+  radius_m: 0.03            # Ball radius in metres (6 cm diameter).
+
+zmq:
+  bind_address: "tcp://*:5555"   # ADR-002: core BINDs (default port 5555); consumers CONNECT.
+
+calibration:
+  intrinsics_path: "config/intrinsics.json"    # Per-camera intrinsics (ADR-004 Phase 1).
+  extrinsics_path: "config/extrinsics.json"    # Floor-plane extrinsics (ADR-006).

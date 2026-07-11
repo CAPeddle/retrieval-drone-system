@@ -63,6 +63,11 @@ FetchContent_Declare(googletest
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
+# ─── Testing ─────────────────────────────────────────────────────────────────
+# Required at the top level so gtest_discover_tests registrations in
+# tests/cpp_unit are visible to `ctest` run from the build root.
+enable_testing()
+
 # ─── Subdirectories ──────────────────────────────────────────────────────────
 add_subdirectory(src/core)
 add_subdirectory(tests/cpp_unit)

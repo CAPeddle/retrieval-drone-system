@@ -26,6 +26,7 @@ Workflow defined in [README.md → Workflow](README.md#workflow). Risk register 
 - [x] DOCS-002 — Move root brainstorm `.md` files to `docs/research/` (2026-06-18)
 - [x] DOCS-006 — Reconcile [CLAUDE.md §8.7](CLAUDE.md) layout with chosen multi-subsystem structure (2026-06-21)
 - [x] TRK-002 — Build system overhaul (2026-07-08)
+- [x] TRK-003 — Configuration system (2026-07-08)
 
 ## Backlog
 
@@ -48,7 +49,6 @@ Workflow defined in [README.md → Workflow](README.md#workflow). Risk register 
 
 ### v0.3 implementation — infrastructure
 
-- [ ] TRK-003 — Configuration system (YAML loader + typed Config struct) → [story](docs/tickets/TRK-003-configuration-system.md)
 - [ ] TRK-004 — Async logger (spdlog ring buffer) → [story](docs/tickets/TRK-004-async-logger.md)
 - [ ] TRK-005 — Frame ring buffer (lock-free SPSC) → [story](docs/tickets/TRK-005-frame-ring-buffer.md)
 - [ ] TRK-006 — Camera capture thread (V4L2 + SCHED_FIFO) → [story](docs/tickets/TRK-006-camera-capture-thread.md)

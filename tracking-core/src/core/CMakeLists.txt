@@ -1,6 +1,7 @@
 # ─── tracking_core_lib: static library of all pipeline sources ────────────────
 # Used by both the main executable and unit tests. Excludes main.cpp.
 add_library(tracking_core_lib STATIC
+    config.cpp
     tracking/detector.cpp
     tracking/tracker.cpp
 )

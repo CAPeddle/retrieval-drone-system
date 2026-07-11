@@ -68,8 +68,9 @@ hot-path and are held to looser rules. When unsure, treat as hot-path and ask.
   pointers/references only for non-owning access (hot-path exception above).
 - Header/implementation split; templates and inline functions in headers.
 - `constexpr` and `noexcept` where they genuinely apply, not as decoration.
-- Namespaces under `dbrs::` with sub-namespaces matching the directory
-  (`dbrs::tracking::`, `dbrs::detection::`, …).
+- Namespaces: the tracking core uses `tracking::` as its root namespace
+  (`tracking::Detector`, `tracking::Tracker`, `tracking::Config`), with
+  sub-namespaces matching the directory as the codebase grows.
 - Includes: angle-brackets for third-party, quotes for project headers. Order:
   project, third-party, standard library; each group alphabetised.
 

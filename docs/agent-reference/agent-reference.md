@@ -344,6 +344,6 @@ MAVLink, mutex, lock-free, pub/sub, …) are assumed known.
   Phase 4 (closed-loop laser aiming), Phase 5 (active calibration, ADR-009). Not a
   committed roadmap.
 
-**Acronyms:** ADR, AGC, CSI, dbrs (Drone Ball Retrieval System namespace), EKF, FC,
+**Acronyms:** ADR, AGC, CSI, dbrs (Drone Ball Retrieval System; the C++ root namespace is `tracking::`), EKF, FC,
 FoV, GIL, HWM, IR, MCU, NED, NoIR, PSD, RAII, RT, SBC, SPSC, TTL, V4L2, VPE
 (VISION_POSITION_ESTIMATE), YAML, ZMQ.

@@ -1,0 +1,175 @@
+#include "config.hpp"
+
+#include <gtest/gtest.h>
+
+#include <cstdio>
+#include <fstream>
+#include <string>
+#include <vector>
+
+namespace {
+
+// Writes YAML content to a unique temp file per test and removes it on teardown.
+class ConfigTest : public ::testing::Test {
+protected:
+    std::string write_temp(const std::string& content) {
+        const std::string path = ::testing::TempDir() + "trk003_" +
+            ::testing::UnitTest::GetInstance()->current_test_info()->name() + ".yaml";
+        std::ofstream(path) << content;
+        temp_paths_.push_back(path);
+        return path;
+    }
+
+    void TearDown() override {
+        for (const std::string& path : temp_paths_) {
+            std::remove(path.c_str());
+        }
+    }
+
+private:
+    std::vector<std::string> temp_paths_;
+};
+
+constexpr const char* kValidYaml = R"(
+camera:
+  device_id: 0
+  target_fps: 60
+laser:
+  modulation_frequency_hz: 15.0
+  modulation_duty_cycle: 0.5
+safe_for_control:
+  age_max_ms: 50
+  laser_settled_speed_m_per_s: 0.05
+  alignment_tolerance_m: 0.02
+ball:
+  radius_m: 0.03
+zmq:
+  bind_address: "tcp://*:5556"
+calibration:
+  intrinsics_path: "config/intrinsics.json"
+  extrinsics_path: "config/extrinsics.json"
+)";
+
+TEST_F(ConfigTest, LoadsValidConfig) {
+    const tracking::Config cfg = tracking::Config::load(write_temp(kValidYaml));
+
+    EXPECT_EQ(cfg.camera.device_id, 0);
+    EXPECT_EQ(cfg.camera.target_fps, 60);
+    EXPECT_DOUBLE_EQ(cfg.laser.modulation_frequency_hz, 15.0);
+    EXPECT_DOUBLE_EQ(cfg.laser.modulation_duty_cycle, 0.5);
+    EXPECT_DOUBLE_EQ(cfg.safe_for_control.age_max_ms, 50.0);
+    EXPECT_DOUBLE_EQ(cfg.safe_for_control.laser_settled_speed_m_per_s, 0.05);
+    EXPECT_DOUBLE_EQ(cfg.safe_for_control.alignment_tolerance_m, 0.02);
+    EXPECT_DOUBLE_EQ(cfg.ball.radius_m, 0.03);
+    EXPECT_EQ(cfg.zmq.bind_address, "tcp://*:5556");
+    EXPECT_EQ(cfg.calibration.intrinsics_path, "config/intrinsics.json");
+    EXPECT_EQ(cfg.calibration.extrinsics_path, "config/extrinsics.json");
+}
+
+TEST_F(ConfigTest, ThrowsOnMissingRequiredField) {
+    // ball.radius_m is absent.
+    const std::string yaml = R"(
+camera: {device_id: 0, target_fps: 60}
+laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5}
+safe_for_control: {age_max_ms: 50, laser_settled_speed_m_per_s: 0.05, alignment_tolerance_m: 0.02}
+ball: {}
+zmq: {bind_address: "tcp://*:5556"}
+calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json"}
+)";
+    EXPECT_THROW(tracking::Config::load(write_temp(yaml)), tracking::ConfigError);
+}
+
+TEST_F(ConfigTest, ThrowsOnMissingRequiredSection) {
+    // The entire `laser` section is absent.
+    const std::string yaml = R"(
+camera: {device_id: 0, target_fps: 60}
+safe_for_control: {age_max_ms: 50, laser_settled_speed_m_per_s: 0.05, alignment_tolerance_m: 0.02}
+ball: {radius_m: 0.03}
+zmq: {bind_address: "tcp://*:5556"}
+calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json"}
+)";
+    EXPECT_THROW(tracking::Config::load(write_temp(yaml)), tracking::ConfigError);
+}
+
+TEST_F(ConfigTest, ThrowsOnTypeMismatch) {
+    // ball.radius_m is a non-numeric string.
+    const std::string yaml = R"(
+camera: {device_id: 0, target_fps: 60}
+laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5}
+safe_for_control: {age_max_ms: 50, laser_settled_speed_m_per_s: 0.05, alignment_tolerance_m: 0.02}
+ball: {radius_m: "not_a_number"}
+zmq: {bind_address: "tcp://*:5556"}
+calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json"}
+)";
+    EXPECT_THROW(tracking::Config::load(write_temp(yaml)), tracking::ConfigError);
+}
+
+TEST_F(ConfigTest, ThrowsOnMissingFile) {
+    EXPECT_THROW(tracking::Config::load("/nonexistent/path/tracking_core.yaml"),
+                 tracking::ConfigError);
+}
+
+TEST_F(ConfigTest, ThrowsOnNonMapRoot) {
+    // A scalar/sequence root must fail cleanly, not abort the process.
+    EXPECT_THROW(tracking::Config::load(write_temp("just a scalar, not a map\n")),
+                 tracking::ConfigError);
+}
+
+TEST_F(ConfigTest, ThrowsOnNonFiniteThreshold) {
+    // A NaN safety threshold must be rejected — it silently disables ADR-007.
+    const std::string yaml = R"(
+camera: {device_id: 0, target_fps: 60}
+laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5}
+safe_for_control: {age_max_ms: 50, laser_settled_speed_m_per_s: 0.05, alignment_tolerance_m: .nan}
+ball: {radius_m: 0.03}
+zmq: {bind_address: "tcp://*:5556"}
+calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json"}
+)";
+    EXPECT_THROW(tracking::Config::load(write_temp(yaml)), tracking::ConfigError);
+}
+
+TEST_F(ConfigTest, ThrowsOnNonPositiveRadius) {
+    const std::string yaml = R"(
+camera: {device_id: 0, target_fps: 60}
+laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5}
+safe_for_control: {age_max_ms: 50, laser_settled_speed_m_per_s: 0.05, alignment_tolerance_m: 0.02}
+ball: {radius_m: -0.03}
+zmq: {bind_address: "tcp://*:5556"}
+calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json"}
+)";
+    EXPECT_THROW(tracking::Config::load(write_temp(yaml)), tracking::ConfigError);
+}
+
+TEST_F(ConfigTest, ThrowsOnDutyCycleOutOfRange) {
+    const std::string yaml = R"(
+camera: {device_id: 0, target_fps: 60}
+laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 5.0}
+safe_for_control: {age_max_ms: 50, laser_settled_speed_m_per_s: 0.05, alignment_tolerance_m: 0.02}
+ball: {radius_m: 0.03}
+zmq: {bind_address: "tcp://*:5556"}
+calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json"}
+)";
+    EXPECT_THROW(tracking::Config::load(write_temp(yaml)), tracking::ConfigError);
+}
+
+TEST_F(ConfigTest, ThrowsOnEmptyBindAddress) {
+    const std::string yaml = R"(
+camera: {device_id: 0, target_fps: 60}
+laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5}
+safe_for_control: {age_max_ms: 50, laser_settled_speed_m_per_s: 0.05, alignment_tolerance_m: 0.02}
+ball: {radius_m: 0.03}
+zmq: {bind_address: ""}
+calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json"}
+)";
+    EXPECT_THROW(tracking::Config::load(write_temp(yaml)), tracking::ConfigError);
+}
+
+#ifdef TRACKING_CORE_CONFIG_TEMPLATE
+TEST(ConfigTemplateTest, ShippedTemplateLoads) {
+    // The shipped config/tracking_core.yaml must load through the real loader —
+    // catches struct-vs-template drift (a field in one but not the other).
+    EXPECT_NO_THROW(tracking::Config::load(TRACKING_CORE_CONFIG_TEMPLATE));
+}
+#endif
+
+}  // namespace

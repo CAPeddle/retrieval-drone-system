@@ -22,6 +22,7 @@ Key constraints:
 - Frame format: raw or compressed? Bandwidth vs latency trade-off.
 - Timestamping: frames must carry capture timestamps synchronised to a common time base (NTP or PTP).
 - CSI cable reach (15cm) prevents multi-camera on a single Pi 5 — this is why the Pi 3B exists.
+- Power: the Pi 3B under-volts on a marginal supply once the camera draws current. Spec a **5 V/2.5 A+** PSU and a short, thick cable. See [`docs/solutions/hardware/pi3b-camera-node-undervoltage.md`](../solutions/hardware/pi3b-camera-node-undervoltage.md).
 
 ## Acceptance
 
@@ -32,6 +33,7 @@ Key constraints:
 - Configurable resolution and frame rate (matching the Pi 5's local camera settings).
 - Time synchronisation mechanism documented and validated (NTP or PTP with measured offset).
 - The Pi 5 tracking core can distinguish local-camera frames from remote-camera frames (camera_id metadata).
+- Power supply verified adequate under camera load — `tools/pi-power-check.sh` reports healthy (`get_throttled=0x0`, no under-voltage while streaming).
 
 ## Plan
 

@@ -17,15 +17,17 @@ Documented patterns, recipes, reviews, and recovery procedures captured from wor
 - [`python/`](python/) — Viewer and tooling patterns
 - [`calibration/`](calibration/) — Calibration drift recovery and procedures
 - [`external-reviews/`](external-reviews/) — Critical reviews of external workflows or tools considered for borrowing
+- [`hardware/`](hardware/) — Raspberry Pi / hardware setup gotchas and recovery procedures
 
 ## File format
 
-See [`.github/instructions/solutions.instructions.md`](../../.github/instructions/solutions.instructions.md) for the required frontmatter schema and conventions. Both Claude and Copilot enforce this via file-scoped instructions.
+See [`.claude/rules/solutions.md`](../../.claude/rules/solutions.md) for the required frontmatter schema and conventions (auto-applied by Claude Code when editing files under `docs/solutions/`).
 
 ## Index (most recent first)
 
 | Date | File | Type | Applies to | Tags |
 |---|---|---|---|---|
+| 2026-07-15 | [hardware/pi3b-camera-node-undervoltage.md](hardware/pi3b-camera-node-undervoltage.md) | recovery | camera-node | raspberry-pi, power, under-voltage, camera, hardware |
 | 2026-06-04 | [workflow/session-decision-log-2026-05-31.md](workflow/session-decision-log-2026-05-31.md) | reference | * | agent-workflow, decision-log, questions, session-history |
 | 2026-06-04 | [workflow/tracking-core-rename-and-build-overhaul-handoff.md](workflow/2026-06-04-tracking-core-rename-and-build-overhaul-handoff.md) | recipe | tracking-core | workflow, build-system, handoff, ticket-state, validation |
 | 2026-05-31 | [external-reviews/compound-engineering-plugin-review.md](external-reviews/2026-05-31-compound-engineering-plugin-review.md) | review | * | agent-workflow, plan-driven-development, parallel-subagents, kanban |

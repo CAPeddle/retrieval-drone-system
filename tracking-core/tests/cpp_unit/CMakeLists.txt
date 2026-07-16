@@ -1,6 +1,8 @@
 # ─── tracking_core_tests: links tracking_core_lib instead of raw sources ─────
 add_executable(tracking_core_tests
     test_config.cpp
+    test_logging.cpp
+    test_logging_default_level.cpp
     test_tracking_pipeline.cpp
 )
 

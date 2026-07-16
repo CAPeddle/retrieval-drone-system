@@ -18,6 +18,7 @@ Documented patterns, recipes, reviews, and recovery procedures captured from wor
 - [`calibration/`](calibration/) — Calibration drift recovery and procedures
 - [`external-reviews/`](external-reviews/) — Critical reviews of external workflows or tools considered for borrowing
 - [`hardware/`](hardware/) — Raspberry Pi / hardware setup gotchas and recovery procedures
+- [`tooling-decisions/`](tooling-decisions/) — Language, library, or tool choices with durable rationale
 
 ## File format
 
@@ -28,6 +29,7 @@ See [`.claude/rules/solutions.md`](../../.claude/rules/solutions.md) for the req
 | Date | File | Type | Applies to | Tags |
 |---|---|---|---|---|
 | 2026-07-15 | [hardware/pi3b-camera-node-undervoltage.md](hardware/pi3b-camera-node-undervoltage.md) | recovery | camera-node | raspberry-pi, power, under-voltage, camera, hardware |
+| 2026-06-22 | [tooling-decisions/2026-06-22-gh-cli-authentication-custom-ssh-host.md](tooling-decisions/2026-06-22-gh-cli-authentication-custom-ssh-host.md) | tooling_decision | * | gh-cli, github, authentication, ssh, git-remote |
 | 2026-06-04 | [workflow/session-decision-log-2026-05-31.md](workflow/session-decision-log-2026-05-31.md) | reference | * | agent-workflow, decision-log, questions, session-history |
 | 2026-06-04 | [workflow/tracking-core-rename-and-build-overhaul-handoff.md](workflow/2026-06-04-tracking-core-rename-and-build-overhaul-handoff.md) | recipe | tracking-core | workflow, build-system, handoff, ticket-state, validation |
 | 2026-05-31 | [external-reviews/compound-engineering-plugin-review.md](external-reviews/2026-05-31-compound-engineering-plugin-review.md) | review | * | agent-workflow, plan-driven-development, parallel-subagents, kanban |

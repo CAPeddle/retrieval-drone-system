@@ -29,3 +29,9 @@ zmq:
 calibration:
   intrinsics_path: "config/intrinsics.json"    # Per-camera intrinsics (ADR-004 Phase 1).
   extrinsics_path: "config/extrinsics.json"    # Floor-plane extrinsics (ADR-006).
+
+logging:                        # §7.1: async ring-buffered spdlog, tmpfs only.
+  level: warn                   # Runtime floor: trace|debug|info|warn|error|critical.
+                                # Release builds compile out debug/trace regardless.
+  output_dir: "/tmp/tracking_core/"   # Must be tmpfs — never the SD card. Init warns if not.
+  max_file_size_mb: 10          # Rotating sink size limit (3 rotated files kept).

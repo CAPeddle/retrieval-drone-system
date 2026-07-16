@@ -180,6 +180,9 @@ it for trivial/"go ahead" answers.
 project-specific. Search past chats when the user references a prior decision you don't
 see. Apply the C++/Python conventions without being asked. Verify ADR IDs and section
 references before citing — a wrong citation undermines cross-checkability.
+`docs/solutions/` is a searchable library of documented fixes, patterns, and recovery
+procedures (queryable by `applies_to` / `tags` / `problem_type`) — worth a grep when
+debugging or building in an area it may already cover.
 
 For substantial deliverables (>~500 lines or structure-under-design), use the checkpoint
 workflow (propose structure → draft section by section → lock each → assemble); detail in

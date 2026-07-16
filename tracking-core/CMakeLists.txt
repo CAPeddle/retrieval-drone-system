@@ -5,6 +5,16 @@ project(tracking_core
     LANGUAGES CXX
 )
 
+# ─── Build type (single-config generators) ───────────────────────────────────
+# Default to Release: the Pi 5 deployment binary is the one that must meet the
+# performance budgets. Release implies -O3 + NDEBUG (assert() disabled, DEBUG/
+# TRACE log macros compiled out per logging.hpp). Use -DCMAKE_BUILD_TYPE=Debug
+# for symbols, asserts, console logging, and DEBUG/TRACE.
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+    set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type (default Release)" FORCE)
+    message(STATUS "CMAKE_BUILD_TYPE not set — defaulting to Release")
+endif()
+
 # ─── Language standard (ADR-001: C++17 minimum) ───────────────────────────────
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)

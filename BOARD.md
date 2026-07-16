@@ -28,6 +28,7 @@ Workflow defined in [README.md → Workflow](README.md#workflow). Risk register 
 - [x] DOCS-006 — Reconcile [CLAUDE.md §8.7](CLAUDE.md) layout with chosen multi-subsystem structure (2026-06-21)
 - [x] TRK-002 — Build system overhaul (2026-07-08)
 - [x] TRK-003 — Configuration system (2026-07-08)
+- [x] CAM-002 — PoC: Pi3B to Pi5 camera streaming with web viewer (2026-07-15)
 
 ## Backlog
 

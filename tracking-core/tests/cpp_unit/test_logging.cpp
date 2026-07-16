@@ -17,6 +17,7 @@
 #include <sstream>
 #include <string>
 #include <thread>
+#include <vector>
 
 namespace {
 
@@ -31,6 +32,11 @@ protected:
         config.output_dir = ::testing::TempDir() + "trk004_" +
             ::testing::UnitTest::GetInstance()->current_test_info()->name();
         config.max_file_size_mb = max_file_size_mb;
+        // The rotating sink appends: a log left by a previous run (or by the
+        // other build config's test binary, which shares this path) would
+        // leak stale lines into read_logs and corrupt content assertions.
+        fs::remove_all(config.output_dir);
+        temp_dirs_.push_back(config.output_dir);
         return config;
     }
 
@@ -52,7 +58,13 @@ protected:
         // KTD-6 re-init contract: each case inits its own logger; shutdown
         // drains and drops it so the next case starts clean.
         tracking::logging::shutdown();
+        for (const std::string& dir : temp_dirs_) {
+            fs::remove_all(dir);
+        }
     }
+
+private:
+    std::vector<std::string> temp_dirs_;
 };
 
 TEST_F(LoggingTest, InitCreatesDirectoryAndWritesFile) {

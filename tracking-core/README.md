@@ -72,6 +72,9 @@ startup with an error naming the offending field. All fields are required in v0.
 | `zmq.bind_address` | string | Core BIND address (ADR-002) |
 | `calibration.intrinsics_path` | string | Per-camera intrinsics JSON (ADR-004) |
 | `calibration.extrinsics_path` | string | Floor-plane extrinsics JSON (ADR-006) |
+| `logging.level` | string | Runtime log floor: `trace`\|`debug`\|`info`\|`warn`\|`error`\|`critical` (Release builds compile out `debug`/`trace`) |
+| `logging.output_dir` | string | Log directory — must be tmpfs, never the SD card (§7.1); init warns if not |
+| `logging.max_file_size_mb` | int | Rotating-sink file size limit (3 rotated files kept) |
 
 ## Test
 

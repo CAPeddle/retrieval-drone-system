@@ -3,6 +3,7 @@
 #include <yaml-cpp/yaml.h>
 
 #include <cmath>
+#include <initializer_list>
 #include <string>
 
 namespace tracking {
@@ -66,6 +67,24 @@ void require_nonempty(const std::string& value, const char* field) {
     }
 }
 
+// Rejects a string outside `allowed`, listing the allowed values in the error so
+// the operator can fix the config without reading source.
+void require_one_of(const std::string& value,
+                    std::initializer_list<const char*> allowed, const char* field) {
+    for (const char* candidate : allowed) {
+        if (value == candidate) {
+            return;
+        }
+    }
+    std::string message = std::string("invalid value '") + value + "' for " + field +
+                          " (allowed:";
+    for (const char* candidate : allowed) {
+        message += std::string(" ") + candidate;
+    }
+    message += ")";
+    throw ConfigError(message);
+}
+
 }  // namespace
 
 Config Config::load(const std::string& path) {
@@ -113,6 +132,11 @@ Config Config::load(const std::string& path) {
             require<std::string>(calibration, "calibration", "intrinsics_path");
         cfg.calibration.extrinsics_path =
             require<std::string>(calibration, "calibration", "extrinsics_path");
+
+        const YAML::Node logging = require_section(root, "logging");
+        cfg.logging.level = require<std::string>(logging, "logging", "level");
+        cfg.logging.output_dir = require<std::string>(logging, "logging", "output_dir");
+        cfg.logging.max_file_size_mb = require<int>(logging, "logging", "max_file_size_mb");
     } catch (const ConfigError&) {
         throw;  // already actionable
     } catch (const YAML::Exception& e) {
@@ -142,6 +166,13 @@ Config Config::load(const std::string& path) {
     require_nonempty(cfg.zmq.bind_address, "zmq.bind_address");
     require_nonempty(cfg.calibration.intrinsics_path, "calibration.intrinsics_path");
     require_nonempty(cfg.calibration.extrinsics_path, "calibration.extrinsics_path");
+    require_one_of(cfg.logging.level,
+                   {"trace", "debug", "info", "warn", "error", "critical"},
+                   "logging.level");
+    require_nonempty(cfg.logging.output_dir, "logging.output_dir");
+    if (cfg.logging.max_file_size_mb <= 0) {
+        throw ConfigError("field must be > 0: logging.max_file_size_mb");
+    }
 
     return cfg;
 }

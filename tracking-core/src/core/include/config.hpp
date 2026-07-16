@@ -40,6 +40,12 @@ struct CalibrationConfig {
     std::string extrinsics_path;
 };
 
+struct LoggingConfig {
+    std::string level;        // One of: trace, debug, info, warn, error, critical.
+    std::string output_dir;   // Must be tmpfs on the Pi — never the SD card (§7.1).
+    int max_file_size_mb = 0; // Rotating-sink file size limit.
+};
+
 // Runtime configuration, loaded once at startup from tracking_core.yaml. Treated
 // as read-only after Config::load returns — pass by const reference. (Members are
 // public and non-const, so immutability is a convention, not a type guarantee.)
@@ -51,6 +57,7 @@ struct Config {
     BallConfig ball;
     ZmqConfig zmq;
     CalibrationConfig calibration;
+    LoggingConfig logging;
 
     // Loads and validates the YAML at `path`. Throws ConfigError on a missing
     // required field or a type mismatch. Startup-only — may throw (config and

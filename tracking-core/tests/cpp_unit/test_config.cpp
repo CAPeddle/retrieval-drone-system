@@ -48,6 +48,10 @@ zmq:
 calibration:
   intrinsics_path: "config/intrinsics.json"
   extrinsics_path: "config/extrinsics.json"
+logging:
+  level: warn
+  output_dir: "/tmp/tracking_core/"
+  max_file_size_mb: 10
 )";
 
 TEST_F(ConfigTest, LoadsValidConfig) {
@@ -64,6 +68,9 @@ TEST_F(ConfigTest, LoadsValidConfig) {
     EXPECT_EQ(cfg.zmq.bind_address, "tcp://*:5556");
     EXPECT_EQ(cfg.calibration.intrinsics_path, "config/intrinsics.json");
     EXPECT_EQ(cfg.calibration.extrinsics_path, "config/extrinsics.json");
+    EXPECT_EQ(cfg.logging.level, "warn");
+    EXPECT_EQ(cfg.logging.output_dir, "/tmp/tracking_core/");
+    EXPECT_EQ(cfg.logging.max_file_size_mb, 10);
 }
 
 TEST_F(ConfigTest, ThrowsOnMissingRequiredField) {
@@ -75,6 +82,7 @@ safe_for_control: {age_max_ms: 50, laser_settled_speed_m_per_s: 0.05, alignment_
 ball: {}
 zmq: {bind_address: "tcp://*:5556"}
 calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json"}
+logging: {level: warn, output_dir: "/tmp/tracking_core/", max_file_size_mb: 10}
 )";
     EXPECT_THROW(tracking::Config::load(write_temp(yaml)), tracking::ConfigError);
 }
@@ -87,6 +95,7 @@ safe_for_control: {age_max_ms: 50, laser_settled_speed_m_per_s: 0.05, alignment_
 ball: {radius_m: 0.03}
 zmq: {bind_address: "tcp://*:5556"}
 calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json"}
+logging: {level: warn, output_dir: "/tmp/tracking_core/", max_file_size_mb: 10}
 )";
     EXPECT_THROW(tracking::Config::load(write_temp(yaml)), tracking::ConfigError);
 }
@@ -100,6 +109,7 @@ safe_for_control: {age_max_ms: 50, laser_settled_speed_m_per_s: 0.05, alignment_
 ball: {radius_m: "not_a_number"}
 zmq: {bind_address: "tcp://*:5556"}
 calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json"}
+logging: {level: warn, output_dir: "/tmp/tracking_core/", max_file_size_mb: 10}
 )";
     EXPECT_THROW(tracking::Config::load(write_temp(yaml)), tracking::ConfigError);
 }
@@ -124,6 +134,7 @@ safe_for_control: {age_max_ms: 50, laser_settled_speed_m_per_s: 0.05, alignment_
 ball: {radius_m: 0.03}
 zmq: {bind_address: "tcp://*:5556"}
 calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json"}
+logging: {level: warn, output_dir: "/tmp/tracking_core/", max_file_size_mb: 10}
 )";
     EXPECT_THROW(tracking::Config::load(write_temp(yaml)), tracking::ConfigError);
 }
@@ -136,6 +147,7 @@ safe_for_control: {age_max_ms: 50, laser_settled_speed_m_per_s: 0.05, alignment_
 ball: {radius_m: -0.03}
 zmq: {bind_address: "tcp://*:5556"}
 calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json"}
+logging: {level: warn, output_dir: "/tmp/tracking_core/", max_file_size_mb: 10}
 )";
     EXPECT_THROW(tracking::Config::load(write_temp(yaml)), tracking::ConfigError);
 }
@@ -148,6 +160,7 @@ safe_for_control: {age_max_ms: 50, laser_settled_speed_m_per_s: 0.05, alignment_
 ball: {radius_m: 0.03}
 zmq: {bind_address: "tcp://*:5556"}
 calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json"}
+logging: {level: warn, output_dir: "/tmp/tracking_core/", max_file_size_mb: 10}
 )";
     EXPECT_THROW(tracking::Config::load(write_temp(yaml)), tracking::ConfigError);
 }
@@ -160,6 +173,69 @@ safe_for_control: {age_max_ms: 50, laser_settled_speed_m_per_s: 0.05, alignment_
 ball: {radius_m: 0.03}
 zmq: {bind_address: ""}
 calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json"}
+logging: {level: warn, output_dir: "/tmp/tracking_core/", max_file_size_mb: 10}
+)";
+    EXPECT_THROW(tracking::Config::load(write_temp(yaml)), tracking::ConfigError);
+}
+
+TEST_F(ConfigTest, ThrowsOnMissingLoggingSection) {
+    const std::string yaml = R"(
+camera: {device_id: 0, target_fps: 60}
+laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5}
+safe_for_control: {age_max_ms: 50, laser_settled_speed_m_per_s: 0.05, alignment_tolerance_m: 0.02}
+ball: {radius_m: 0.03}
+zmq: {bind_address: "tcp://*:5556"}
+calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json"}
+)";
+    EXPECT_THROW(tracking::Config::load(write_temp(yaml)), tracking::ConfigError);
+}
+
+TEST_F(ConfigTest, ThrowsOnInvalidLogLevel) {
+    // "verbose" is not a member of the spdlog level set.
+    const std::string yaml = R"(
+camera: {device_id: 0, target_fps: 60}
+laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5}
+safe_for_control: {age_max_ms: 50, laser_settled_speed_m_per_s: 0.05, alignment_tolerance_m: 0.02}
+ball: {radius_m: 0.03}
+zmq: {bind_address: "tcp://*:5556"}
+calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json"}
+logging: {level: verbose, output_dir: "/tmp/tracking_core/", max_file_size_mb: 10}
+)";
+    try {
+        tracking::Config::load(write_temp(yaml));
+        FAIL() << "expected ConfigError";
+    } catch (const tracking::ConfigError& e) {
+        // The error must name the field and list the allowed values.
+        EXPECT_NE(std::string(e.what()).find("logging.level"), std::string::npos);
+        EXPECT_NE(std::string(e.what()).find("warn"), std::string::npos);
+    }
+}
+
+TEST_F(ConfigTest, ThrowsOnNonPositiveMaxFileSize) {
+    for (const char* size : {"0", "-5"}) {
+        const std::string yaml = std::string(R"(
+camera: {device_id: 0, target_fps: 60}
+laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5}
+safe_for_control: {age_max_ms: 50, laser_settled_speed_m_per_s: 0.05, alignment_tolerance_m: 0.02}
+ball: {radius_m: 0.03}
+zmq: {bind_address: "tcp://*:5556"}
+calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json"}
+logging: {level: warn, output_dir: "/tmp/tracking_core/", max_file_size_mb: )") +
+                                 size + "}\n";
+        EXPECT_THROW(tracking::Config::load(write_temp(yaml)), tracking::ConfigError)
+            << "max_file_size_mb=" << size;
+    }
+}
+
+TEST_F(ConfigTest, ThrowsOnEmptyLogOutputDir) {
+    const std::string yaml = R"(
+camera: {device_id: 0, target_fps: 60}
+laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5}
+safe_for_control: {age_max_ms: 50, laser_settled_speed_m_per_s: 0.05, alignment_tolerance_m: 0.02}
+ball: {radius_m: 0.03}
+zmq: {bind_address: "tcp://*:5556"}
+calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json"}
+logging: {level: warn, output_dir: "", max_file_size_mb: 10}
 )";
     EXPECT_THROW(tracking::Config::load(write_temp(yaml)), tracking::ConfigError);
 }

@@ -2,6 +2,7 @@
 # Used by both the main executable and unit tests. Excludes main.cpp.
 add_library(tracking_core_lib STATIC
     config.cpp
+    logging.cpp
     tracking/detector.cpp
     tracking/tracker.cpp
 )

@@ -8,6 +8,7 @@ Workflow defined in [README.md → Workflow](README.md#workflow). Risk register 
 
 
 ## In Progress
+- [ ] TRK-004 — Async logger → [story](docs/tickets/TRK-004-async-logger.md)
 
 
 ## Blocked
@@ -49,7 +50,6 @@ Workflow defined in [README.md → Workflow](README.md#workflow). Risk register 
 
 ### v0.3 implementation — infrastructure
 
-- [ ] TRK-004 — Async logger (spdlog ring buffer) → [story](docs/tickets/TRK-004-async-logger.md)
 - [ ] TRK-005 — Frame ring buffer (lock-free SPSC) → [story](docs/tickets/TRK-005-frame-ring-buffer.md)
 - [ ] TRK-006 — Camera capture thread (V4L2 + SCHED_FIFO) → [story](docs/tickets/TRK-006-camera-capture-thread.md)
 - [ ] TRK-007 — Frame timestamping (FrameMetadata POD) → [story](docs/tickets/TRK-007-frame-timestamping.md)

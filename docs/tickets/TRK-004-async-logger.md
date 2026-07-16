@@ -1,12 +1,10 @@
 ---
 id: TRK-004
-status: backlog
+status: in-progress
 subsystem: tracking-core
 tier: small
 created: 2026-05-31
-updated: 2026-05-31
-depends_on:
-  - "TRK-002"
+updated: 2026-07-16
 spec: null
 plan: null
 blockers: []
@@ -39,3 +37,4 @@ U6. Unit test: `test_logging.cpp` — verify async behaviour (enqueue doesn't bl
 ## Log
 
 - 2026-05-31: created. Status: backlog. Depends on TRK-003 (config fields for logging).
+- 2026-07-16: backlog → in-progress. Implementation complete on feat/trk-004-async-logger per docs/plans/2026-07-15-001-feat-trk-004-async-logger-plan.md (supersedes the inline U1-U6 sketch): logging config section, spdlog async logger with LOG_* macros, main.cpp wiring, 26/26 tests green in Release and Debug. Front-matter depends_on corrected to include TRK-003. Awaiting review/merge.

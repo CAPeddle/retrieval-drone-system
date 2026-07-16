@@ -8,7 +8,6 @@ Workflow defined in [README.md → Workflow](README.md#workflow). Risk register 
 
 
 ## In Progress
-- [ ] TRK-004 — Async logger → [story](docs/tickets/TRK-004-async-logger.md)
 
 
 ## Blocked
@@ -29,6 +28,7 @@ Workflow defined in [README.md → Workflow](README.md#workflow). Risk register 
 - [x] TRK-002 — Build system overhaul (2026-07-08)
 - [x] TRK-003 — Configuration system (2026-07-08)
 - [x] CAM-002 — PoC: Pi3B to Pi5 camera streaming with web viewer (2026-07-15)
+- [x] TRK-004 — Async logger (2026-07-16)
 
 ## Backlog
 

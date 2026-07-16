@@ -1,4 +1,5 @@
 #include "config.hpp"
+#include "logging.hpp"
 #include "tracking_pipeline.hpp"
 
 #include <opencv2/imgcodecs.hpp>
@@ -17,15 +18,19 @@ int main(int argc, char** argv) {
     tracking::Config config;
     try {
         config = tracking::Config::load(config_path);
-    } catch (const tracking::ConfigError& e) {
-        std::cerr << "Config error: " << e.what() << std::endl;
+        // One catch for the whole pre-logger window: ConfigError from load,
+        // filesystem_error/spdlog_ex from init. The logger cannot report its
+        // own bootstrap failures, so this path stays on stderr.
+        tracking::logging::init(config.logging);
+    } catch (const std::exception& e) {
+        std::cerr << "Startup error: " << e.what() << std::endl;
         return 1;
     }
 
     cv::VideoCapture camera(config.camera.device_id);
     if (!camera.isOpened()) {
-        std::cerr << "Unable to open camera device " << config.camera.device_id
-                  << std::endl;
+        LOG_ERROR("Unable to open camera device {}", config.camera.device_id);
+        tracking::logging::shutdown();
         return 1;
     }
 
@@ -62,5 +67,6 @@ int main(int argc, char** argv) {
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 
+    tracking::logging::shutdown();
     return 0;
 }

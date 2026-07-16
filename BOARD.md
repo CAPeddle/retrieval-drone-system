@@ -29,6 +29,7 @@ Workflow defined in [README.md → Workflow](README.md#workflow). Risk register 
 - [x] TRK-003 — Configuration system (2026-07-08)
 - [x] CAM-002 — PoC: Pi3B to Pi5 camera streaming with web viewer (2026-07-15)
 - [x] TRK-004 — Async logger (2026-07-16)
+- [x] META-014 — Board scripts preserve optional front-matter fields (2026-07-16)
 
 ## Backlog
 

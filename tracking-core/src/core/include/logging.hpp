@@ -1,8 +1,11 @@
 #pragma once
 
 // TRK-004 async logger — project-wide log macros over spdlog (cpp rule §7.1:
-// async, ring-buffered, never blocks the caller; DEBUG/TRACE compiled out of
-// Release builds).
+// async, ring-buffered; DEBUG/TRACE compiled out of Release builds). "Never
+// blocks" means never waits for queue space (overrun_oldest drops the eldest);
+// the enqueue itself takes a short std::mutex critical section shared with the
+// worker — not strictly lock-free. SCHED_FIFO threads logging through it risk
+// priority inversion; revisit before TRK-006's capture thread adopts LOG_*.
 //
 // Compile-time floor. Release (NDEBUG) compiles out exactly DEBUG/TRACE; INFO
 // and above stay runtime-filtered by logging.level, so the config surface

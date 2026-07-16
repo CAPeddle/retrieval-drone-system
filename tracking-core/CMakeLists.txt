@@ -58,10 +58,13 @@ set(YAML_CPP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(YAML_CPP_BUILD_TOOLS OFF CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(yaml-cpp)
 
-# spdlog — async ring-buffered logger (ADR-001: no sync I/O on hot-path)
+# spdlog — async ring-buffered logger (ADR-001: no sync I/O on hot-path).
+# >= v1.15: v1.14's async_msg carried a std::promise per message (heap
+# allocation on every log call, violating the §7.1 no-alloc rule); v1.15
+# removed it. Do not downgrade below v1.15 without re-checking that.
 FetchContent_Declare(spdlog
     GIT_REPOSITORY https://github.com/gabime/spdlog.git
-    GIT_TAG        v1.14.1
+    GIT_TAG        v1.15.3
 )
 FetchContent_MakeAvailable(spdlog)
 

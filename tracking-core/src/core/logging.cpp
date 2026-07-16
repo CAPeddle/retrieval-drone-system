@@ -64,7 +64,8 @@ void init(const LoggingConfig& config) {
 
     // overrun_oldest: a full queue drops the eldest message instead of
     // blocking the producer — same staleness philosophy as ADR-002's
-    // ZMQ_CONFLATE=1. Never block the hot path (§7.1).
+    // ZMQ_CONFLATE=1. Never wait for queue space (§7.1); the enqueue still
+    // takes spdlog's short queue mutex (see logging.hpp header note).
     auto logger = std::make_shared<spdlog::async_logger>(
         "tracking_core", sinks.begin(), sinks.end(), spdlog::thread_pool(),
         spdlog::async_overflow_policy::overrun_oldest);

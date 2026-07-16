@@ -212,7 +212,8 @@ logging: {level: verbose, output_dir: "/tmp/tracking_core/", max_file_size_mb: 1
 }
 
 TEST_F(ConfigTest, ThrowsOnNonPositiveMaxFileSize) {
-    for (const char* size : {"0", "-5"}) {
+    // 300 exceeds the 256 MB upper bound (4 files on RAM-backed tmpfs).
+    for (const char* size : {"0", "-5", "300"}) {
         const std::string yaml = std::string(R"(
 camera: {device_id: 0, target_fps: 60}
 laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5}

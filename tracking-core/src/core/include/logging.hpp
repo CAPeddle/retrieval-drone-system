@@ -38,13 +38,19 @@ namespace logging {
 // previous logger (test fixtures rely on this); production calls it once.
 void init(const LoggingConfig& config);
 
-// Drains the async queue, flushes sinks, and releases the logger. No LOG_*
-// call is valid after shutdown until the next init.
+// Drains the async queue, flushes sinks, and releases the logger, then
+// installs a synchronous stderr fallback as the default — a stray LOG_* after
+// shutdown degrades to stderr instead of crashing on spdlog's nulled default.
 void shutdown();
 
-// The logger the LOG_* macros target. Non-owning; valid between init and
-// shutdown (before init this is spdlog's built-in stdout default logger).
+// The logger the LOG_* macros target. Non-owning; the async logger between
+// init and shutdown, spdlog's built-in stdout default before the first init,
+// and the synchronous stderr fallback after shutdown.
 inline spdlog::logger* get() { return spdlog::default_logger_raw(); }
+
+// True when `path` sits on a tmpfs mount (Linux; other platforms report true).
+// Exposed for tests; init uses it for the §7.1 persistent-storage warning.
+bool is_tmpfs(const std::string& path);
 
 // The floor this library was compiled with — messages below it are compiled
 // out of logging.cpp's TU and the LOG_* macros of every TU using the default.

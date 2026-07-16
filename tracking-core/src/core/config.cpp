@@ -173,6 +173,11 @@ Config Config::load(const std::string& path) {
     if (cfg.logging.max_file_size_mb <= 0) {
         throw ConfigError("field must be > 0: logging.max_file_size_mb");
     }
+    // The sink keeps the active file plus 3 rotated files on RAM-backed tmpfs;
+    // an unbounded size could commit several GB of the Pi's memory.
+    if (cfg.logging.max_file_size_mb > 256) {
+        throw ConfigError("field must be <= 256: logging.max_file_size_mb");
+    }
 
     return cfg;
 }

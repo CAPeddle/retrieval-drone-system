@@ -2,9 +2,7 @@
 
 #include <spdlog/async.h>
 #include <spdlog/sinks/rotating_file_sink.h>
-#ifndef NDEBUG
 #include <spdlog/sinks/stdout_color_sinks.h>
-#endif
 
 #include <chrono>
 #include <cstddef>
@@ -25,8 +23,8 @@ namespace {
 constexpr std::size_t kQueueSlots = 8192;  // Pre-allocated at init (§7.1).
 constexpr int kRotatedFilesKept = 3;
 
-// True when `path` is on a tmpfs mount. Only meaningful on Linux (the Pi 5
-// target); elsewhere the check is skipped and no warning fires.
+}  // namespace
+
 bool is_tmpfs(const std::string& path) {
 #ifdef __linux__
     constexpr long kTmpfsMagic = 0x01021994;  // TMPFS_MAGIC (linux/magic.h)
@@ -40,8 +38,6 @@ bool is_tmpfs(const std::string& path) {
     return true;
 #endif
 }
-
-}  // namespace
 
 void init(const LoggingConfig& config) {
     // Idempotent-by-replacement: drop any previous logger and thread pool so a
@@ -74,11 +70,13 @@ void init(const LoggingConfig& config) {
         spdlog::async_overflow_policy::overrun_oldest);
 
     const spdlog::level::level_enum level = spdlog::level::from_str(config.level);
-    logger->set_level(level);
     logger->flush_on(spdlog::level::err);
     spdlog::set_default_logger(logger);
     spdlog::flush_every(std::chrono::seconds(3));
 
+    // Init diagnostics are emitted BEFORE the configured level is applied (a
+    // fresh logger admits WARN) — a level of error/critical must not silence
+    // the safety warnings below.
     if (!on_tmpfs) {
         // Persistent-storage logging violates §7.1 (never write the SD card on
         // the hot path). /tmp is tmpfs only from Debian trixie onward.
@@ -95,9 +93,17 @@ void init(const LoggingConfig& config) {
                            config.level,
                            spdlog::level::to_string_view(compiled_floor()));
     }
+    logger->set_level(level);
 }
 
-void shutdown() { spdlog::shutdown(); }
+void shutdown() {
+    spdlog::shutdown();
+    // Leave a synchronous stderr fallback as the default so a stray LOG_* after
+    // shutdown (teardown paths, destructors) degrades to stderr instead of
+    // dereferencing the null default logger spdlog::shutdown() leaves behind.
+    spdlog::set_default_logger(
+        spdlog::stderr_color_mt("tracking_core_fallback"));
+}
 
 spdlog::level::level_enum compiled_floor() {
     return static_cast<spdlog::level::level_enum>(SPDLOG_ACTIVE_LEVEL);

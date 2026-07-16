@@ -138,6 +138,40 @@ TEST_F(LoggingTest, RuntimeLevelFilters) {
     EXPECT_NE(logs.find("boom-error"), std::string::npos);
 }
 
+#ifdef __linux__
+TEST_F(LoggingTest, IsTmpfsDetectsRealMounts) {
+    // /dev/shm is tmpfs on every Linux target we run on (incl. Pi OS).
+    EXPECT_TRUE(tracking::logging::is_tmpfs("/dev/shm"));
+    // A path that does not exist is unstatable and must read as suspect.
+    EXPECT_FALSE(tracking::logging::is_tmpfs("/nonexistent/trk004"));
+}
+#endif
+
+TEST_F(LoggingTest, InitWarningsSurviveStrictRuntimeLevel) {
+    // Regression for the set_level ordering bug: with logging.level=error the
+    // init-time safety warnings must still reach the sink. The tmpfs warning
+    // fires exactly when the environment's temp dir is not tmpfs, so assert
+    // agreement with is_tmpfs() rather than a fixed expectation.
+    const tracking::LoggingConfig config = make_config("error");
+    tracking::logging::init(config);
+    LOG_WARN("post-init warn must be filtered");
+    tracking::logging::shutdown();
+
+    const std::string logs = read_logs(config.output_dir);
+    const bool expect_tmpfs_warning = !tracking::logging::is_tmpfs(config.output_dir);
+    EXPECT_EQ(logs.find("not tmpfs") != std::string::npos, expect_tmpfs_warning);
+    // The configured level still applies to everything after init.
+    EXPECT_EQ(logs.find("post-init warn"), std::string::npos);
+}
+
+TEST_F(LoggingTest, LogAfterShutdownFallsBackWithoutCrash) {
+    tracking::logging::init(make_config());
+    tracking::logging::shutdown();
+    // Must not crash: shutdown installs a synchronous stderr fallback.
+    LOG_ERROR("late message after shutdown (expected on stderr)");
+    ASSERT_NE(tracking::logging::get(), nullptr);
+}
+
 TEST_F(LoggingTest, WarnsWhenConfiguredLevelBelowCompiledFloor) {
     // 'trace' is below the compiled floor exactly when logging.cpp was built
     // with a floor above trace (Release: info). Branch on the actual floor so

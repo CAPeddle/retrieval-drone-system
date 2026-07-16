@@ -5,6 +5,9 @@ subsystem: tracking-core
 tier: small
 created: 2026-05-31
 updated: 2026-07-16
+depends_on:
+  - "TRK-002"
+  - "TRK-003"
 spec: null
 plan: null
 blockers: []

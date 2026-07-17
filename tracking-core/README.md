@@ -65,7 +65,10 @@ startup with an error naming the offending field. All fields are required in v0.
 | `camera.target_fps` | int | Capture rate (v0.3 targets ≥60 fps) |
 | `camera.width` | int | Capture width in pixels |
 | `camera.height` | int | Capture height in pixels |
+| `camera.exposure_us` | int | Manual exposure in µs, locked at calibration time (ADR-004) |
 | `pipeline.ring_buffer_capacity` | int | Pre-allocated frame slots between capture and processing (1–64) |
+| `pipeline.capture_cpu_core` | int | Core the ingestion thread pins to (0–63) |
+| `pipeline.capture_thread_priority` | int | SCHED_FIFO priority (1–99); degrades with a WARN when unprivileged |
 | `laser.modulation_frequency_hz` | double | ADR-005 modulation frequency (15 Hz) |
 | `laser.modulation_duty_cycle` | double | ADR-005 duty cycle (0.0–1.0) |
 | `safe_for_control.age_max_ms` | double | Max snapshot age before the predicate goes false |

@@ -12,9 +12,12 @@ camera:
   target_fps: 60          # Capture rate (int). v0.3 targets >=60 fps end-to-end.
   width: 640              # Capture width in pixels.
   height: 480             # Capture height in pixels.
+  exposure_us: 5000       # Manual exposure (us), locked at calibration time (ADR-004).
 
 pipeline:
   ring_buffer_capacity: 4 # Pre-allocated frame slots between capture and processing (1-64).
+  capture_cpu_core: 2     # Core the ingestion thread pins to (fixed partition, §7.1).
+  capture_thread_priority: 80   # SCHED_FIFO priority (1-99); degrades with a WARN unprivileged.
 
 laser:
   modulation_frequency_hz: 15.0   # ADR-005: 15 Hz modulation.

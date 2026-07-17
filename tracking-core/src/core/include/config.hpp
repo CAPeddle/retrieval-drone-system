@@ -16,6 +16,7 @@ struct CameraConfig {
     int target_fps = 0;
     int width = 0;
     int height = 0;
+    int exposure_us = 0;  // Manual exposure locked at calibration time (ADR-004).
 };
 
 struct LaserConfig {
@@ -43,7 +44,9 @@ struct CalibrationConfig {
 };
 
 struct PipelineConfig {
-    int ring_buffer_capacity = 0;  // Frame slots pre-allocated between capture and processing.
+    int ring_buffer_capacity = 0;      // Frame slots pre-allocated between capture and processing.
+    int capture_cpu_core = 0;          // Core the ingestion thread is pinned to (§7.1 affinity).
+    int capture_thread_priority = 0;   // SCHED_FIFO priority for the ingestion thread.
 };
 
 struct LoggingConfig {

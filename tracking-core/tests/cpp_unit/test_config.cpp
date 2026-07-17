@@ -36,8 +36,11 @@ camera:
   target_fps: 60
   width: 640
   height: 480
+  exposure_us: 5000
 pipeline:
   ring_buffer_capacity: 4
+  capture_cpu_core: 2
+  capture_thread_priority: 80
 laser:
   modulation_frequency_hz: 15.0
   modulation_duty_cycle: 0.5
@@ -66,6 +69,9 @@ TEST_F(ConfigTest, LoadsValidConfig) {
     EXPECT_EQ(cfg.camera.width, 640);
     EXPECT_EQ(cfg.camera.height, 480);
     EXPECT_EQ(cfg.pipeline.ring_buffer_capacity, 4);
+    EXPECT_EQ(cfg.camera.exposure_us, 5000);
+    EXPECT_EQ(cfg.pipeline.capture_cpu_core, 2);
+    EXPECT_EQ(cfg.pipeline.capture_thread_priority, 80);
     EXPECT_DOUBLE_EQ(cfg.laser.modulation_frequency_hz, 15.0);
     EXPECT_DOUBLE_EQ(cfg.laser.modulation_duty_cycle, 0.5);
     EXPECT_DOUBLE_EQ(cfg.safe_for_control.age_max_ms, 50.0);
@@ -83,14 +89,14 @@ TEST_F(ConfigTest, LoadsValidConfig) {
 TEST_F(ConfigTest, ThrowsOnMissingRequiredField) {
     // ball.radius_m is absent.
     const std::string yaml = R"(
-camera: {device_id: 0, target_fps: 60, width: 640, height: 480}
+camera: {device_id: 0, target_fps: 60, width: 640, height: 480, exposure_us: 5000}
 laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5}
 safe_for_control: {age_max_ms: 50, laser_settled_speed_m_per_s: 0.05, alignment_tolerance_m: 0.02}
 ball: {}
 zmq: {bind_address: "tcp://*:5556"}
 calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json"}
 logging: {level: warn, output_dir: "/tmp/tracking_core/", max_file_size_mb: 10}
-pipeline: {ring_buffer_capacity: 4}
+pipeline: {ring_buffer_capacity: 4, capture_cpu_core: 2, capture_thread_priority: 80}
 )";
     EXPECT_THROW(tracking::Config::load(write_temp(yaml)), tracking::ConfigError);
 }
@@ -98,13 +104,13 @@ pipeline: {ring_buffer_capacity: 4}
 TEST_F(ConfigTest, ThrowsOnMissingRequiredSection) {
     // The entire `laser` section is absent.
     const std::string yaml = R"(
-camera: {device_id: 0, target_fps: 60, width: 640, height: 480}
+camera: {device_id: 0, target_fps: 60, width: 640, height: 480, exposure_us: 5000}
 safe_for_control: {age_max_ms: 50, laser_settled_speed_m_per_s: 0.05, alignment_tolerance_m: 0.02}
 ball: {radius_m: 0.03}
 zmq: {bind_address: "tcp://*:5556"}
 calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json"}
 logging: {level: warn, output_dir: "/tmp/tracking_core/", max_file_size_mb: 10}
-pipeline: {ring_buffer_capacity: 4}
+pipeline: {ring_buffer_capacity: 4, capture_cpu_core: 2, capture_thread_priority: 80}
 )";
     EXPECT_THROW(tracking::Config::load(write_temp(yaml)), tracking::ConfigError);
 }
@@ -112,14 +118,14 @@ pipeline: {ring_buffer_capacity: 4}
 TEST_F(ConfigTest, ThrowsOnTypeMismatch) {
     // ball.radius_m is a non-numeric string.
     const std::string yaml = R"(
-camera: {device_id: 0, target_fps: 60, width: 640, height: 480}
+camera: {device_id: 0, target_fps: 60, width: 640, height: 480, exposure_us: 5000}
 laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5}
 safe_for_control: {age_max_ms: 50, laser_settled_speed_m_per_s: 0.05, alignment_tolerance_m: 0.02}
 ball: {radius_m: "not_a_number"}
 zmq: {bind_address: "tcp://*:5556"}
 calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json"}
 logging: {level: warn, output_dir: "/tmp/tracking_core/", max_file_size_mb: 10}
-pipeline: {ring_buffer_capacity: 4}
+pipeline: {ring_buffer_capacity: 4, capture_cpu_core: 2, capture_thread_priority: 80}
 )";
     EXPECT_THROW(tracking::Config::load(write_temp(yaml)), tracking::ConfigError);
 }
@@ -138,69 +144,69 @@ TEST_F(ConfigTest, ThrowsOnNonMapRoot) {
 TEST_F(ConfigTest, ThrowsOnNonFiniteThreshold) {
     // A NaN safety threshold must be rejected — it silently disables ADR-007.
     const std::string yaml = R"(
-camera: {device_id: 0, target_fps: 60, width: 640, height: 480}
+camera: {device_id: 0, target_fps: 60, width: 640, height: 480, exposure_us: 5000}
 laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5}
 safe_for_control: {age_max_ms: 50, laser_settled_speed_m_per_s: 0.05, alignment_tolerance_m: .nan}
 ball: {radius_m: 0.03}
 zmq: {bind_address: "tcp://*:5556"}
 calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json"}
 logging: {level: warn, output_dir: "/tmp/tracking_core/", max_file_size_mb: 10}
-pipeline: {ring_buffer_capacity: 4}
+pipeline: {ring_buffer_capacity: 4, capture_cpu_core: 2, capture_thread_priority: 80}
 )";
     EXPECT_THROW(tracking::Config::load(write_temp(yaml)), tracking::ConfigError);
 }
 
 TEST_F(ConfigTest, ThrowsOnNonPositiveRadius) {
     const std::string yaml = R"(
-camera: {device_id: 0, target_fps: 60, width: 640, height: 480}
+camera: {device_id: 0, target_fps: 60, width: 640, height: 480, exposure_us: 5000}
 laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5}
 safe_for_control: {age_max_ms: 50, laser_settled_speed_m_per_s: 0.05, alignment_tolerance_m: 0.02}
 ball: {radius_m: -0.03}
 zmq: {bind_address: "tcp://*:5556"}
 calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json"}
 logging: {level: warn, output_dir: "/tmp/tracking_core/", max_file_size_mb: 10}
-pipeline: {ring_buffer_capacity: 4}
+pipeline: {ring_buffer_capacity: 4, capture_cpu_core: 2, capture_thread_priority: 80}
 )";
     EXPECT_THROW(tracking::Config::load(write_temp(yaml)), tracking::ConfigError);
 }
 
 TEST_F(ConfigTest, ThrowsOnDutyCycleOutOfRange) {
     const std::string yaml = R"(
-camera: {device_id: 0, target_fps: 60, width: 640, height: 480}
+camera: {device_id: 0, target_fps: 60, width: 640, height: 480, exposure_us: 5000}
 laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 5.0}
 safe_for_control: {age_max_ms: 50, laser_settled_speed_m_per_s: 0.05, alignment_tolerance_m: 0.02}
 ball: {radius_m: 0.03}
 zmq: {bind_address: "tcp://*:5556"}
 calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json"}
 logging: {level: warn, output_dir: "/tmp/tracking_core/", max_file_size_mb: 10}
-pipeline: {ring_buffer_capacity: 4}
+pipeline: {ring_buffer_capacity: 4, capture_cpu_core: 2, capture_thread_priority: 80}
 )";
     EXPECT_THROW(tracking::Config::load(write_temp(yaml)), tracking::ConfigError);
 }
 
 TEST_F(ConfigTest, ThrowsOnEmptyBindAddress) {
     const std::string yaml = R"(
-camera: {device_id: 0, target_fps: 60, width: 640, height: 480}
+camera: {device_id: 0, target_fps: 60, width: 640, height: 480, exposure_us: 5000}
 laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5}
 safe_for_control: {age_max_ms: 50, laser_settled_speed_m_per_s: 0.05, alignment_tolerance_m: 0.02}
 ball: {radius_m: 0.03}
 zmq: {bind_address: ""}
 calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json"}
 logging: {level: warn, output_dir: "/tmp/tracking_core/", max_file_size_mb: 10}
-pipeline: {ring_buffer_capacity: 4}
+pipeline: {ring_buffer_capacity: 4, capture_cpu_core: 2, capture_thread_priority: 80}
 )";
     EXPECT_THROW(tracking::Config::load(write_temp(yaml)), tracking::ConfigError);
 }
 
 TEST_F(ConfigTest, ThrowsOnMissingLoggingSection) {
     const std::string yaml = R"(
-camera: {device_id: 0, target_fps: 60, width: 640, height: 480}
+camera: {device_id: 0, target_fps: 60, width: 640, height: 480, exposure_us: 5000}
 laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5}
 safe_for_control: {age_max_ms: 50, laser_settled_speed_m_per_s: 0.05, alignment_tolerance_m: 0.02}
 ball: {radius_m: 0.03}
 zmq: {bind_address: "tcp://*:5556"}
 calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json"}
-pipeline: {ring_buffer_capacity: 4}
+pipeline: {ring_buffer_capacity: 4, capture_cpu_core: 2, capture_thread_priority: 80}
 )";
     EXPECT_THROW(tracking::Config::load(write_temp(yaml)), tracking::ConfigError);
 }
@@ -208,14 +214,14 @@ pipeline: {ring_buffer_capacity: 4}
 TEST_F(ConfigTest, ThrowsOnInvalidLogLevel) {
     // "verbose" is not a member of the spdlog level set.
     const std::string yaml = R"(
-camera: {device_id: 0, target_fps: 60, width: 640, height: 480}
+camera: {device_id: 0, target_fps: 60, width: 640, height: 480, exposure_us: 5000}
 laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5}
 safe_for_control: {age_max_ms: 50, laser_settled_speed_m_per_s: 0.05, alignment_tolerance_m: 0.02}
 ball: {radius_m: 0.03}
 zmq: {bind_address: "tcp://*:5556"}
 calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json"}
 logging: {level: verbose, output_dir: "/tmp/tracking_core/", max_file_size_mb: 10}
-pipeline: {ring_buffer_capacity: 4}
+pipeline: {ring_buffer_capacity: 4, capture_cpu_core: 2, capture_thread_priority: 80}
 )";
     try {
         tracking::Config::load(write_temp(yaml));
@@ -231,13 +237,13 @@ TEST_F(ConfigTest, ThrowsOnNonPositiveMaxFileSize) {
     // 300 exceeds the 256 MB upper bound (4 files on RAM-backed tmpfs).
     for (const char* size : {"0", "-5", "300"}) {
         const std::string yaml = std::string(R"(
-camera: {device_id: 0, target_fps: 60, width: 640, height: 480}
+camera: {device_id: 0, target_fps: 60, width: 640, height: 480, exposure_us: 5000}
 laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5}
 safe_for_control: {age_max_ms: 50, laser_settled_speed_m_per_s: 0.05, alignment_tolerance_m: 0.02}
 ball: {radius_m: 0.03}
 zmq: {bind_address: "tcp://*:5556"}
 calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json"}
-pipeline: {ring_buffer_capacity: 4}
+pipeline: {ring_buffer_capacity: 4, capture_cpu_core: 2, capture_thread_priority: 80}
 logging: {level: warn, output_dir: "/tmp/tracking_core/", max_file_size_mb: )") +
                                  size + "}\n";
         EXPECT_THROW(tracking::Config::load(write_temp(yaml)), tracking::ConfigError)
@@ -247,14 +253,14 @@ logging: {level: warn, output_dir: "/tmp/tracking_core/", max_file_size_mb: )") 
 
 TEST_F(ConfigTest, ThrowsOnEmptyLogOutputDir) {
     const std::string yaml = R"(
-camera: {device_id: 0, target_fps: 60, width: 640, height: 480}
+camera: {device_id: 0, target_fps: 60, width: 640, height: 480, exposure_us: 5000}
 laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5}
 safe_for_control: {age_max_ms: 50, laser_settled_speed_m_per_s: 0.05, alignment_tolerance_m: 0.02}
 ball: {radius_m: 0.03}
 zmq: {bind_address: "tcp://*:5556"}
 calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json"}
 logging: {level: warn, output_dir: "", max_file_size_mb: 10}
-pipeline: {ring_buffer_capacity: 4}
+pipeline: {ring_buffer_capacity: 4, capture_cpu_core: 2, capture_thread_priority: 80}
 )";
     EXPECT_THROW(tracking::Config::load(write_temp(yaml)), tracking::ConfigError);
 }
@@ -263,29 +269,46 @@ TEST_F(ConfigTest, ThrowsOnBadRingBufferCapacity) {
     // Zero, negative, and above the 64-slot pre-allocation ceiling.
     for (const char* cap : {"0", "-2", "100"}) {
         const std::string yaml = std::string(R"(
-camera: {device_id: 0, target_fps: 60, width: 640, height: 480}
+camera: {device_id: 0, target_fps: 60, width: 640, height: 480, exposure_us: 5000}
 laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5}
 safe_for_control: {age_max_ms: 50, laser_settled_speed_m_per_s: 0.05, alignment_tolerance_m: 0.02}
 ball: {radius_m: 0.03}
 zmq: {bind_address: "tcp://*:5556"}
 calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json"}
 logging: {level: warn, output_dir: "/tmp/tracking_core/", max_file_size_mb: 10}
-pipeline: {ring_buffer_capacity: )") + cap + "}\n";
+pipeline: {ring_buffer_capacity: )") + cap + ", capture_cpu_core: 2, capture_thread_priority: 80}\n";
         EXPECT_THROW(tracking::Config::load(write_temp(yaml)), tracking::ConfigError)
             << "ring_buffer_capacity=" << cap;
     }
 }
 
-TEST_F(ConfigTest, ThrowsOnNonPositiveFrameDimensions) {
-    const std::string yaml = R"(
-camera: {device_id: 0, target_fps: 60, width: 0, height: 480}
+TEST_F(ConfigTest, ThrowsOnCaptureThreadPriorityOutOfRange) {
+    // SCHED_FIFO priorities are 1-99.
+    for (const char* prio : {"0", "100"}) {
+        const std::string yaml = std::string(R"(
+camera: {device_id: 0, target_fps: 60, width: 640, height: 480, exposure_us: 5000}
 laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5}
 safe_for_control: {age_max_ms: 50, laser_settled_speed_m_per_s: 0.05, alignment_tolerance_m: 0.02}
 ball: {radius_m: 0.03}
 zmq: {bind_address: "tcp://*:5556"}
 calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json"}
 logging: {level: warn, output_dir: "/tmp/tracking_core/", max_file_size_mb: 10}
-pipeline: {ring_buffer_capacity: 4}
+pipeline: {ring_buffer_capacity: 4, capture_cpu_core: 2, capture_thread_priority: )") + prio + "}\n";
+        EXPECT_THROW(tracking::Config::load(write_temp(yaml)), tracking::ConfigError)
+            << "capture_thread_priority=" << prio;
+    }
+}
+
+TEST_F(ConfigTest, ThrowsOnNonPositiveFrameDimensions) {
+    const std::string yaml = R"(
+camera: {device_id: 0, target_fps: 60, width: 0, height: 480, exposure_us: 5000}
+laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5}
+safe_for_control: {age_max_ms: 50, laser_settled_speed_m_per_s: 0.05, alignment_tolerance_m: 0.02}
+ball: {radius_m: 0.03}
+zmq: {bind_address: "tcp://*:5556"}
+calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json"}
+logging: {level: warn, output_dir: "/tmp/tracking_core/", max_file_size_mb: 10}
+pipeline: {ring_buffer_capacity: 4, capture_cpu_core: 2, capture_thread_priority: 80}
 )";
     EXPECT_THROW(tracking::Config::load(write_temp(yaml)), tracking::ConfigError);
 }

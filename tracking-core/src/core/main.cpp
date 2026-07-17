@@ -1,4 +1,7 @@
+#include "camera_source.hpp"
+#include "capture_thread.hpp"
 #include "config.hpp"
+#include "frame_ring_buffer.hpp"
 #include "logging.hpp"
 #include "tracking_pipeline.hpp"
 
@@ -30,8 +33,8 @@ int main(int argc, char** argv) {
     // Post-init failures (zmq bind, OpenCV throws) must drain the logger and
     // exit 1 rather than reach std::terminate with queued messages lost.
     try {
-        cv::VideoCapture camera(config.camera.device_id);
-        if (!camera.isOpened()) {
+        tracking::CameraSource camera(config.camera);
+        if (!camera.is_open()) {
             LOG_ERROR("Unable to open camera device {}", config.camera.device_id);
             tracking::logging::shutdown();
             return 1;
@@ -45,10 +48,23 @@ int main(int argc, char** argv) {
         tracking::Detector detector;
         tracking::Tracker tracker;
 
+        // Capture (producer) and processing (consumer) sides of the TRK-005
+        // ring buffer. Frames arrive as 8-bit BGR at the configured size.
+        tracking::FrameRingBuffer ring_buffer(
+            static_cast<std::size_t>(config.pipeline.ring_buffer_capacity),
+            config.camera.height, config.camera.width, CV_8UC3);
+        tracking::CaptureThread::Options capture_options;
+        capture_options.cpu_core = config.pipeline.capture_cpu_core;
+        capture_options.thread_priority = config.pipeline.capture_thread_priority;
+        capture_options.camera_id = 0;
+        tracking::CaptureThread capture(camera, ring_buffer, capture_options);
+        capture.start();
+
+        cv::Mat frame(config.camera.height, config.camera.width, CV_8UC3);
         while (true) {
-            cv::Mat frame;
-            camera >> frame;
-            if (frame.empty()) {
+            const auto metadata = ring_buffer.try_pop(frame);
+            if (!metadata.has_value()) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
                 continue;
             }
 
@@ -66,8 +82,6 @@ int main(int argc, char** argv) {
             zmq::message_t topic("frames", 6);
             publisher.send(topic, zmq::send_flags::sndmore);
             publisher.send(zmq::buffer(encoded), zmq::send_flags::none);
-
-            std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
     } catch (const std::exception& e) {
         LOG_CRITICAL("fatal error after startup: {}", e.what());

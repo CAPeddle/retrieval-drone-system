@@ -108,6 +108,7 @@ Config Config::load(const std::string& path) {
         cfg.camera.target_fps = require<int>(camera, "camera", "target_fps");
         cfg.camera.width = require<int>(camera, "camera", "width");
         cfg.camera.height = require<int>(camera, "camera", "height");
+        cfg.camera.exposure_us = require<int>(camera, "camera", "exposure_us");
 
         const YAML::Node laser = require_section(root, "laser");
         cfg.laser.modulation_frequency_hz =
@@ -138,6 +139,10 @@ Config Config::load(const std::string& path) {
         const YAML::Node pipeline = require_section(root, "pipeline");
         cfg.pipeline.ring_buffer_capacity =
             require<int>(pipeline, "pipeline", "ring_buffer_capacity");
+        cfg.pipeline.capture_cpu_core =
+            require<int>(pipeline, "pipeline", "capture_cpu_core");
+        cfg.pipeline.capture_thread_priority =
+            require<int>(pipeline, "pipeline", "capture_thread_priority");
 
         const YAML::Node logging = require_section(root, "logging");
         cfg.logging.level = require<std::string>(logging, "logging", "level");
@@ -168,6 +173,16 @@ Config Config::load(const std::string& path) {
     // unbounded capacity would commit large amounts of Pi RAM at startup.
     if (cfg.pipeline.ring_buffer_capacity <= 0 || cfg.pipeline.ring_buffer_capacity > 64) {
         throw ConfigError("field must be in [1, 64]: pipeline.ring_buffer_capacity");
+    }
+    if (cfg.camera.exposure_us <= 0) {
+        throw ConfigError("field must be > 0: camera.exposure_us");
+    }
+    if (cfg.pipeline.capture_cpu_core < 0 || cfg.pipeline.capture_cpu_core > 63) {
+        throw ConfigError("field must be in [0, 63]: pipeline.capture_cpu_core");
+    }
+    // SCHED_FIFO valid priority range on Linux.
+    if (cfg.pipeline.capture_thread_priority < 1 || cfg.pipeline.capture_thread_priority > 99) {
+        throw ConfigError("field must be in [1, 99]: pipeline.capture_thread_priority");
     }
     require_gt(cfg.laser.modulation_frequency_hz, 0.0, "laser.modulation_frequency_hz");
     require_in(cfg.laser.modulation_duty_cycle, 0.0, 1.0, "laser.modulation_duty_cycle");

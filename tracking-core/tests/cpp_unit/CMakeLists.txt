@@ -1,5 +1,6 @@
 # ─── tracking_core_tests: links tracking_core_lib instead of raw sources ─────
 add_executable(tracking_core_tests
+    test_capture_thread.cpp
     test_config.cpp
     test_frame_ring_buffer.cpp
     test_logging.cpp

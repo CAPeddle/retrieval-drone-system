@@ -98,6 +98,22 @@ TEST(FrameRingBufferTest, OverflowDropsOldest) {
     EXPECT_FALSE(buffer.try_pop(out).has_value());
 }
 
+TEST(FrameRingBufferTest, MismatchedFrameIsRejectedNotPushed) {
+    // A dims/type mismatch must be refused: silently reallocating the slot
+    // would both allocate on the hot path and race the consumer's copy.
+    tracking::FrameRingBuffer buffer(4, kRows, kCols, kType);
+    const cv::Mat wrong_size(kRows * 2, kCols, kType, cv::Scalar(1));
+    const cv::Mat wrong_type(kRows, kCols, CV_8UC3, cv::Scalar(1, 1, 1));
+    EXPECT_FALSE(buffer.try_push(wrong_size, meta(0)));
+    EXPECT_FALSE(buffer.try_push(wrong_type, meta(1)));
+    EXPECT_EQ(buffer.rejected(), 2u);
+
+    cv::Mat out;
+    EXPECT_FALSE(buffer.try_pop(out).has_value());  // nothing was pushed
+    EXPECT_FALSE(buffer.try_push(solid_frame(2), meta(2)));  // matching frame still works
+    EXPECT_TRUE(buffer.try_pop(out).has_value());
+}
+
 TEST(FrameRingBufferTest, PopCopiesIntoPreallocatedWithoutReshape) {
     tracking::FrameRingBuffer buffer(2, kRows, kCols, kType);
     buffer.try_push(solid_frame(3), meta(3));

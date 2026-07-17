@@ -44,3 +44,4 @@ U7. Integrate into pipeline: consumer thread pops frame from ring buffer, calls 
 - 2026-05-31: created. Status: backlog. Depends on TRK-006 (frames available in ring buffer).
 - 2026-07-17: backlog → in-progress. Starting on feat/v03-frame-pipeline; TRK-005/006/007 landed.
 - 2026-07-17: in-progress → done. FrameQualityAssessor landed: exposure mean + Laplacian variance gates, 20%-margin DEGRADED band, pre-allocated working buffers, rejected-frame counter for TRK-023, consumer-loop integration with 1 Hz aggregated reporting. Header at src/core/include/frame_quality.hpp per the repo's flat-include convention (ticket named src/core/detection/). 54/54 ctest green Release+Debug.
+- 2026-07-17: review note: the <0.5 ms/frame Pi 5 budget in Acceptance is deferred to on-target verification (TRK-026 benchmark suite), per the cross-environment handoff recipe. Dev-machine ctest covers correctness only.

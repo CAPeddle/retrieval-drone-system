@@ -45,7 +45,9 @@ void apply_realtime(const CaptureThread::Options& options) {
 
 CaptureThread::CaptureThread(FrameSource& source, FrameRingBuffer& buffer,
                              const Options& options)
-    : source_(source), buffer_(buffer), options_(options) {}
+    : source_(source), buffer_(buffer), options_(options) {
+    scratch_.create(buffer.rows(), buffer.cols(), buffer.type());
+}
 
 CaptureThread::~CaptureThread() { stop(); }
 
@@ -69,12 +71,35 @@ void CaptureThread::run() {
     apply_realtime(options_);
 
     std::uint64_t drops_in_window = 0;
+    std::uint64_t failures_in_window = 0;
     clock::time_point window_start = clock::now();
+
+    // Aggregated 1 Hz reporting — never per-frame (KTD-2). The window
+    // advances unconditionally so a summary always covers ~1 s, not the
+    // whole quiet period since the last incident.
+    const auto report_window = [&](clock::time_point now) {
+        if (now - window_start < std::chrono::seconds(1)) {
+            return;
+        }
+        if (drops_in_window > 0) {
+            LOG_WARN("capture: dropped {} frame(s) in the last second (consumer lagging)",
+                     drops_in_window);
+        }
+        if (failures_in_window > 0) {
+            LOG_WARN("capture: {} grab failure(s) in the last second (source unhealthy)",
+                     failures_in_window);
+        }
+        drops_in_window = 0;
+        failures_in_window = 0;
+        window_start = now;
+    };
 
     while (!stop_.load(std::memory_order_relaxed)) {
         const clock::time_point grab_start = clock::now();
         if (!source_.grab(scratch_)) {
             grab_failures_.fetch_add(1, std::memory_order_relaxed);
+            ++failures_in_window;
+            report_window(clock::now());
             // Source failure (disconnect / synthetic source exhausted): brief
             // pause instead of a hot spin; the owner decides recovery.
             std::this_thread::sleep_for(std::chrono::milliseconds(1));
@@ -98,14 +123,7 @@ void CaptureThread::run() {
         }
         frames_captured_.fetch_add(1, std::memory_order_relaxed);
 
-        // Drop summary at most once per second — aggregated, never per-frame
-        // (KTD-2: bounded logging from the SCHED_FIFO thread).
-        if (drops_in_window > 0 && grab_end - window_start >= std::chrono::seconds(1)) {
-            LOG_WARN("capture: dropped {} frame(s) in the last second (consumer lagging)",
-                     drops_in_window);
-            drops_in_window = 0;
-            window_start = grab_end;
-        }
+        report_window(grab_end);
     }
 }
 

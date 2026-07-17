@@ -6,6 +6,7 @@
 // (§7.1); on unprivileged dev machines both degrade gracefully with a WARN.
 
 #include "frame_ring_buffer.hpp"
+#include "frame_source.hpp"
 
 #include <opencv2/core.hpp>
 
@@ -14,17 +15,6 @@
 #include <thread>
 
 namespace tracking {
-
-// Seam between the capture loop and the physical camera, so tests drive the
-// thread with synthetic frames. One virtual call per frame — not per pixel —
-// which stays within the hot-path budget.
-class FrameSource {
-public:
-    virtual ~FrameSource() = default;
-    // Fills `out` with the next frame; false on failure/disconnect. The
-    // source owns pacing (a real camera blocks at its frame rate).
-    virtual bool grab(cv::Mat& out) = 0;
-};
 
 class CaptureThread {
 public:
@@ -35,6 +25,8 @@ public:
     };
 
     // Non-owning references: source and buffer must outlive the thread.
+    // scratch_ is pre-sized to the buffer's slot geometry so the first grab
+    // does not allocate on the capture thread.
     CaptureThread(FrameSource& source, FrameRingBuffer& buffer, const Options& options);
     ~CaptureThread();  // stops and joins if still running
 

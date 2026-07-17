@@ -17,13 +17,23 @@ FrameQualityAssessor::FrameQualityAssessor(const FrameQualityConfig& config, int
     laplacian_.create(rows, cols, CV_64F);
 }
 
-double FrameQualityAssessor::laplacian_variance(const cv::Mat& gray) {
-    cv::Mat laplacian;
-    cv::Laplacian(gray, laplacian, CV_64F);
+namespace {
+
+// Single home for the blur metric so assess() and the public helper cannot
+// drift apart.
+double variance_of(const cv::Mat& laplacian) {
     cv::Scalar mean;
     cv::Scalar stddev;
     cv::meanStdDev(laplacian, mean, stddev);
     return stddev[0] * stddev[0];
+}
+
+}  // namespace
+
+double FrameQualityAssessor::laplacian_variance(const cv::Mat& gray) {
+    cv::Mat laplacian;
+    cv::Laplacian(gray, laplacian, CV_64F);
+    return variance_of(laplacian);
 }
 
 FrameQuality FrameQualityAssessor::assess(const cv::Mat& frame) {
@@ -47,10 +57,7 @@ FrameQuality FrameQualityAssessor::assess(const cv::Mat& frame) {
         mean > over * (1.0 - kDegradedMarginFraction);
 
     cv::Laplacian(*gray, laplacian_, CV_64F);  // into pre-allocated buffer
-    cv::Scalar lap_mean;
-    cv::Scalar lap_stddev;
-    cv::meanStdDev(laplacian_, lap_mean, lap_stddev);
-    const double variance = lap_stddev[0] * lap_stddev[0];
+    const double variance = variance_of(laplacian_);
     if (variance < config_.blur_threshold) {
         ++rejected_count_;
         return FrameQuality::REJECT;

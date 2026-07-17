@@ -36,3 +36,4 @@ U5. Unit test: compile-time assertions pass, runtime construction and copy behav
 
 - 2026-05-31: created. Status: backlog. Depends on TRK-005 (ring buffer uses this).
 - 2026-07-17: backlog → done. FrameMetadata POD formalized: struct + static_asserts (trivially copyable, <=32 bytes) landed with TRK-005 in frame_metadata.hpp; contract test TU added proving both build configs; ring-buffer slots and capture thread already propagate it. 45/45 ctest green Release+Debug.
+- 2026-07-17: review note: the ZMQ publish_timestamp_ms/frame_capture_timestamp_ms derivation named in Acceptance is deliberately deferred to TRK-021 (ZMQ publisher, JSON schema v1) — the metadata struct and its propagation are in place; the message schema does not exist yet.

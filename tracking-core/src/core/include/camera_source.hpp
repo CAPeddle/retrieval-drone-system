@@ -5,8 +5,8 @@
 // backend on dev machines without V4L2. Manual exposure is locked at open
 // (auto-exposure disabled) so calibration-time exposure holds (ADR-004).
 
-#include "capture_thread.hpp"
 #include "config.hpp"
+#include "frame_source.hpp"
 
 #include <opencv2/videoio.hpp>
 

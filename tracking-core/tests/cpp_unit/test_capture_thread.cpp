@@ -52,7 +52,10 @@ public:
 private:
     double period_;
     int max_frames_;
-    int emitted_ = 0;
+    // Written by the capture thread in grab(), read by the test thread while
+    // it waits — atomic so the tests validating lock-free code are themselves
+    // race-free under TSan.
+    std::atomic<int> emitted_{0};
     std::chrono::steady_clock::time_point start_{};
     std::chrono::steady_clock::time_point next_{};
     std::chrono::steady_clock::time_point last_{};
@@ -162,6 +165,45 @@ TEST(CaptureThreadTest, StopStartLifecycleContinuesSequence) {
         last_seq = metadata->sequence_number;
         first = false;
     }
+}
+
+TEST(CaptureThreadTest, GrabFailuresCountedAfterSourceExhausts) {
+    SyntheticSource source(1000.0, 5);
+    tracking::FrameRingBuffer buffer(8, kRows, kCols, CV_8UC1);
+    tracking::CaptureThread capture(source, buffer, test_options());
+    capture.start();
+    // Once the source is exhausted every grab fails; wait for the counter to
+    // move rather than sleeping a fixed time.
+    const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(10);
+    while (capture.grab_failures() == 0 && std::chrono::steady_clock::now() < deadline) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(2));
+    }
+    capture.stop();
+    EXPECT_EQ(capture.frames_captured(), 5u);
+    EXPECT_GT(capture.grab_failures(), 0u);
+}
+
+TEST(CaptureThreadTest, StartWhileRunningIsNoOp) {
+    SyntheticSource source(500.0, 1000);
+    tracking::FrameRingBuffer buffer(8, kRows, kCols, CV_8UC1);
+    tracking::CaptureThread capture(source, buffer, test_options());
+    capture.start();
+    capture.start();  // must not spawn a second producer or throw
+    std::this_thread::sleep_for(std::chrono::milliseconds(30));
+    capture.stop();
+    EXPECT_GT(capture.frames_captured(), 0u);
+}
+
+TEST(CaptureThreadTest, DestructorJoinsRunningThread) {
+    SyntheticSource source(500.0, 1000);
+    tracking::FrameRingBuffer buffer(8, kRows, kCols, CV_8UC1);
+    {
+        tracking::CaptureThread capture(source, buffer, test_options());
+        capture.start();
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        // No explicit stop(): the destructor must stop and join cleanly.
+    }
+    SUCCEED();
 }
 
 TEST(CaptureThreadTest, DropsCountedWhenConsumerAbsent) {

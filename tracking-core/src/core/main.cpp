@@ -66,6 +66,8 @@ int main(int argc, char** argv) {
         auto last_quality_report = std::chrono::steady_clock::now();
         std::uint64_t degraded_in_window = 0;
         std::uint64_t rejected_at_last_report = 0;
+        std::uint64_t captured_at_last_report = 0;
+        std::uint64_t failures_at_last_report = 0;
 
         cv::Mat frame(config.camera.height, config.camera.width, CV_8UC3);
         while (true) {
@@ -90,6 +92,19 @@ int main(int argc, char** argv) {
                 }
                 rejected_at_last_report = rejected;
                 degraded_in_window = 0;
+                // Source-health check: frames flat while grab failures grow
+                // means the camera died — surface it instead of spinning
+                // silently (recovery policy is a follow-up decision).
+                const std::uint64_t captured_now = capture.frames_captured();
+                const std::uint64_t failures_now = capture.grab_failures();
+                if (captured_now == captured_at_last_report &&
+                    failures_now > failures_at_last_report) {
+                    LOG_ERROR("camera source stalled: no frames for >=1 s, {} grab "
+                              "failure(s) accumulating",
+                              failures_now);
+                }
+                captured_at_last_report = captured_now;
+                failures_at_last_report = failures_now;
                 last_quality_report = now;
             }
             if (frame_quality == tracking::FrameQuality::REJECT) {

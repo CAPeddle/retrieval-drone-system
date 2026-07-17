@@ -10,6 +10,11 @@
 camera:
   device_id: 0            # V4L2 device index (int). 0 = /dev/video0.
   target_fps: 60          # Capture rate (int). v0.3 targets >=60 fps end-to-end.
+  width: 640              # Capture width in pixels.
+  height: 480             # Capture height in pixels.
+
+pipeline:
+  ring_buffer_capacity: 4 # Pre-allocated frame slots between capture and processing (1-64).
 
 laser:
   modulation_frequency_hz: 15.0   # ADR-005: 15 Hz modulation.

@@ -106,6 +106,8 @@ Config Config::load(const std::string& path) {
         const YAML::Node camera = require_section(root, "camera");
         cfg.camera.device_id = require<int>(camera, "camera", "device_id");
         cfg.camera.target_fps = require<int>(camera, "camera", "target_fps");
+        cfg.camera.width = require<int>(camera, "camera", "width");
+        cfg.camera.height = require<int>(camera, "camera", "height");
 
         const YAML::Node laser = require_section(root, "laser");
         cfg.laser.modulation_frequency_hz =
@@ -133,6 +135,10 @@ Config Config::load(const std::string& path) {
         cfg.calibration.extrinsics_path =
             require<std::string>(calibration, "calibration", "extrinsics_path");
 
+        const YAML::Node pipeline = require_section(root, "pipeline");
+        cfg.pipeline.ring_buffer_capacity =
+            require<int>(pipeline, "pipeline", "ring_buffer_capacity");
+
         const YAML::Node logging = require_section(root, "logging");
         cfg.logging.level = require<std::string>(logging, "logging", "level");
         cfg.logging.output_dir = require<std::string>(logging, "logging", "output_dir");
@@ -151,6 +157,17 @@ Config Config::load(const std::string& path) {
     }
     if (cfg.camera.target_fps <= 0) {
         throw ConfigError("field must be > 0: camera.target_fps");
+    }
+    if (cfg.camera.width <= 0) {
+        throw ConfigError("field must be > 0: camera.width");
+    }
+    if (cfg.camera.height <= 0) {
+        throw ConfigError("field must be > 0: camera.height");
+    }
+    // Slots hold full pre-allocated frames (~1 MB each at 640x480 BGR); an
+    // unbounded capacity would commit large amounts of Pi RAM at startup.
+    if (cfg.pipeline.ring_buffer_capacity <= 0 || cfg.pipeline.ring_buffer_capacity > 64) {
+        throw ConfigError("field must be in [1, 64]: pipeline.ring_buffer_capacity");
     }
     require_gt(cfg.laser.modulation_frequency_hz, 0.0, "laser.modulation_frequency_hz");
     require_in(cfg.laser.modulation_duty_cycle, 0.0, 1.0, "laser.modulation_duty_cycle");

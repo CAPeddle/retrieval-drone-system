@@ -63,6 +63,9 @@ startup with an error naming the offending field. All fields are required in v0.
 |-------|------|---------|
 | `camera.device_id` | int | V4L2 device index (0 = /dev/video0) |
 | `camera.target_fps` | int | Capture rate (v0.3 targets ≥60 fps) |
+| `camera.width` | int | Capture width in pixels |
+| `camera.height` | int | Capture height in pixels |
+| `pipeline.ring_buffer_capacity` | int | Pre-allocated frame slots between capture and processing (1–64) |
 | `laser.modulation_frequency_hz` | double | ADR-005 modulation frequency (15 Hz) |
 | `laser.modulation_duty_cycle` | double | ADR-005 duty cycle (0.0–1.0) |
 | `safe_for_control.age_max_ms` | double | Max snapshot age before the predicate goes false |

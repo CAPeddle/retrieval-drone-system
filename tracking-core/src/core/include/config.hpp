@@ -14,6 +14,8 @@ public:
 struct CameraConfig {
     int device_id = 0;
     int target_fps = 0;
+    int width = 0;
+    int height = 0;
 };
 
 struct LaserConfig {
@@ -40,6 +42,10 @@ struct CalibrationConfig {
     std::string extrinsics_path;
 };
 
+struct PipelineConfig {
+    int ring_buffer_capacity = 0;  // Frame slots pre-allocated between capture and processing.
+};
+
 struct LoggingConfig {
     std::string level;        // One of: trace, debug, info, warn, error, critical.
     std::string output_dir;   // Must be tmpfs on the Pi — never the SD card (§7.1).
@@ -58,6 +64,7 @@ struct Config {
     ZmqConfig zmq;
     CalibrationConfig calibration;
     LoggingConfig logging;
+    PipelineConfig pipeline;
 
     // Loads and validates the YAML at `path`. Throws ConfigError on a missing
     // required field or a type mismatch. Startup-only — may throw (config and

@@ -1,10 +1,10 @@
 ---
 id: TRK-005
-status: backlog
+status: done
 subsystem: tracking-core
 tier: small
 created: 2026-05-31
-updated: 2026-05-31
+updated: 2026-07-17
 depends_on:
   - "TRK-002"
 spec: null
@@ -41,3 +41,5 @@ U8. Document the SPSC contract and overflow policy in the header comment.
 ## Log
 
 - 2026-05-31: created. Status: backlog. Depends on TRK-003 (config for capacity) and TRK-002 (build system).
+- 2026-07-17: backlog → in-progress. Starting v0.3 frame-pipeline goal run (TRK-005..008 on feat/v03-frame-pipeline).
+- 2026-07-17: in-progress → done. FrameRingBuffer + FrameMetadata landed on feat/v03-frame-pipeline: SPSC ring with CAS-reclaim overwrite-oldest (torn reads discarded by failed pop CAS), pre-allocated slots from camera.width/height, pipeline.ring_buffer_capacity config (1-64). 6 unit tests incl. slow-consumer concurrent stress; 37/37 ctest green Release+Debug, zero warnings.

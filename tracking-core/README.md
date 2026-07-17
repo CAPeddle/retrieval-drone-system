@@ -69,6 +69,9 @@ startup with an error naming the offending field. All fields are required in v0.
 | `pipeline.ring_buffer_capacity` | int | Pre-allocated frame slots between capture and processing (1–64) |
 | `pipeline.capture_cpu_core` | int | Core the ingestion thread pins to (0–63) |
 | `pipeline.capture_thread_priority` | int | SCHED_FIFO priority (1–99); degrades with a WARN when unprivileged |
+| `frame_quality.underexposed_threshold` | double | Histogram mean below this → frame rejected |
+| `frame_quality.overexposed_threshold` | double | Histogram mean above this → frame rejected |
+| `frame_quality.blur_threshold` | double | Laplacian variance below this → frame rejected |
 | `laser.modulation_frequency_hz` | double | ADR-005 modulation frequency (15 Hz) |
 | `laser.modulation_duty_cycle` | double | ADR-005 duty cycle (0.0–1.0) |
 | `safe_for_control.age_max_ms` | double | Max snapshot age before the predicate goes false |

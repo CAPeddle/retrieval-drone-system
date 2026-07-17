@@ -33,6 +33,7 @@ Workflow defined in [README.md → Workflow](README.md#workflow). Risk register 
 - [x] TRK-005 — Frame ring buffer (2026-07-17)
 - [x] TRK-006 — Camera capture thread (2026-07-17)
 - [x] TRK-007 — Frame timestamping (2026-07-17)
+- [x] TRK-008 — Frame quality assessment (2026-07-17)
 
 ## Backlog
 
@@ -55,7 +56,6 @@ Workflow defined in [README.md → Workflow](README.md#workflow). Risk register 
 
 ### v0.3 implementation — infrastructure
 
-- [ ] TRK-008 — Frame quality assessment (exposure + blur gate) → [story](docs/tickets/TRK-008-frame-quality-assessment.md)
 
 ### v0.3 implementation — detection
 

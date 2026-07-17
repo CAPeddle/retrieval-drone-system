@@ -3,6 +3,7 @@ add_executable(tracking_core_tests
     test_capture_thread.cpp
     test_config.cpp
     test_frame_metadata.cpp
+    test_frame_quality.cpp
     test_frame_ring_buffer.cpp
     test_logging.cpp
     test_logging_default_level.cpp

@@ -49,6 +49,12 @@ struct PipelineConfig {
     int capture_thread_priority = 0;   // SCHED_FIFO priority for the ingestion thread.
 };
 
+struct FrameQualityConfig {
+    double underexposed_threshold = 0.0;  // Histogram mean below this -> REJECT.
+    double overexposed_threshold = 0.0;   // Histogram mean above this -> REJECT.
+    double blur_threshold = 0.0;          // Laplacian variance below this -> REJECT.
+};
+
 struct LoggingConfig {
     std::string level;        // One of: trace, debug, info, warn, error, critical.
     std::string output_dir;   // Must be tmpfs on the Pi — never the SD card (§7.1).
@@ -68,6 +74,7 @@ struct Config {
     CalibrationConfig calibration;
     LoggingConfig logging;
     PipelineConfig pipeline;
+    FrameQualityConfig frame_quality;
 
     // Loads and validates the YAML at `path`. Throws ConfigError on a missing
     // required field or a type mismatch. Startup-only — may throw (config and

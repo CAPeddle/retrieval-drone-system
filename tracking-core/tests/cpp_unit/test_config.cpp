@@ -41,6 +41,10 @@ pipeline:
   ring_buffer_capacity: 4
   capture_cpu_core: 2
   capture_thread_priority: 80
+frame_quality:
+  underexposed_threshold: 20
+  overexposed_threshold: 240
+  blur_threshold: 100
 laser:
   modulation_frequency_hz: 15.0
   modulation_duty_cycle: 0.5
@@ -72,6 +76,9 @@ TEST_F(ConfigTest, LoadsValidConfig) {
     EXPECT_EQ(cfg.camera.exposure_us, 5000);
     EXPECT_EQ(cfg.pipeline.capture_cpu_core, 2);
     EXPECT_EQ(cfg.pipeline.capture_thread_priority, 80);
+    EXPECT_DOUBLE_EQ(cfg.frame_quality.underexposed_threshold, 20.0);
+    EXPECT_DOUBLE_EQ(cfg.frame_quality.overexposed_threshold, 240.0);
+    EXPECT_DOUBLE_EQ(cfg.frame_quality.blur_threshold, 100.0);
     EXPECT_DOUBLE_EQ(cfg.laser.modulation_frequency_hz, 15.0);
     EXPECT_DOUBLE_EQ(cfg.laser.modulation_duty_cycle, 0.5);
     EXPECT_DOUBLE_EQ(cfg.safe_for_control.age_max_ms, 50.0);
@@ -97,6 +104,7 @@ zmq: {bind_address: "tcp://*:5556"}
 calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json"}
 logging: {level: warn, output_dir: "/tmp/tracking_core/", max_file_size_mb: 10}
 pipeline: {ring_buffer_capacity: 4, capture_cpu_core: 2, capture_thread_priority: 80}
+frame_quality: {underexposed_threshold: 20, overexposed_threshold: 240, blur_threshold: 100}
 )";
     EXPECT_THROW(tracking::Config::load(write_temp(yaml)), tracking::ConfigError);
 }
@@ -111,6 +119,7 @@ zmq: {bind_address: "tcp://*:5556"}
 calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json"}
 logging: {level: warn, output_dir: "/tmp/tracking_core/", max_file_size_mb: 10}
 pipeline: {ring_buffer_capacity: 4, capture_cpu_core: 2, capture_thread_priority: 80}
+frame_quality: {underexposed_threshold: 20, overexposed_threshold: 240, blur_threshold: 100}
 )";
     EXPECT_THROW(tracking::Config::load(write_temp(yaml)), tracking::ConfigError);
 }
@@ -126,6 +135,7 @@ zmq: {bind_address: "tcp://*:5556"}
 calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json"}
 logging: {level: warn, output_dir: "/tmp/tracking_core/", max_file_size_mb: 10}
 pipeline: {ring_buffer_capacity: 4, capture_cpu_core: 2, capture_thread_priority: 80}
+frame_quality: {underexposed_threshold: 20, overexposed_threshold: 240, blur_threshold: 100}
 )";
     EXPECT_THROW(tracking::Config::load(write_temp(yaml)), tracking::ConfigError);
 }
@@ -152,6 +162,7 @@ zmq: {bind_address: "tcp://*:5556"}
 calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json"}
 logging: {level: warn, output_dir: "/tmp/tracking_core/", max_file_size_mb: 10}
 pipeline: {ring_buffer_capacity: 4, capture_cpu_core: 2, capture_thread_priority: 80}
+frame_quality: {underexposed_threshold: 20, overexposed_threshold: 240, blur_threshold: 100}
 )";
     EXPECT_THROW(tracking::Config::load(write_temp(yaml)), tracking::ConfigError);
 }
@@ -166,6 +177,7 @@ zmq: {bind_address: "tcp://*:5556"}
 calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json"}
 logging: {level: warn, output_dir: "/tmp/tracking_core/", max_file_size_mb: 10}
 pipeline: {ring_buffer_capacity: 4, capture_cpu_core: 2, capture_thread_priority: 80}
+frame_quality: {underexposed_threshold: 20, overexposed_threshold: 240, blur_threshold: 100}
 )";
     EXPECT_THROW(tracking::Config::load(write_temp(yaml)), tracking::ConfigError);
 }
@@ -180,6 +192,7 @@ zmq: {bind_address: "tcp://*:5556"}
 calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json"}
 logging: {level: warn, output_dir: "/tmp/tracking_core/", max_file_size_mb: 10}
 pipeline: {ring_buffer_capacity: 4, capture_cpu_core: 2, capture_thread_priority: 80}
+frame_quality: {underexposed_threshold: 20, overexposed_threshold: 240, blur_threshold: 100}
 )";
     EXPECT_THROW(tracking::Config::load(write_temp(yaml)), tracking::ConfigError);
 }
@@ -194,6 +207,7 @@ zmq: {bind_address: ""}
 calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json"}
 logging: {level: warn, output_dir: "/tmp/tracking_core/", max_file_size_mb: 10}
 pipeline: {ring_buffer_capacity: 4, capture_cpu_core: 2, capture_thread_priority: 80}
+frame_quality: {underexposed_threshold: 20, overexposed_threshold: 240, blur_threshold: 100}
 )";
     EXPECT_THROW(tracking::Config::load(write_temp(yaml)), tracking::ConfigError);
 }
@@ -207,6 +221,7 @@ ball: {radius_m: 0.03}
 zmq: {bind_address: "tcp://*:5556"}
 calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json"}
 pipeline: {ring_buffer_capacity: 4, capture_cpu_core: 2, capture_thread_priority: 80}
+frame_quality: {underexposed_threshold: 20, overexposed_threshold: 240, blur_threshold: 100}
 )";
     EXPECT_THROW(tracking::Config::load(write_temp(yaml)), tracking::ConfigError);
 }
@@ -222,6 +237,7 @@ zmq: {bind_address: "tcp://*:5556"}
 calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json"}
 logging: {level: verbose, output_dir: "/tmp/tracking_core/", max_file_size_mb: 10}
 pipeline: {ring_buffer_capacity: 4, capture_cpu_core: 2, capture_thread_priority: 80}
+frame_quality: {underexposed_threshold: 20, overexposed_threshold: 240, blur_threshold: 100}
 )";
     try {
         tracking::Config::load(write_temp(yaml));
@@ -244,6 +260,7 @@ ball: {radius_m: 0.03}
 zmq: {bind_address: "tcp://*:5556"}
 calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json"}
 pipeline: {ring_buffer_capacity: 4, capture_cpu_core: 2, capture_thread_priority: 80}
+frame_quality: {underexposed_threshold: 20, overexposed_threshold: 240, blur_threshold: 100}
 logging: {level: warn, output_dir: "/tmp/tracking_core/", max_file_size_mb: )") +
                                  size + "}\n";
         EXPECT_THROW(tracking::Config::load(write_temp(yaml)), tracking::ConfigError)
@@ -261,6 +278,7 @@ zmq: {bind_address: "tcp://*:5556"}
 calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json"}
 logging: {level: warn, output_dir: "", max_file_size_mb: 10}
 pipeline: {ring_buffer_capacity: 4, capture_cpu_core: 2, capture_thread_priority: 80}
+frame_quality: {underexposed_threshold: 20, overexposed_threshold: 240, blur_threshold: 100}
 )";
     EXPECT_THROW(tracking::Config::load(write_temp(yaml)), tracking::ConfigError);
 }
@@ -276,10 +294,25 @@ ball: {radius_m: 0.03}
 zmq: {bind_address: "tcp://*:5556"}
 calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json"}
 logging: {level: warn, output_dir: "/tmp/tracking_core/", max_file_size_mb: 10}
-pipeline: {ring_buffer_capacity: )") + cap + ", capture_cpu_core: 2, capture_thread_priority: 80}\n";
+pipeline: {ring_buffer_capacity: )") + cap + ", capture_cpu_core: 2, capture_thread_priority: 80}\nframe_quality: {underexposed_threshold: 20, overexposed_threshold: 240, blur_threshold: 100}\n";
         EXPECT_THROW(tracking::Config::load(write_temp(yaml)), tracking::ConfigError)
             << "ring_buffer_capacity=" << cap;
     }
+}
+
+TEST_F(ConfigTest, ThrowsOnInvertedExposureThresholds) {
+    const std::string yaml = R"(
+camera: {device_id: 0, target_fps: 60, width: 640, height: 480, exposure_us: 5000}
+laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5}
+safe_for_control: {age_max_ms: 50, laser_settled_speed_m_per_s: 0.05, alignment_tolerance_m: 0.02}
+ball: {radius_m: 0.03}
+zmq: {bind_address: "tcp://*:5556"}
+calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json"}
+logging: {level: warn, output_dir: "/tmp/tracking_core/", max_file_size_mb: 10}
+pipeline: {ring_buffer_capacity: 4, capture_cpu_core: 2, capture_thread_priority: 80}
+frame_quality: {underexposed_threshold: 240, overexposed_threshold: 20, blur_threshold: 100}
+)";
+    EXPECT_THROW(tracking::Config::load(write_temp(yaml)), tracking::ConfigError);
 }
 
 TEST_F(ConfigTest, ThrowsOnCaptureThreadPriorityOutOfRange) {
@@ -293,7 +326,7 @@ ball: {radius_m: 0.03}
 zmq: {bind_address: "tcp://*:5556"}
 calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json"}
 logging: {level: warn, output_dir: "/tmp/tracking_core/", max_file_size_mb: 10}
-pipeline: {ring_buffer_capacity: 4, capture_cpu_core: 2, capture_thread_priority: )") + prio + "}\n";
+pipeline: {ring_buffer_capacity: 4, capture_cpu_core: 2, capture_thread_priority: )") + prio + "}\nframe_quality: {underexposed_threshold: 20, overexposed_threshold: 240, blur_threshold: 100}\n";
         EXPECT_THROW(tracking::Config::load(write_temp(yaml)), tracking::ConfigError)
             << "capture_thread_priority=" << prio;
     }
@@ -309,6 +342,7 @@ zmq: {bind_address: "tcp://*:5556"}
 calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json"}
 logging: {level: warn, output_dir: "/tmp/tracking_core/", max_file_size_mb: 10}
 pipeline: {ring_buffer_capacity: 4, capture_cpu_core: 2, capture_thread_priority: 80}
+frame_quality: {underexposed_threshold: 20, overexposed_threshold: 240, blur_threshold: 100}
 )";
     EXPECT_THROW(tracking::Config::load(write_temp(yaml)), tracking::ConfigError);
 }

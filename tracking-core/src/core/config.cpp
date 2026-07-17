@@ -144,6 +144,14 @@ Config Config::load(const std::string& path) {
         cfg.pipeline.capture_thread_priority =
             require<int>(pipeline, "pipeline", "capture_thread_priority");
 
+        const YAML::Node fqa = require_section(root, "frame_quality");
+        cfg.frame_quality.underexposed_threshold =
+            require<double>(fqa, "frame_quality", "underexposed_threshold");
+        cfg.frame_quality.overexposed_threshold =
+            require<double>(fqa, "frame_quality", "overexposed_threshold");
+        cfg.frame_quality.blur_threshold =
+            require<double>(fqa, "frame_quality", "blur_threshold");
+
         const YAML::Node logging = require_section(root, "logging");
         cfg.logging.level = require<std::string>(logging, "logging", "level");
         cfg.logging.output_dir = require<std::string>(logging, "logging", "output_dir");
@@ -184,6 +192,15 @@ Config Config::load(const std::string& path) {
     if (cfg.pipeline.capture_thread_priority < 1 || cfg.pipeline.capture_thread_priority > 99) {
         throw ConfigError("field must be in [1, 99]: pipeline.capture_thread_priority");
     }
+    require_in(cfg.frame_quality.underexposed_threshold, 0.0, 255.0,
+               "frame_quality.underexposed_threshold");
+    require_in(cfg.frame_quality.overexposed_threshold, 0.0, 255.0,
+               "frame_quality.overexposed_threshold");
+    if (cfg.frame_quality.overexposed_threshold <= cfg.frame_quality.underexposed_threshold) {
+        throw ConfigError(
+            "frame_quality.overexposed_threshold must be > frame_quality.underexposed_threshold");
+    }
+    require_gt(cfg.frame_quality.blur_threshold, 0.0, "frame_quality.blur_threshold");
     require_gt(cfg.laser.modulation_frequency_hz, 0.0, "laser.modulation_frequency_hz");
     require_in(cfg.laser.modulation_duty_cycle, 0.0, 1.0, "laser.modulation_duty_cycle");
     require_gt(cfg.safe_for_control.age_max_ms, 0.0, "safe_for_control.age_max_ms");

@@ -19,6 +19,11 @@ pipeline:
   capture_cpu_core: 2     # Core the ingestion thread pins to (fixed partition, §7.1).
   capture_thread_priority: 80   # SCHED_FIFO priority (1-99); degrades with a WARN unprivileged.
 
+frame_quality:                  # TRK-008 gate: reject garbage before detection.
+  underexposed_threshold: 20    # Histogram mean below this -> REJECT.
+  overexposed_threshold: 240    # Histogram mean above this -> REJECT.
+  blur_threshold: 100           # Laplacian variance below this -> REJECT.
+
 laser:
   modulation_frequency_hz: 15.0   # ADR-005: 15 Hz modulation.
   modulation_duty_cycle: 0.5      # ADR-005: 50/50 duty (0.0-1.0).

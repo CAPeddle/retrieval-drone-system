@@ -1,6 +1,7 @@
 #include "camera_source.hpp"
 #include "capture_thread.hpp"
 #include "config.hpp"
+#include "frame_quality.hpp"
 #include "frame_ring_buffer.hpp"
 #include "logging.hpp"
 #include "tracking_pipeline.hpp"
@@ -60,11 +61,38 @@ int main(int argc, char** argv) {
         tracking::CaptureThread capture(camera, ring_buffer, capture_options);
         capture.start();
 
+        tracking::FrameQualityAssessor quality(config.frame_quality,
+                                               config.camera.height, config.camera.width);
+        auto last_quality_report = std::chrono::steady_clock::now();
+        std::uint64_t degraded_in_window = 0;
+        std::uint64_t rejected_at_last_report = 0;
+
         cv::Mat frame(config.camera.height, config.camera.width, CV_8UC3);
         while (true) {
             const auto metadata = ring_buffer.try_pop(frame);
             if (!metadata.has_value()) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                continue;
+            }
+
+            // TRK-008 gate: garbage frames stop here instead of feeding
+            // detection. Aggregated 1 Hz reporting, never per-frame.
+            const tracking::FrameQuality frame_quality = quality.assess(frame);
+            if (frame_quality == tracking::FrameQuality::DEGRADED) {
+                ++degraded_in_window;
+            }
+            const auto now = std::chrono::steady_clock::now();
+            if (now - last_quality_report >= std::chrono::seconds(1)) {
+                const std::uint64_t rejected = quality.rejected_count();
+                if (rejected != rejected_at_last_report || degraded_in_window > 0) {
+                    LOG_WARN("frame quality: {} rejected, {} degraded in the last second",
+                             rejected - rejected_at_last_report, degraded_in_window);
+                }
+                rejected_at_last_report = rejected;
+                degraded_in_window = 0;
+                last_quality_report = now;
+            }
+            if (frame_quality == tracking::FrameQuality::REJECT) {
                 continue;
             }
 

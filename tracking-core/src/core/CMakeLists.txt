@@ -6,6 +6,7 @@ add_library(tracking_core_lib STATIC
     config.cpp
     frame_quality.cpp
     logging.cpp
+    replay_source.cpp
     tracking/detector.cpp
     tracking/tracker.cpp
 )

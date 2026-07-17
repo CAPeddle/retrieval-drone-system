@@ -56,7 +56,12 @@ build_and_test() {
     fi
     if [ "$warnings" != "0" ]; then echo "WARNINGS-PRESENT $name"; overall=1; fi
     echo "== ctest $name =="
-    (cd "$dir" && ctest --output-on-failure 2>&1 | tail -3)
+    # Recorded scenario clips (TRK-031) enable the replay integration tests;
+    # without them those tests skip and the suite stays hermetic.
+    if [ -n "$(ls "$HOME/tracking-core-ci/recordings/"*.avi 2>/dev/null)" ]; then
+        export TRACKING_REPLAY_DIR="$HOME/tracking-core-ci/recordings"
+    fi
+    (cd "$dir" && ctest --output-on-failure 2>&1 | grep -E 'tests passed|tests failed|Skipped')
     (cd "$dir" && ctest -Q) || { echo "TEST-FAIL $name"; overall=1; }
 }
 

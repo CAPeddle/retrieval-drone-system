@@ -22,7 +22,12 @@ pipeline:
 frame_quality:                  # TRK-008 gate: reject garbage before detection.
   underexposed_threshold: 20    # Histogram mean below this -> REJECT.
   overexposed_threshold: 240    # Histogram mean above this -> REJECT.
-  blur_threshold: 100           # Laplacian variance below this -> REJECT.
+  blur_threshold: 12            # Laplacian variance below this -> REJECT.
+                                # Measured 2026-07-17 (ov5647, 640x480, indoor):
+                                # sharp footage ~33, sigma-1.5 defocus ~6.3,
+                                # sigma-3 blur ~2.5. Re-calibrate on camera/scene
+                                # change (the original guess of 100 rejected
+                                # every real frame).
 
 laser:
   modulation_frequency_hz: 15.0   # ADR-005: 15 Hz modulation.

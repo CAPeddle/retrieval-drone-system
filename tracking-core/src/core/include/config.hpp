@@ -59,6 +59,18 @@ struct CalibrationConfig {
     CharucoConfig charuco;
 };
 
+struct CoordinateConfig {
+    double pixel_uncertainty_stddev_px = 0.0;  // TRK-019 input uncertainty.
+    double condition_number_max = 0.0;         // Homography degeneracy gate (ADR-006).
+    // Floor area of interest in FloorPlane2D metres: mapped positions outside
+    // are rejected as degenerate (plan R8). Also bounds the horizon-safety
+    // denominator check at artifact load (plan R5).
+    double floor_aoi_x_min_m = 0.0;
+    double floor_aoi_x_max_m = 0.0;
+    double floor_aoi_y_min_m = 0.0;
+    double floor_aoi_y_max_m = 0.0;
+};
+
 struct GatingConfig {
     double max_distance_px = 0.0;  // Association gate radius in image pixels (TRK-015).
 };
@@ -101,6 +113,7 @@ struct Config {
     ZmqConfig zmq;
     TrackConfig track;
     GatingConfig gating;
+    CoordinateConfig coordinate;
     CalibrationConfig calibration;
     LoggingConfig logging;
     PipelineConfig pipeline;

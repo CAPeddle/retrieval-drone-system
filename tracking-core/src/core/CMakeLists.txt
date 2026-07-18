@@ -4,6 +4,7 @@ add_library(tracking_core_lib STATIC
     camera_source.cpp
     capture_thread.cpp
     config.cpp
+    coordinate/homography_loader.cpp
     frame_quality.cpp
     logging.cpp
     replay_source.cpp

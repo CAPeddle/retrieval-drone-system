@@ -7,6 +7,7 @@ add_executable(tracking_core_tests
     test_frame_metadata.cpp
     test_frame_quality.cpp
     test_frame_ring_buffer.cpp
+    test_homography_loader.cpp
     test_replay_integration.cpp
     test_replay_source.cpp
     test_logging.cpp
@@ -25,6 +26,8 @@ target_link_libraries(tracking_core_tests
     PRIVATE
         tracking_core_lib
         GTest::gtest_main
+        # Calibration fixtures build the TRK-012/013 JSON artifacts directly.
+        nlohmann_json::nlohmann_json
 )
 
 # Absolute path to the shipped config template, so the template-load smoke test

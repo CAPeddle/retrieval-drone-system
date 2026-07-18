@@ -68,6 +68,19 @@ gating:                         # TRK-015 observation association.
   max_distance_px: 50           # Gate radius; observation beyond this spawns a
                                 # new track. Provisional — ticket default.
 
+coordinate:                     # TRK-017..019 floor-plane mapping (ADR-006/010).
+  pixel_uncertainty_stddev_px: 1.0   # Detector pixel noise fed to the Jacobian.
+  condition_number_max: 100000  # Degeneracy gate on the UNIT-NORMALISED homography
+                                # (pixels and AOI metres both scaled to [-1,1]):
+                                # healthy fits sit at O(1..1e3), collinear-anchor
+                                # fits blow past 1e10. Provisional.
+  # Floor AOI (FloorPlane2D metres): mapped positions outside are rejected.
+  # ALL provisional — measure the real operating area at install time.
+  floor_aoi_x_min_m: -1.0       # provisional
+  floor_aoi_x_max_m: 5.0        # provisional
+  floor_aoi_y_min_m: -1.0       # provisional
+  floor_aoi_y_max_m: 5.0        # provisional
+
 zmq:
   bind_address: "tcp://*:5555"   # ADR-002: core BINDs (default port 5555); consumers CONNECT.
 

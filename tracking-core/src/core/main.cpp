@@ -2,6 +2,8 @@
 #include "camera_source.hpp"
 #include "capture_thread.hpp"
 #include "config.hpp"
+#include "coordinate_mapper.hpp"
+#include "homography_loader.hpp"
 #include "frame_quality.hpp"
 #include "frame_ring_buffer.hpp"
 #include "logging.hpp"
@@ -57,6 +59,22 @@ int main(int argc, char** argv) {
     // Post-init failures (zmq bind, OpenCV throws) must drain the logger and
     // exit 1 rather than reach std::terminate with queued messages lost.
     try {
+        // TRK-017/018 fail-fast (plan KTD-7): the core refuses to start
+        // without valid, paired, undistorted-fit calibration artifacts.
+        const tracking::CalibrationArtifacts calibration =
+            tracking::load_calibration_artifacts(config.calibration.intrinsics_path,
+                                                 config.calibration.extrinsics_path,
+                                                 config.coordinate);
+        tracking::CoordinateMapper coordinate_mapper(calibration, config.coordinate,
+                                                     config.ball.radius_m);
+        LOG_INFO("calibration loaded: camera '{}' at floor position ({:.3f}, {:.3f}, "
+                 "{:.3f}) m",
+                 calibration.intrinsics.camera_id, coordinate_mapper.camera_centre()[0],
+                 coordinate_mapper.camera_centre()[1], coordinate_mapper.camera_centre()[2]);
+        // coordinate_mapper feeds the TRK-020 snapshot builder (Phase C); the
+        // tracker below still operates in pixel space.
+        (void)coordinate_mapper;
+
         tracking::CameraSource camera(config.camera);
         if (!camera.is_open()) {
             LOG_ERROR("Unable to open camera device {}", config.camera.device_id);

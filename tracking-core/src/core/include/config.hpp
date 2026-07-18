@@ -2,6 +2,7 @@
 
 #include <stdexcept>
 #include <string>
+#include <vector>
 
 namespace tracking {
 
@@ -14,6 +15,9 @@ public:
 struct CameraConfig {
     int device_id = 0;
     int target_fps = 0;
+    int width = 0;
+    int height = 0;
+    int exposure_us = 0;  // Manual exposure locked at calibration time (ADR-004).
 };
 
 struct LaserConfig {
@@ -28,16 +32,43 @@ struct SafeForControlConfig {
 };
 
 struct BallConfig {
-    double radius_m = 0.0;
+    double radius_m = 0.0;                // Physical radius (ADR-010 Z compensation).
+    int expected_radius_px_min = 0;       // TRK-010 size gate, lower bound.
+    int expected_radius_px_max = 0;       // TRK-010 size gate, upper bound.
+    double min_circularity = 0.0;         // 4*pi*area/perimeter^2 must exceed this.
+    int detection_blur_kernel = 0;        // Odd Gaussian kernel size for denoising.
+    int brightness_threshold = 0;         // Fixed prior: pixels above this are ball-candidate (NoIR).
 };
 
 struct ZmqConfig {
     std::string bind_address;
 };
 
+struct CharucoConfig {
+    int squares_x = 0;             // Board columns (odd per KTD-4 future-proofing).
+    int squares_y = 0;             // Board rows (odd).
+    double square_length_m = 0.0;  // Physical square edge length.
+    double marker_length_m = 0.0;  // Physical marker edge length (< square).
+};
+
 struct CalibrationConfig {
     std::string intrinsics_path;
     std::string extrinsics_path;
+    std::string aruco_dictionary;      // TRK-011: predefined dictionary name.
+    std::vector<int> marker_ids;       // Expected static health-monitoring marker IDs (ADR-004 Phase 2).
+    CharucoConfig charuco;
+};
+
+struct PipelineConfig {
+    int ring_buffer_capacity = 0;      // Frame slots pre-allocated between capture and processing.
+    int capture_cpu_core = 0;          // Core the ingestion thread is pinned to (§7.1 affinity).
+    int capture_thread_priority = 0;   // SCHED_FIFO priority for the ingestion thread.
+};
+
+struct FrameQualityConfig {
+    double underexposed_threshold = 0.0;  // Histogram mean below this -> REJECT.
+    double overexposed_threshold = 0.0;   // Histogram mean above this -> REJECT.
+    double blur_threshold = 0.0;          // Laplacian variance below this -> REJECT.
 };
 
 struct LoggingConfig {
@@ -58,6 +89,8 @@ struct Config {
     ZmqConfig zmq;
     CalibrationConfig calibration;
     LoggingConfig logging;
+    PipelineConfig pipeline;
+    FrameQualityConfig frame_quality;
 
     // Loads and validates the YAML at `path`. Throws ConfigError on a missing
     // required field or a type mismatch. Startup-only — may throw (config and

@@ -8,7 +8,6 @@ Workflow defined in [README.md → Workflow](README.md#workflow). Risk register 
 
 
 ## In Progress
-- [ ] TRK-004 — Async logger → [story](docs/tickets/TRK-004-async-logger.md)
 
 
 ## Blocked
@@ -28,6 +27,18 @@ Workflow defined in [README.md → Workflow](README.md#workflow). Risk register 
 - [x] DOCS-006 — Reconcile [CLAUDE.md §8.7](CLAUDE.md) layout with chosen multi-subsystem structure (2026-06-21)
 - [x] TRK-002 — Build system overhaul (2026-07-08)
 - [x] TRK-003 — Configuration system (2026-07-08)
+- [x] CAM-002 — PoC: Pi3B to Pi5 camera streaming with web viewer (2026-07-15)
+- [x] TRK-004 — Async logger (2026-07-16)
+- [x] META-014 — Board scripts preserve optional front-matter fields (2026-07-16)
+- [x] TRK-005 — Frame ring buffer (2026-07-17)
+- [x] TRK-006 — Camera capture thread (2026-07-17)
+- [x] TRK-007 — Frame timestamping (2026-07-17)
+- [x] TRK-008 — Frame quality assessment (2026-07-17)
+- [x] TRK-031 — Replay frame source and recorded scenario library (2026-07-17)
+- [x] TRK-010 — Ball detector (2026-07-18)
+- [x] TRK-011 — Calibration marker detector (2026-07-18)
+- [x] TRK-012 — Intrinsic calibration tool (2026-07-18)
+- [x] TRK-013 — Extrinsic calibration tool (2026-07-18)
 
 ## Backlog
 
@@ -50,10 +61,6 @@ Workflow defined in [README.md → Workflow](README.md#workflow). Risk register 
 
 ### v0.3 implementation — infrastructure
 
-- [ ] TRK-005 — Frame ring buffer (lock-free SPSC) → [story](docs/tickets/TRK-005-frame-ring-buffer.md)
-- [ ] TRK-006 — Camera capture thread (V4L2 + SCHED_FIFO) → [story](docs/tickets/TRK-006-camera-capture-thread.md)
-- [ ] TRK-007 — Frame timestamping (FrameMetadata POD) → [story](docs/tickets/TRK-007-frame-timestamping.md)
-- [ ] TRK-008 — Frame quality assessment (exposure + blur gate) → [story](docs/tickets/TRK-008-frame-quality-assessment.md)
 
 ### v0.3 implementation — detection
 
@@ -62,13 +69,9 @@ Workflow defined in [README.md → Workflow](README.md#workflow). Risk register 
 - [ ] TRK-009b — Rolling buffer + PSD correlation engine → [story](docs/tickets/TRK-009b-rolling-buffer-correlation.md)
 - [ ] TRK-009c — Clustering + centroid extraction → [story](docs/tickets/TRK-009c-clustering-centroid.md)
 - [ ] TRK-009d — Grace period + pipeline integration → [story](docs/tickets/TRK-009d-grace-period-integration.md)
-- [ ] TRK-010 — Ball detector (IR blob + size gate) → [story](docs/tickets/TRK-010-ball-detector.md)
-- [ ] TRK-011 — Calibration marker detector (ArUco/Charuco) → [story](docs/tickets/TRK-011-calibration-marker-detector.md)
 
 ### v0.3 implementation — calibration tooling
 
-- [ ] TRK-012 — Intrinsic calibration tool (Python) → [story](docs/tickets/TRK-012-intrinsic-calibration-tool.md)
-- [ ] TRK-013 — Extrinsic calibration tool (Python) → [story](docs/tickets/TRK-013-extrinsic-calibration-tool.md)
 
 ### v0.3 implementation — tracking
 

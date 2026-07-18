@@ -1,6 +1,6 @@
 ---
 id: TRK-004
-status: in-progress
+status: done
 subsystem: tracking-core
 tier: small
 created: 2026-05-31
@@ -41,3 +41,6 @@ U6. Unit test: `test_logging.cpp` — verify async behaviour (enqueue doesn't bl
 
 - 2026-05-31: created. Status: backlog. Depends on TRK-003 (config fields for logging).
 - 2026-07-16: backlog → in-progress. Implementation complete on feat/trk-004-async-logger per docs/plans/2026-07-15-001-feat-trk-004-async-logger-plan.md (supersedes the inline U1-U6 sketch): logging config section, spdlog async logger with LOG_* macros, main.cpp wiring, 26/26 tests green in Release and Debug. Front-matter depends_on corrected to include TRK-003. Awaiting review/merge.
+- 2026-07-16: in-progress → done. PR #9 merged to master: spdlog v1.15.3 async logger, LOG_* macros with NDEBUG compile floor, logging: config section, 29/29 tests green in Release and Debug. Known residuals recorded in the PR (main loop exit path, TRK-006 SCHED_FIFO logging constraint).
+- 2026-07-16: done → in-progress. META-014 verification round-trip (reverting immediately).
+- 2026-07-16: in-progress → done. META-014 verification round-trip complete; depends_on survived both moves.

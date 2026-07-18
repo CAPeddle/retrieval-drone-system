@@ -106,6 +106,9 @@ Config Config::load(const std::string& path) {
         const YAML::Node camera = require_section(root, "camera");
         cfg.camera.device_id = require<int>(camera, "camera", "device_id");
         cfg.camera.target_fps = require<int>(camera, "camera", "target_fps");
+        cfg.camera.width = require<int>(camera, "camera", "width");
+        cfg.camera.height = require<int>(camera, "camera", "height");
+        cfg.camera.exposure_us = require<int>(camera, "camera", "exposure_us");
 
         const YAML::Node laser = require_section(root, "laser");
         cfg.laser.modulation_frequency_hz =
@@ -123,6 +126,11 @@ Config Config::load(const std::string& path) {
 
         const YAML::Node ball = require_section(root, "ball");
         cfg.ball.radius_m = require<double>(ball, "ball", "radius_m");
+        cfg.ball.expected_radius_px_min = require<int>(ball, "ball", "expected_radius_px_min");
+        cfg.ball.expected_radius_px_max = require<int>(ball, "ball", "expected_radius_px_max");
+        cfg.ball.min_circularity = require<double>(ball, "ball", "min_circularity");
+        cfg.ball.detection_blur_kernel = require<int>(ball, "ball", "detection_blur_kernel");
+        cfg.ball.brightness_threshold = require<int>(ball, "ball", "brightness_threshold");
 
         const YAML::Node zmq = require_section(root, "zmq");
         cfg.zmq.bind_address = require<std::string>(zmq, "zmq", "bind_address");
@@ -132,6 +140,34 @@ Config Config::load(const std::string& path) {
             require<std::string>(calibration, "calibration", "intrinsics_path");
         cfg.calibration.extrinsics_path =
             require<std::string>(calibration, "calibration", "extrinsics_path");
+        cfg.calibration.aruco_dictionary =
+            require<std::string>(calibration, "calibration", "aruco_dictionary");
+        // The generic require<T> handles sequences via yaml-cpp's vector convert.
+        cfg.calibration.marker_ids =
+            require<std::vector<int>>(calibration, "calibration", "marker_ids");
+        const YAML::Node charuco = require_section(calibration, "charuco");
+        cfg.calibration.charuco.squares_x = require<int>(charuco, "calibration.charuco", "squares_x");
+        cfg.calibration.charuco.squares_y = require<int>(charuco, "calibration.charuco", "squares_y");
+        cfg.calibration.charuco.square_length_m =
+            require<double>(charuco, "calibration.charuco", "square_length_m");
+        cfg.calibration.charuco.marker_length_m =
+            require<double>(charuco, "calibration.charuco", "marker_length_m");
+
+        const YAML::Node pipeline = require_section(root, "pipeline");
+        cfg.pipeline.ring_buffer_capacity =
+            require<int>(pipeline, "pipeline", "ring_buffer_capacity");
+        cfg.pipeline.capture_cpu_core =
+            require<int>(pipeline, "pipeline", "capture_cpu_core");
+        cfg.pipeline.capture_thread_priority =
+            require<int>(pipeline, "pipeline", "capture_thread_priority");
+
+        const YAML::Node fqa = require_section(root, "frame_quality");
+        cfg.frame_quality.underexposed_threshold =
+            require<double>(fqa, "frame_quality", "underexposed_threshold");
+        cfg.frame_quality.overexposed_threshold =
+            require<double>(fqa, "frame_quality", "overexposed_threshold");
+        cfg.frame_quality.blur_threshold =
+            require<double>(fqa, "frame_quality", "blur_threshold");
 
         const YAML::Node logging = require_section(root, "logging");
         cfg.logging.level = require<std::string>(logging, "logging", "level");
@@ -152,6 +188,36 @@ Config Config::load(const std::string& path) {
     if (cfg.camera.target_fps <= 0) {
         throw ConfigError("field must be > 0: camera.target_fps");
     }
+    if (cfg.camera.width <= 0) {
+        throw ConfigError("field must be > 0: camera.width");
+    }
+    if (cfg.camera.height <= 0) {
+        throw ConfigError("field must be > 0: camera.height");
+    }
+    // Slots hold full pre-allocated frames (~1 MB each at 640x480 BGR); an
+    // unbounded capacity would commit large amounts of Pi RAM at startup.
+    if (cfg.pipeline.ring_buffer_capacity <= 0 || cfg.pipeline.ring_buffer_capacity > 64) {
+        throw ConfigError("field must be in [1, 64]: pipeline.ring_buffer_capacity");
+    }
+    if (cfg.camera.exposure_us <= 0) {
+        throw ConfigError("field must be > 0: camera.exposure_us");
+    }
+    if (cfg.pipeline.capture_cpu_core < 0 || cfg.pipeline.capture_cpu_core > 63) {
+        throw ConfigError("field must be in [0, 63]: pipeline.capture_cpu_core");
+    }
+    // SCHED_FIFO valid priority range on Linux.
+    if (cfg.pipeline.capture_thread_priority < 1 || cfg.pipeline.capture_thread_priority > 99) {
+        throw ConfigError("field must be in [1, 99]: pipeline.capture_thread_priority");
+    }
+    require_in(cfg.frame_quality.underexposed_threshold, 0.0, 255.0,
+               "frame_quality.underexposed_threshold");
+    require_in(cfg.frame_quality.overexposed_threshold, 0.0, 255.0,
+               "frame_quality.overexposed_threshold");
+    if (cfg.frame_quality.overexposed_threshold <= cfg.frame_quality.underexposed_threshold) {
+        throw ConfigError(
+            "frame_quality.overexposed_threshold must be > frame_quality.underexposed_threshold");
+    }
+    require_gt(cfg.frame_quality.blur_threshold, 0.0, "frame_quality.blur_threshold");
     require_gt(cfg.laser.modulation_frequency_hz, 0.0, "laser.modulation_frequency_hz");
     require_in(cfg.laser.modulation_duty_cycle, 0.0, 1.0, "laser.modulation_duty_cycle");
     require_gt(cfg.safe_for_control.age_max_ms, 0.0, "safe_for_control.age_max_ms");
@@ -163,9 +229,57 @@ Config Config::load(const std::string& path) {
     require_gt(cfg.safe_for_control.alignment_tolerance_m, 0.0,
               "safe_for_control.alignment_tolerance_m");
     require_gt(cfg.ball.radius_m, 0.0, "ball.radius_m");
+    // TRK-010 ball detector gates. All defaults are provisional (guessed,
+    // pending real-footage validation) — see the yaml provenance comments.
+    if (cfg.ball.expected_radius_px_min <= 0) {
+        throw ConfigError("field must be > 0: ball.expected_radius_px_min");
+    }
+    if (cfg.ball.expected_radius_px_max <= cfg.ball.expected_radius_px_min) {
+        throw ConfigError(
+            "ball.expected_radius_px_max must be > ball.expected_radius_px_min");
+    }
+    require_in(cfg.ball.min_circularity, 0.0, 1.0, "ball.min_circularity");
+    if (cfg.ball.min_circularity <= 0.0) {
+        throw ConfigError("field must be > 0: ball.min_circularity");
+    }
+    // Odd kernel required by cv::GaussianBlur; bounded to keep denoising sane.
+    if (cfg.ball.detection_blur_kernel < 3 || cfg.ball.detection_blur_kernel > 15 ||
+        cfg.ball.detection_blur_kernel % 2 == 0) {
+        throw ConfigError("field must be an odd int in [3, 15]: ball.detection_blur_kernel");
+    }
+    if (cfg.ball.brightness_threshold < 1 || cfg.ball.brightness_threshold > 254) {
+        throw ConfigError("field must be in [1, 254]: ball.brightness_threshold");
+    }
     require_nonempty(cfg.zmq.bind_address, "zmq.bind_address");
     require_nonempty(cfg.calibration.intrinsics_path, "calibration.intrinsics_path");
     require_nonempty(cfg.calibration.extrinsics_path, "calibration.extrinsics_path");
+    // TRK-011 marker detector.
+    require_one_of(cfg.calibration.aruco_dictionary, {"4X4_50", "4X4_100", "5X5_50"},
+                   "calibration.aruco_dictionary");
+    // ADR-004 Phase 2 health monitoring needs at least one static marker.
+    if (cfg.calibration.marker_ids.empty()) {
+        throw ConfigError("field must be a non-empty int list: calibration.marker_ids");
+    }
+    for (const int id : cfg.calibration.marker_ids) {
+        if (id < 0) {
+            throw ConfigError("field must contain only non-negative ids: calibration.marker_ids");
+        }
+    }
+    // Odd square counts per KTD-4 (future-proofing against legacy Charuco
+    // patterns and rows-vs-columns axis confusion; all our OpenCV versions
+    // already agree on the post-4.6.0 pattern).
+    if (cfg.calibration.charuco.squares_x < 3 || cfg.calibration.charuco.squares_x % 2 == 0) {
+        throw ConfigError("field must be an odd int >= 3: calibration.charuco.squares_x");
+    }
+    if (cfg.calibration.charuco.squares_y < 3 || cfg.calibration.charuco.squares_y % 2 == 0) {
+        throw ConfigError("field must be an odd int >= 3: calibration.charuco.squares_y");
+    }
+    require_gt(cfg.calibration.charuco.square_length_m, 0.0, "calibration.charuco.square_length_m");
+    require_gt(cfg.calibration.charuco.marker_length_m, 0.0, "calibration.charuco.marker_length_m");
+    if (cfg.calibration.charuco.marker_length_m >= cfg.calibration.charuco.square_length_m) {
+        throw ConfigError(
+            "calibration.charuco.marker_length_m must be < calibration.charuco.square_length_m");
+    }
     require_one_of(cfg.logging.level,
                    {"trace", "debug", "info", "warn", "error", "critical"},
                    "logging.level");

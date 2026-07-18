@@ -1,9 +1,14 @@
 # ─── tracking_core_lib: static library of all pipeline sources ────────────────
 # Used by both the main executable and unit tests. Excludes main.cpp.
 add_library(tracking_core_lib STATIC
+    camera_source.cpp
+    capture_thread.cpp
     config.cpp
+    frame_quality.cpp
     logging.cpp
-    tracking/detector.cpp
+    replay_source.cpp
+    tracking/ball_detector.cpp
+    tracking/calibration_marker_detector.cpp
     tracking/tracker.cpp
 )
 

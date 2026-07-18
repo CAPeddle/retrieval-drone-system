@@ -69,9 +69,13 @@ class Frontmatter:
     tier: str | None = None
     created: str | None = None
     updated: str | None = None
+    depends_on: list[str] = field(default_factory=list)
     spec: str | None = None
     plan: str | None = None
     blockers: list[str] = field(default_factory=list)
+    # Any key outside the schema above, in file order. Preserved verbatim on
+    # render so a move never silently deletes front-matter it doesn't know.
+    extras: dict[str, object] = field(default_factory=dict)
 
 
 def today() -> str:
@@ -103,22 +107,44 @@ def parse_frontmatter(text: str) -> tuple[Frontmatter, str]:
         body = text[end + 5:]
     fm_text = text[4:end]
     raw: dict[str, object] = {}
+    pending_list_key: str | None = None  # key opened with an empty value; `- item` lines attach to it
     for line in fm_text.splitlines():
         line = line.rstrip()
         if not line or line.lstrip().startswith("#"):
             continue
+        item = re.match(r"^\s+-\s*(.+?)\s*$", line)
+        if item and pending_list_key is not None:
+            value_list = raw[pending_list_key]
+            assert isinstance(value_list, list)
+            value_list.append(item.group(1).strip().strip('"').strip("'"))
+            continue
+        pending_list_key = None
         if ":" not in line:
             continue
         key, _, value = line.partition(":")
         key = key.strip()
         value = value.strip()
-        if value == "null" or value == "":
+        if value == "":
+            # Either a multi-line list opener or a blank scalar; resolved below.
+            raw[key] = []
+            pending_list_key = key
+        elif value == "null":
             raw[key] = None
         elif value.startswith("[") and value.endswith("]"):
             inner = value[1:-1].strip()
-            raw[key] = [x.strip() for x in inner.split(",") if x.strip()] if inner else []
+            raw[key] = (
+                [x.strip().strip('"').strip("'") for x in inner.split(",") if x.strip()]
+                if inner
+                else []
+            )
         else:
             raw[key] = value
+    # An empty-valued scalar key that never received list items reads as null,
+    # except for the schema's list fields where the empty list is the default.
+    for key, value in raw.items():
+        if value == [] and key not in ("depends_on", "blockers"):
+            raw[key] = None
+    known = ("id", "status", "subsystem", "tier", "created", "updated", "depends_on", "spec", "plan", "blockers")
     fm = Frontmatter(
         id=raw.get("id"),
         status=raw.get("status"),
@@ -126,9 +152,11 @@ def parse_frontmatter(text: str) -> tuple[Frontmatter, str]:
         tier=raw.get("tier"),
         created=raw.get("created"),
         updated=raw.get("updated"),
+        depends_on=raw.get("depends_on") or [],
         spec=raw.get("spec"),
         plan=raw.get("plan"),
         blockers=raw.get("blockers") or [],
+        extras={k: v for k, v in raw.items() if k not in known},
     )
     return fm, body
 
@@ -143,8 +171,18 @@ def render_frontmatter(fm: Frontmatter) -> str:
         return str(value)
 
     lines = ["---"]
-    for key in ("id", "status", "subsystem", "tier", "created", "updated", "spec", "plan", "blockers"):
+    for key in ("id", "status", "subsystem", "tier", "created", "updated"):
         lines.append(f"{key}: {render(getattr(fm, key))}")
+    # Schema position per .claude/rules/tickets.md: depends_on sits between
+    # updated and spec. Multi-line quoted form matches the hand-written files.
+    if fm.depends_on:
+        lines.append("depends_on:")
+        for item in fm.depends_on:
+            lines.append(f'  - "{item}"')
+    for key in ("spec", "plan", "blockers"):
+        lines.append(f"{key}: {render(getattr(fm, key))}")
+    for key, value in fm.extras.items():
+        lines.append(f"{key}: {render(value)}")
     lines.append("---")
     return "\n".join(lines) + "\n"
 

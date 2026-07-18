@@ -1,10 +1,10 @@
 ---
 id: TRK-010
-status: backlog
+status: done
 subsystem: tracking-core
 tier: small
 created: 2026-05-31
-updated: 2026-05-31
+updated: 2026-07-18
 depends_on:
   - "TRK-008"
 spec: null
@@ -51,3 +51,5 @@ U8. Unit tests: synthetic images, edge cases (ball at frame edge, partial occlus
 ## Log
 
 - 2026-05-31: created. Status: backlog. Depends on TRK-008 (frames available post quality check).
+- 2026-07-18: backlog → in-progress. Starting detection+calibration cluster (TRK-010..013) on feat/v03-detection-calibration, stacked on PR #10.
+- 2026-07-18: in-progress → done. BallDetector landed on feat/v03-detection-calibration: fixed brightness-prior threshold (not Otsu, per KTD-2 zero-FP-gate rationale), contour+circularity+convexity gates, moments centroid, pre-allocated buffers incl. reused convexHull scratch. Replaces stub Detector; Tracker bridge in main.cpp (centroid+/-radius, empty Rect on nullopt). Test-surfaced fix: min_circularity 0.7 admitted squares (pi/4~=0.785) -> raised provisional default to 0.82. 72/72 ctest green Release+Debug, zero warnings. <=2ms Pi budget deferred to TRK-026; real-ball true-positive thresholds deferred to bench replay.

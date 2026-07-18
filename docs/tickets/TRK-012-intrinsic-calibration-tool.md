@@ -1,10 +1,10 @@
 ---
 id: TRK-012
-status: backlog
+status: done
 subsystem: tracking-core
 tier: small
 created: 2026-05-31
-updated: 2026-05-31
+updated: 2026-07-18
 depends_on:
   - "TRK-002"
 spec: null
@@ -41,3 +41,4 @@ U8. Integration test: use `cv2.aruco.CharucoBoard.generateImage()` to create syn
 ## Log
 
 - 2026-05-31: created. Status: backlog. Python tooling — depends on TRK-002 (requirements.txt updated) but not on C++ pipeline.
+- 2026-07-18: backlog → done. calibrate_intrinsics.py landed (file-driven, KTD-5): modern cv2 5.0 CharucoDetector.detectBoard->matchImagePoints->calibrateCamera path (KTD-3, no removed calibrateCameraCharuco), versioned JSON per ADR-004 with atomic write, reject >1.0px or <8 views. U4 pose-projected synthetic fixture (fixed K_true, +/-15-35deg poses through one pinhole) makes the focal-length recovery verifiable. 8/8 pytest green in a .venv (Python 3.14 dev box, PEP668-safe per KTD-8); black+ruff clean. Real-camera capture is the untested bench wrapper.

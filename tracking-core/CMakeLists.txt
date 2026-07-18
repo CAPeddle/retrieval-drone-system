@@ -28,7 +28,15 @@ add_compile_options(-Wall -Wextra -Wpedantic)
 # OpenCV: too large for FetchContent — must be system-installed.
 # Pi 5: sudo apt install libopencv-dev
 # Dev:   sudo apt install libopencv-dev (or brew install opencv)
+# ArUco (TRK-011) lives in the contrib `aruco` module through OpenCV 4.6 and
+# was merged into `objdetect` in 4.7+. Request the right one per version so the
+# same source links on the 4.6 dev box and the 4.10 Pi 5 (KTD-2).
 find_package(OpenCV REQUIRED COMPONENTS core imgproc videoio calib3d)
+if(OpenCV_VERSION VERSION_LESS 4.7)
+    find_package(OpenCV REQUIRED COMPONENTS aruco)
+else()
+    find_package(OpenCV REQUIRED COMPONENTS objdetect)
+endif()
 
 # ─── FetchContent dependencies ───────────────────────────────────────────────
 include(FetchContent)

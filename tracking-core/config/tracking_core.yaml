@@ -10,6 +10,24 @@
 camera:
   device_id: 0            # V4L2 device index (int). 0 = /dev/video0.
   target_fps: 60          # Capture rate (int). v0.3 targets >=60 fps end-to-end.
+  width: 640              # Capture width in pixels.
+  height: 480             # Capture height in pixels.
+  exposure_us: 5000       # Manual exposure (us), locked at calibration time (ADR-004).
+
+pipeline:
+  ring_buffer_capacity: 4 # Pre-allocated frame slots between capture and processing (1-64).
+  capture_cpu_core: 2     # Core the ingestion thread pins to (fixed partition, §7.1).
+  capture_thread_priority: 80   # SCHED_FIFO priority (1-99); degrades with a WARN unprivileged.
+
+frame_quality:                  # TRK-008 gate: reject garbage before detection.
+  underexposed_threshold: 20    # Histogram mean below this -> REJECT.
+  overexposed_threshold: 240    # Histogram mean above this -> REJECT.
+  blur_threshold: 12            # Laplacian variance below this -> REJECT.
+                                # Measured 2026-07-17 (ov5647, 640x480, indoor):
+                                # sharp footage ~33, sigma-1.5 defocus ~6.3,
+                                # sigma-3 blur ~2.5. Re-calibrate on camera/scene
+                                # change (the original guess of 100 rejected
+                                # every real frame).
 
 laser:
   modulation_frequency_hz: 15.0   # ADR-005: 15 Hz modulation.
@@ -21,7 +39,21 @@ safe_for_control:               # ADR-007 predicate thresholds.
   alignment_tolerance_m: 0.02   # ALIGNMENT_TOLERANCE_M (2 cm default).
 
 ball:
-  radius_m: 0.03            # Ball radius in metres (6 cm diameter).
+  radius_m: 0.03            # Ball radius in metres (6 cm diameter, ADR-010 Z comp).
+  # TRK-010 detector gates. ALL provisional — guessed, pending real-footage
+  # validation against a ball-in-scene replay clip recorded at bench time.
+  # The zero-false-positive replay gate (U3) validates only that a ball-free
+  # room produces no detection; true-positive thresholds get measured provenance
+  # once a ball clip exists (see the TRK-008 blur_threshold precedent above).
+  expected_radius_px_min: 10    # provisional
+  expected_radius_px_max: 80    # provisional
+  min_circularity: 0.82         # provisional — above a square's ceiling
+                                # (4*pi*A/P^2 = pi/4 ~= 0.785 for a square), so
+                                # the gate actually excludes non-round blobs;
+                                # the ticket's 0.7 guess admitted squares
+  detection_blur_kernel: 5      # provisional (odd, 3-15)
+  brightness_threshold: 200     # provisional — NoIR ball is bright; a room scene
+                                # should have nothing brighter that is also circular
 
 zmq:
   bind_address: "tcp://*:5555"   # ADR-002: core BINDs (default port 5555); consumers CONNECT.
@@ -29,6 +61,13 @@ zmq:
 calibration:
   intrinsics_path: "config/intrinsics.json"    # Per-camera intrinsics (ADR-004 Phase 1).
   extrinsics_path: "config/extrinsics.json"    # Floor-plane extrinsics (ADR-006).
+  aruco_dictionary: "4X4_50"                   # TRK-011 predefined dictionary.
+  marker_ids: [0, 1, 2, 3]                     # Static health-monitoring marker IDs (ADR-004 Phase 2, provisional).
+  charuco:                                     # Install-time board geometry (Python tools).
+    squares_x: 5                               # Odd (KTD-4 future-proofing).
+    squares_y: 7                               # Odd.
+    square_length_m: 0.025                     # provisional — measure the printed board at bench time.
+    marker_length_m: 0.020                     # provisional (< square).
 
 logging:                        # §7.1: async ring-buffered spdlog, tmpfs only.
   level: warn                   # Runtime floor: trace|debug|info|warn|error|critical.

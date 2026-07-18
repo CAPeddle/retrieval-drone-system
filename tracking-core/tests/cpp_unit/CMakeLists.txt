@@ -1,6 +1,14 @@
 # ─── tracking_core_tests: links tracking_core_lib instead of raw sources ─────
 add_executable(tracking_core_tests
+    test_ball_detector.cpp
+    test_calibration_marker_detector.cpp
+    test_capture_thread.cpp
     test_config.cpp
+    test_frame_metadata.cpp
+    test_frame_quality.cpp
+    test_frame_ring_buffer.cpp
+    test_replay_integration.cpp
+    test_replay_source.cpp
     test_logging.cpp
     test_logging_default_level.cpp
     test_tracking_pipeline.cpp

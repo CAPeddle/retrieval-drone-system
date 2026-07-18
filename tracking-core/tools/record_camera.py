@@ -7,7 +7,9 @@ import cv2
 def main() -> None:
     parser = argparse.ArgumentParser(description="Record raw camera frames to disk")
     parser.add_argument("--output", default="recordings", help="Output directory")
-    parser.add_argument("--frames", type=int, default=100, help="Number of frames to capture")
+    parser.add_argument(
+        "--frames", type=int, default=100, help="Number of frames to capture"
+    )
     args = parser.parse_args()
 
     output_dir = Path(args.output)

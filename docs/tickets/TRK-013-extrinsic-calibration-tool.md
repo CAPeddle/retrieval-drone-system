@@ -1,10 +1,10 @@
 ---
 id: TRK-013
-status: backlog
+status: done
 subsystem: tracking-core
 tier: small
 created: 2026-05-31
-updated: 2026-05-31
+updated: 2026-07-18
 depends_on:
   - "TRK-012"
 spec: null
@@ -41,3 +41,5 @@ U8. Integration test: synthetic point correspondences with known homography → 
 ## Log
 
 - 2026-05-31: created. Status: backlog. Python tooling — depends on TRK-012 (intrinsics available for undistortion during anchor detection).
+- 2026-07-18: backlog → in-progress. Starting on feat/v03-detection-calibration; TRK-012 intrinsics landed.
+- 2026-07-18: in-progress → done. calibrate_extrinsics.py landed: image->FloorPlane2D homography via findHomography(method=0, NOT RANSAC — dst units are metres, a bad anchor must fail the gate not be masked as outlier), error computed over ALL anchors. Gates: >=4 (warn exact-fit at 4), non-collinear SVD sigma2/sigma1<1e-3, <=0.020m (CAL_HEALTH_FAIL_M), <=3.0px (ADR-006). Undistorts via --intrinsics; JSON records undistorted_coordinates:true + floor_anchor_points with image px (frame re-derivable per ADR-006). 6 tests incl. exact+near-collinear(2mm) and perturbed-anchor rejection; 14/14 python green, black+ruff clean. Interactive click mode out of scope (KTD-5, layout file replaces it).

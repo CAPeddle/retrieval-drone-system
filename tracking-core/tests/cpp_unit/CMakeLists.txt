@@ -15,6 +15,7 @@ add_executable(tracking_core_tests
     test_logging_default_level.cpp
     test_pipeline_tracking.cpp
     test_safe_for_control.cpp
+    test_safety_replay.cpp
     test_snapshot_builder.cpp
     test_track.cpp
     test_tracker.cpp

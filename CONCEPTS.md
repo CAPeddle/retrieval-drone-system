@@ -19,6 +19,9 @@ The per-frame admission status assigned before detection: GOOD (use), DEGRADED (
 ### Provisional Default
 A numeric configuration default shipped without measured provenance from real footage, marked as provisional at its definition site. It survives only until a bench recording exists to measure the real value; replacing a Provisional Default with a measured one is expected follow-up work, not tuning.
 
+### Known-Answer Fixture
+A synthetic test input constructed so its ground truth is exactly known and validation must accept it — the healthy-input counterpart to rejection tests. It is the only test shape that catches silent-zero or silent-wrong-value failures inside a validity gate: a suite of invalid-inputs-must-throw tests passes happily while the gate rejects everything.
+
 ### On-Target Run
 A build-and-test cycle executed natively on the deployment hardware (the Pi 5), as opposed to the development box. Load-bearing rather than a nicety: version-seamed code compiles only one branch per environment, and the replay recordings live only on the target, so an On-Target Run is the sole existence proof for the deployed branch and the Replay Gates. A change to either is unverified until the On-Target Run is green.
 

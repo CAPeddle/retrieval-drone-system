@@ -28,6 +28,9 @@ See [`.claude/rules/solutions.md`](../../.claude/rules/solutions.md) for the req
 
 | Date | File | Type | Applies to | Tags |
 |---|---|---|---|---|
+| 2026-07-18 | [cpp/2026-07-18-camera-centre-from-plane-homography.md](cpp/2026-07-18-camera-centre-from-plane-homography.md) | pattern | tracking-core | opencv, homography, plane-pose, decomposehomographymat, camera-centre, z-compensation, adr-010 |
+| 2026-07-18 | [cpp/2026-07-18-opencv-svd-outputarray-matx-silent-failure.md](cpp/2026-07-18-opencv-svd-outputarray-matx-silent-failure.md) | pattern | tracking-core | opencv, svd, outputarray, matx, silent-failure, homography |
+| 2026-07-18 | [workflow/2026-07-18-stacked-pr-merge-order-recovery.md](workflow/2026-07-18-stacked-pr-merge-order-recovery.md) | recovery | * | stacked-prs, github, merge-order, pull-requests, recovery, gh-cli |
 | 2026-07-18 | [python/2026-07-18-artifact-metadata-derived-not-asserted.md](python/2026-07-18-artifact-metadata-derived-not-asserted.md) | pattern | tracking-core | calibration, extrinsics, artifact-contract, undistortion, metadata |
 | 2026-07-18 | [cpp/2026-07-18-opencv-aruco-version-portability-seam.md](cpp/2026-07-18-opencv-aruco-version-portability-seam.md) | pattern | tracking-core | opencv, aruco, cmake, version-portability, preprocessor-seam |
 | 2026-07-18 | [cpp/2026-07-18-composite-test-targets-model-occlusion.md](cpp/2026-07-18-composite-test-targets-model-occlusion.md) | pattern | tracking-core | testing, replay-harness, ball-detector, synthetic-compositing, occlusion |

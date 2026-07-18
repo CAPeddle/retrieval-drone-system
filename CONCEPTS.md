@@ -22,6 +22,14 @@ A numeric configuration default shipped without measured provenance from real fo
 ### On-Target Run
 A build-and-test cycle executed natively on the deployment hardware (the Pi 5), as opposed to the development box. Load-bearing rather than a nicety: version-seamed code compiles only one branch per environment, and the replay recordings live only on the target, so an On-Target Run is the sole existence proof for the deployed branch and the Replay Gates. A change to either is unverified until the On-Target Run is green.
 
+## Tracking
+
+### Track Lifecycle
+The state machine every tracked object moves through: Provisional (seen but unconfirmed) → Confirmed (enough consecutive observations to trust) → Predicted → Occluded (coasting on prediction while unobserved) → Lost (no longer accepting observations) → Retired (removed). Only a Confirmed track can satisfy the safety predicate; the decay direction is driven by time since last observation, and ties at a timer boundary always decay.
+
+### Tracking Snapshot
+The per-frame, fixed-size summary of everything the core believes at one instant — tracked objects with floor-plane positions and uncertainties, system health, and the safety predicate's result. It is the unit the safety predicate evaluates (a pure function of one snapshot, never history) and the unit the publisher serialises onto the wire.
+
 ## Calibration
 
 ### Calibration Artifact

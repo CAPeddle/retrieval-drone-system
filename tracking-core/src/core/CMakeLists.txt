@@ -4,11 +4,17 @@ add_library(tracking_core_lib STATIC
     camera_source.cpp
     capture_thread.cpp
     config.cpp
+    coordinate/coordinate_mapper.cpp
+    coordinate/homography_loader.cpp
+    export/export_thread.cpp
+    export/zmq_publisher.cpp
     frame_quality.cpp
     logging.cpp
     replay_source.cpp
     tracking/ball_detector.cpp
     tracking/calibration_marker_detector.cpp
+    safety/safe_for_control.cpp
+    tracking/snapshot_builder.cpp
     tracking/track.cpp
     tracking/tracker.cpp
 )

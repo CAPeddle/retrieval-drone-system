@@ -123,6 +123,8 @@ Config Config::load(const std::string& path) {
             require<double>(sfc, "safe_for_control", "laser_settled_speed_m_per_s");
         cfg.safe_for_control.alignment_tolerance_m =
             require<double>(sfc, "safe_for_control", "alignment_tolerance_m");
+        cfg.safe_for_control.min_unsafe_dwell_ms =
+            require<double>(sfc, "safe_for_control", "min_unsafe_dwell_ms");
 
         const YAML::Node ball = require_section(root, "ball");
         cfg.ball.radius_m = require<double>(ball, "ball", "radius_m");
@@ -145,6 +147,20 @@ Config Config::load(const std::string& path) {
 
         const YAML::Node gating = require_section(root, "gating");
         cfg.gating.max_distance_px = require<double>(gating, "gating", "max_distance_px");
+
+        const YAML::Node coordinate = require_section(root, "coordinate");
+        cfg.coordinate.pixel_uncertainty_stddev_px =
+            require<double>(coordinate, "coordinate", "pixel_uncertainty_stddev_px");
+        cfg.coordinate.condition_number_max =
+            require<double>(coordinate, "coordinate", "condition_number_max");
+        cfg.coordinate.floor_aoi_x_min_m =
+            require<double>(coordinate, "coordinate", "floor_aoi_x_min_m");
+        cfg.coordinate.floor_aoi_x_max_m =
+            require<double>(coordinate, "coordinate", "floor_aoi_x_max_m");
+        cfg.coordinate.floor_aoi_y_min_m =
+            require<double>(coordinate, "coordinate", "floor_aoi_y_min_m");
+        cfg.coordinate.floor_aoi_y_max_m =
+            require<double>(coordinate, "coordinate", "floor_aoi_y_max_m");
 
         const YAML::Node calibration = require_section(root, "calibration");
         cfg.calibration.intrinsics_path =
@@ -239,6 +255,8 @@ Config Config::load(const std::string& path) {
     }
     require_gt(cfg.safe_for_control.alignment_tolerance_m, 0.0,
               "safe_for_control.alignment_tolerance_m");
+    require_gt(cfg.safe_for_control.min_unsafe_dwell_ms, 0.0,
+               "safe_for_control.min_unsafe_dwell_ms");
     require_gt(cfg.ball.radius_m, 0.0, "ball.radius_m");
     // TRK-010 ball detector gates. All defaults are provisional (guessed,
     // pending real-footage validation) — see the yaml provenance comments.
@@ -279,6 +297,24 @@ Config Config::load(const std::string& path) {
         throw ConfigError("track.retire_timeout_ms must be > track.occlude_timeout_ms");
     }
     require_gt(cfg.gating.max_distance_px, 0.0, "gating.max_distance_px");
+    // TRK-017..019 coordinate mapping. AOI bounds feed the degenerate-mapping
+    // rejection, so NaN here would silently disable it (same rationale as the
+    // ADR-007 finite checks).
+    require_gt(cfg.coordinate.pixel_uncertainty_stddev_px, 0.0,
+               "coordinate.pixel_uncertainty_stddev_px");
+    require_gt(cfg.coordinate.condition_number_max, 1.0, "coordinate.condition_number_max");
+    require_finite(cfg.coordinate.floor_aoi_x_min_m, "coordinate.floor_aoi_x_min_m");
+    require_finite(cfg.coordinate.floor_aoi_x_max_m, "coordinate.floor_aoi_x_max_m");
+    require_finite(cfg.coordinate.floor_aoi_y_min_m, "coordinate.floor_aoi_y_min_m");
+    require_finite(cfg.coordinate.floor_aoi_y_max_m, "coordinate.floor_aoi_y_max_m");
+    if (cfg.coordinate.floor_aoi_x_max_m <= cfg.coordinate.floor_aoi_x_min_m) {
+        throw ConfigError(
+            "coordinate.floor_aoi_x_max_m must be > coordinate.floor_aoi_x_min_m");
+    }
+    if (cfg.coordinate.floor_aoi_y_max_m <= cfg.coordinate.floor_aoi_y_min_m) {
+        throw ConfigError(
+            "coordinate.floor_aoi_y_max_m must be > coordinate.floor_aoi_y_min_m");
+    }
     require_nonempty(cfg.zmq.bind_address, "zmq.bind_address");
     require_nonempty(cfg.calibration.intrinsics_path, "calibration.intrinsics_path");
     require_nonempty(cfg.calibration.extrinsics_path, "calibration.extrinsics_path");

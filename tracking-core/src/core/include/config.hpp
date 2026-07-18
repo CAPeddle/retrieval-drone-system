@@ -29,6 +29,7 @@ struct SafeForControlConfig {
     double age_max_ms = 0.0;
     double laser_settled_speed_m_per_s = 0.0;
     double alignment_tolerance_m = 0.0;
+    double min_unsafe_dwell_ms = 0.0;  // ADR-007 hysteresis dwell (TRK-020c).
 };
 
 struct BallConfig {
@@ -57,6 +58,18 @@ struct CalibrationConfig {
     std::string aruco_dictionary;      // TRK-011: predefined dictionary name.
     std::vector<int> marker_ids;       // Expected static health-monitoring marker IDs (ADR-004 Phase 2).
     CharucoConfig charuco;
+};
+
+struct CoordinateConfig {
+    double pixel_uncertainty_stddev_px = 0.0;  // TRK-019 input uncertainty.
+    double condition_number_max = 0.0;         // Homography degeneracy gate (ADR-006).
+    // Floor area of interest in FloorPlane2D metres: mapped positions outside
+    // are rejected as degenerate (plan R8). Also bounds the horizon-safety
+    // denominator check at artifact load (plan R5).
+    double floor_aoi_x_min_m = 0.0;
+    double floor_aoi_x_max_m = 0.0;
+    double floor_aoi_y_min_m = 0.0;
+    double floor_aoi_y_max_m = 0.0;
 };
 
 struct GatingConfig {
@@ -101,6 +114,7 @@ struct Config {
     ZmqConfig zmq;
     TrackConfig track;
     GatingConfig gating;
+    CoordinateConfig coordinate;
     CalibrationConfig calibration;
     LoggingConfig logging;
     PipelineConfig pipeline;

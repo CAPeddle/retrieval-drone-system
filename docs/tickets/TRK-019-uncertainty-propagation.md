@@ -1,6 +1,6 @@
 ---
 id: TRK-019
-status: backlog
+status: done
 subsystem: tracking-core
 tier: small
 created: 2026-05-31
@@ -38,3 +38,4 @@ U5. Unit tests: verify monotonic increase with distance, verify camera-angle dep
 ## Log
 
 - 2026-05-31: created. Status: backlog. Depends on TRK-018 (extends CoordinateMapper with uncertainty).
+- 2026-07-18: backlog -> done. Analytic projective Jacobian x pixel stddev (spectral norm), numeric finite-difference cross-check within 10%; far>near and shallow>steep verified. Combined with track prediction uncertainty at snapshot build.

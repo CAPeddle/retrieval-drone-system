@@ -1,6 +1,6 @@
 ---
 id: TRK-014
-status: backlog
+status: done
 subsystem: tracking-core
 tier: small
 created: 2026-05-31
@@ -44,3 +44,4 @@ U7. Unit tests: full state machine coverage — every edge, timer boundaries, pa
 ## Log
 
 - 2026-05-31: created. Status: backlog. Depends on TRK-009/010 (detectors produce observations to feed tracks).
+- 2026-07-18: backlog -> done. TrackLifecycle landed on feat/trk-014-016-track-lifecycle: six-state Track machine, capture-clock timers with ties-decay boundaries, Provisional 2-miss deletion, cascading decay, monotonic IDs; `track` config section. Full edge/boundary unit coverage.

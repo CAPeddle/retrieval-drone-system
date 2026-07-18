@@ -1,6 +1,6 @@
 ---
 id: TRK-018
-status: backlog
+status: done
 subsystem: tracking-core
 tier: small
 created: 2026-05-31
@@ -43,3 +43,4 @@ U9. Unit tests: known geometry scenarios matching ADR-010's worked example.
 ## Log
 
 - 2026-05-31: created. Status: backlog. Depends on TRK-017 (homography loaded) and TRK-012 (intrinsics available).
+- 2026-07-18: backlog -> done. CoordinateMapper landed: camera centre via plane-pose extraction B=K^-1 H^-1 (NOT decomposeHomographyMat — wrong contract for a world-plane homography), closed-form height scaling, degenerate rejection (valid=false, never NaN). ADR-010 worked-example gate: naive >2cm bias, compensated <=5mm.

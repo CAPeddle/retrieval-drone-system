@@ -3,3 +3,5 @@ pyzmq
 numpy
 pytest
 pyyaml
+pygame>=2.5
+pydantic>=2.5

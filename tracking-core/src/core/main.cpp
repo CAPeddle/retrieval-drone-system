@@ -2,15 +2,20 @@
 #include "camera_source.hpp"
 #include "capture_thread.hpp"
 #include "config.hpp"
+#include "coordinate_mapper.hpp"
+#include "homography_loader.hpp"
 #include "frame_quality.hpp"
+#include "export_thread.hpp"
 #include "frame_ring_buffer.hpp"
 #include "logging.hpp"
+#include "safe_for_control.hpp"
+#include "snapshot_builder.hpp"
+#include "spsc_ring.hpp"
 #include "tracker.hpp"
+#include "tracking_snapshot.hpp"
+#include "zmq_publisher.hpp"
 
-#include <opencv2/imgcodecs.hpp>
-#include <opencv2/imgproc.hpp>
 #include <opencv2/videoio.hpp>
-#include <zmq.hpp>
 
 #include <atomic>
 #include <chrono>
@@ -57,6 +62,26 @@ int main(int argc, char** argv) {
     // Post-init failures (zmq bind, OpenCV throws) must drain the logger and
     // exit 1 rather than reach std::terminate with queued messages lost.
     try {
+        // TRK-017/018 fail-fast (plan KTD-7): the core refuses to start
+        // without valid, paired, undistorted-fit calibration artifacts.
+        const tracking::CalibrationArtifacts calibration =
+            tracking::load_calibration_artifacts(config.calibration.intrinsics_path,
+                                                 config.calibration.extrinsics_path,
+                                                 config.coordinate);
+        tracking::CoordinateMapper coordinate_mapper(calibration, config.coordinate,
+                                                     config.ball.radius_m);
+        LOG_INFO("calibration loaded: camera '{}' at floor position ({:.3f}, {:.3f}, "
+                 "{:.3f}) m",
+                 calibration.intrinsics.camera_id, coordinate_mapper.camera_centre()[0],
+                 coordinate_mapper.camera_centre()[1], coordinate_mapper.camera_centre()[2]);
+        // TRK-020: snapshot assembly + the ADR-007 predicate, evaluated once
+        // per frame after tracking. The tracker operates in pixel space; the
+        // mapper projects at snapshot build.
+        tracking::SnapshotBuilder snapshot_builder(coordinate_mapper, config.coordinate);
+        tracking::SafeForControlEvaluator safety_evaluator(config.safe_for_control,
+                                                           config.ball.radius_m);
+        bool last_published_safe = false;
+
         tracking::CameraSource camera(config.camera);
         if (!camera.is_open()) {
             LOG_ERROR("Unable to open camera device {}", config.camera.device_id);
@@ -64,10 +89,13 @@ int main(int argc, char** argv) {
             return 1;
         }
 
-        zmq::context_t context(1);
-        zmq::socket_t publisher(context, zmq::socket_type::pub);
-        publisher.set(zmq::sockopt::sndhwm, 1);  // ADR-002: drop stale frames on lag.
-        publisher.bind(config.zmq.bind_address);
+        // TRK-021: snapshot publisher on its own export thread, fed through a
+        // freshest-wins SPSC ring (ADR-002 CONFLATE semantics end to end).
+        tracking::ZmqPublisher zmq_publisher(config.zmq, config.safe_for_control,
+                                             config.ball.radius_m);
+        tracking::SpscRing<tracking::TrackingSnapshot> snapshot_ring(4);
+        tracking::ExportThread export_thread(snapshot_ring, zmq_publisher);
+        export_thread.start();
 
         tracking::BallDetector ball_detector(config.ball, config.camera.height,
                                              config.camera.width);
@@ -143,10 +171,13 @@ int main(int argc, char** argv) {
                 last_quality_report = now;
             }
             if (frame_quality == tracking::FrameQuality::REJECT) {
+                snapshot_builder.note_frame_rejected();
                 observations.clear();
                 tracker.update(observations, now_ns);  // R4: REJECT still ages tracks
                 continue;
             }
+            snapshot_builder.mark_frame_admitted();  // INITIALISING -> RUNNING
+            snapshot_builder.note_frame_processed();
 
             // TRK-010 ball detection feeding the TRK-014/015 tracker. This is
             // the observation-build seam (plan U4/KTD-6): detector outputs are
@@ -163,31 +194,28 @@ int main(int argc, char** argv) {
                 observations.push_back(obs);
             }
             const auto& tracks = tracker.update(observations, now_ns);
-            for (const tracking::Track& track : tracks) {
-                if (track.type() == tracking::ObjectType::Ball &&
-                    track.state() == tracking::TrackState::Confirmed) {
-                    const int r = static_cast<int>(track.radius_px());
-                    const cv::Point centre(static_cast<int>(track.position_px().x),
-                                           static_cast<int>(track.position_px().y));
-                    cv::circle(frame, centre, r > 0 ? r : 4, cv::Scalar(0, 255, 0), 2);
-                }
-            }
 
-            std::vector<uchar> encoded;
-            if (!cv::imencode(".jpg", frame, encoded)) {
-                continue;
+            // TRK-020c: one snapshot + predicate evaluation per frame. The
+            // snapshot feeds the TRK-021 publisher in Phase D; until then only
+            // flip events surface (never per-frame logging).
+            tracking::TrackingSnapshot snapshot = snapshot_builder.build(
+                tracks, metadata->capture_timestamp_ns, now_ns);
+            const tracking::SafetyResult safety =
+                safety_evaluator.evaluate(snapshot, now_ns);
+            if (safety.safe != last_published_safe) {
+                LOG_INFO("safe_for_control -> {} (reasons=0x{:02x})", safety.safe,
+                         safety.unsafe_reasons);
+                last_published_safe = safety.safe;
             }
-
-            zmq::message_t topic("frames", 6);
-            publisher.send(topic, zmq::send_flags::sndmore);
-            publisher.send(zmq::buffer(encoded), zmq::send_flags::none);
+            snapshot_ring.try_push(snapshot);  // freshest-wins; never blocks
         }
 
-        // Clean shutdown (plan R23): stop capture first (joins its thread),
-        // then let the socket/context unwind; LINGER handling arrives with the
-        // TRK-021 publisher in Phase D.
-        LOG_INFO("shutdown requested; stopping capture thread");
+        // Clean shutdown (plan R23): capture stops first (joins), then the
+        // export thread drains its ring and joins; LINGER=0 keeps the socket
+        // teardown non-blocking.
+        LOG_INFO("shutdown requested; stopping capture and export threads");
         capture.stop();
+        export_thread.stop();
     } catch (const std::exception& e) {
         LOG_CRITICAL("fatal error after startup: {}", e.what());
         tracking::logging::shutdown();

@@ -1,6 +1,6 @@
 # Drone System — Board
 
-Last updated: 2026-06-04
+Last updated: 2026-07-18
 
 Workflow defined in [README.md → Workflow](README.md#workflow). Risk register (R-NN / D-NN items) lives in [CLAUDE.md §13](CLAUDE.md).
 
@@ -15,6 +15,16 @@ Workflow defined in [README.md → Workflow](README.md#workflow). Risk register 
 
 ## Done (recent)
 
+- [x] VIEW-003 — safe_for_control visualisation (2026-07-18)
+- [x] VIEW-002 — Python floor viewer (2026-07-18)
+- [x] TRK-021 — ZMQ publisher (schema v1) (2026-07-18)
+- [x] TRK-020 — safe_for_control predicate incl. TRK-020a/b/c (2026-07-18)
+- [x] TRK-019 — Uncertainty propagation (2026-07-18)
+- [x] TRK-018 — Z compensation CoordinateMapper (2026-07-18)
+- [x] TRK-017 — Homography loader (2026-07-18)
+- [x] TRK-016 — Track prediction (2026-07-18)
+- [x] TRK-015 — Observation gating (2026-07-18)
+- [x] TRK-014 — Track lifecycle state machine (2026-07-18)
 - [x] CAM-002 — PoC: Pi3B to Pi5 camera streaming with web viewer (2026-07-15)
 - [x] TRK-004 — Async logger (2026-07-16)
 - [x] META-014 — Board scripts preserve optional front-matter fields (2026-07-16)
@@ -63,26 +73,15 @@ Workflow defined in [README.md → Workflow](README.md#workflow). Risk register 
 
 ### v0.3 implementation — tracking
 
-- [ ] TRK-014 — Track lifecycle state machine → [story](docs/tickets/TRK-014-track-lifecycle-state-machine.md)
-- [ ] TRK-015 — Observation gating + track association → [story](docs/tickets/TRK-015-observation-gating.md)
-- [ ] TRK-016 — Track prediction (constant-velocity) → [story](docs/tickets/TRK-016-track-prediction.md)
 
 ### v0.3 implementation — coordinate mapping
 
-- [ ] TRK-017 — Homography loader (JSON → matrix) → [story](docs/tickets/TRK-017-homography-loader.md)
-- [ ] TRK-018 — Z compensation + CoordinateMapper → [story](docs/tickets/TRK-018-z-compensation.md)
-- [ ] TRK-019 — Uncertainty propagation (Jacobian-based) → [story](docs/tickets/TRK-019-uncertainty-propagation.md)
 
 ### v0.3 implementation — safety predicate
 
-- [ ] TRK-020 — safe_for_control predicate (design parent) → [story](docs/tickets/TRK-020-safe-for-control-predicate.md)
-- [ ] TRK-020a — Predicate system clauses (1–4) → [story](docs/tickets/TRK-020a-predicate-system-clauses.md)
-- [ ] TRK-020b — Predicate geometric clauses (5–8) → [story](docs/tickets/TRK-020b-predicate-geometric-clauses.md)
-- [ ] TRK-020c — Hysteresis + integration → [story](docs/tickets/TRK-020c-hysteresis-integration.md)
 
 ### v0.3 implementation — export + health
 
-- [ ] TRK-021 — ZMQ publisher (JSON schema v1) → [story](docs/tickets/TRK-021-zmq-publisher.md)
 - [ ] TRK-022 — Heartbeat thread (≥1 Hz) → [story](docs/tickets/TRK-022-heartbeat-thread.md)
 - [ ] TRK-023 — System health reporting → [story](docs/tickets/TRK-023-system-health-reporting.md)
 - [ ] TRK-024 — Calibration health monitoring (ADR-004 Phase 2) → [story](docs/tickets/TRK-024-calibration-health-monitoring.md)
@@ -91,8 +90,6 @@ Workflow defined in [README.md → Workflow](README.md#workflow). Risk register 
 
 - [ ] TRK-025 — Replay test harness (design parent, resolves D-05) → [story](docs/tickets/TRK-025-replay-test-harness.md)
 - [ ] TRK-026 — Performance benchmark suite → [story](docs/tickets/TRK-026-performance-benchmarks.md)
-- [ ] VIEW-002 — Python ZMQ viewer (floor-plane display) → [story](docs/tickets/VIEW-002-python-viewer.md)
-- [ ] VIEW-003 — safe_for_control visualisation overlay → [story](docs/tickets/VIEW-003-safe-for-control-visualisation.md)
 
 ### Phase 3 — multi-camera + drone observation
 

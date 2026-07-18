@@ -1,6 +1,6 @@
 ---
 id: TRK-020
-status: backlog
+status: done
 subsystem: tracking-core
 tier: design
 created: 2026-05-31
@@ -57,3 +57,4 @@ Tier `design` — spawns sub-tickets for rigorous clause-by-clause implementatio
 ## Log
 
 - 2026-05-31: created. Status: backlog. Tier `design` due to safety criticality. Depends on TRK-018/019 (coordinate mapping for distance computation) and TRK-014/015 (track state for clauses 3-4).
+- 2026-07-18: backlog -> done. Parent acceptance met via TRK-020a/b/c: 8 clauses, asymmetric hysteresis (re-anchor semantics per ADR-007 clarification 2026-07-18), no-alloc evaluate, safe_for_control.min_unsafe_dwell_ms config. Verified by clause/boundary/chatter unit tests + U12 synchronous replay harness with True-Positive Counterweight; on-Pi replay gate zero safe=true frames (interim evidence pending the >=5min ball-in-scene library).

@@ -1,6 +1,6 @@
 ---
 id: TRK-020b
-status: backlog
+status: done
 subsystem: tracking-core
 tier: small
 created: 2026-05-31
@@ -42,3 +42,4 @@ U6. Unit tests: individual clause failures at boundary values, combinations.
 ## Log
 
 - 2026-05-31: created. Status: backlog. Child of TRK-020. Can proceed in parallel with TRK-020a.
+- 2026-07-18: backlog -> done. Clauses 5-8 landed: unsafe-side-wins boundary ties (exactly-at fails), undefined speed fails clause 7, clause-8 distance on Z-compensated FloorPlane2D positions, distance exposed for the viewer.

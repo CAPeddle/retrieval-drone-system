@@ -1,6 +1,6 @@
 ---
 id: VIEW-003
-status: backlog
+status: done
 subsystem: viewer
 tier: small
 created: 2026-05-31
@@ -38,3 +38,4 @@ U6. Integration test: mock messages with various clause failure combinations →
 ## Log
 
 - 2026-05-31: created. Status: backlog. Depends on VIEW-002 (base viewer) and TRK-020 (safety result in messages).
+- 2026-07-18: backlog -> done. Safety visualisation landed: 8-row clause panel (value vs threshold from the wire thresholds block + laser_ball_distance_m), hysteresis countdown, 30s timeline strip (resets on session_id change), alignment envelope drawn in-world around the ball. Schema violations force the STALLED visual so a stale SAFE never looks current.

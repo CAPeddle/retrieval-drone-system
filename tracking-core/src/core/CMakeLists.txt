@@ -6,6 +6,8 @@ add_library(tracking_core_lib STATIC
     config.cpp
     coordinate/coordinate_mapper.cpp
     coordinate/homography_loader.cpp
+    export/export_thread.cpp
+    export/zmq_publisher.cpp
     frame_quality.cpp
     logging.cpp
     replay_source.cpp

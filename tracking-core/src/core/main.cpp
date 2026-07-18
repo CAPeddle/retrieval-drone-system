@@ -5,16 +5,17 @@
 #include "coordinate_mapper.hpp"
 #include "homography_loader.hpp"
 #include "frame_quality.hpp"
+#include "export_thread.hpp"
 #include "frame_ring_buffer.hpp"
 #include "logging.hpp"
 #include "safe_for_control.hpp"
 #include "snapshot_builder.hpp"
+#include "spsc_ring.hpp"
 #include "tracker.hpp"
+#include "tracking_snapshot.hpp"
+#include "zmq_publisher.hpp"
 
-#include <opencv2/imgcodecs.hpp>
-#include <opencv2/imgproc.hpp>
 #include <opencv2/videoio.hpp>
-#include <zmq.hpp>
 
 #include <atomic>
 #include <chrono>
@@ -88,10 +89,13 @@ int main(int argc, char** argv) {
             return 1;
         }
 
-        zmq::context_t context(1);
-        zmq::socket_t publisher(context, zmq::socket_type::pub);
-        publisher.set(zmq::sockopt::sndhwm, 1);  // ADR-002: drop stale frames on lag.
-        publisher.bind(config.zmq.bind_address);
+        // TRK-021: snapshot publisher on its own export thread, fed through a
+        // freshest-wins SPSC ring (ADR-002 CONFLATE semantics end to end).
+        tracking::ZmqPublisher zmq_publisher(config.zmq, config.safe_for_control,
+                                             config.ball.radius_m);
+        tracking::SpscRing<tracking::TrackingSnapshot> snapshot_ring(4);
+        tracking::ExportThread export_thread(snapshot_ring, zmq_publisher);
+        export_thread.start();
 
         tracking::BallDetector ball_detector(config.ball, config.camera.height,
                                              config.camera.width);
@@ -203,32 +207,15 @@ int main(int argc, char** argv) {
                          safety.unsafe_reasons);
                 last_published_safe = safety.safe;
             }
-
-            for (const tracking::Track& track : tracks) {
-                if (track.type() == tracking::ObjectType::Ball &&
-                    track.state() == tracking::TrackState::Confirmed) {
-                    const int r = static_cast<int>(track.radius_px());
-                    const cv::Point centre(static_cast<int>(track.position_px().x),
-                                           static_cast<int>(track.position_px().y));
-                    cv::circle(frame, centre, r > 0 ? r : 4, cv::Scalar(0, 255, 0), 2);
-                }
-            }
-
-            std::vector<uchar> encoded;
-            if (!cv::imencode(".jpg", frame, encoded)) {
-                continue;
-            }
-
-            zmq::message_t topic("frames", 6);
-            publisher.send(topic, zmq::send_flags::sndmore);
-            publisher.send(zmq::buffer(encoded), zmq::send_flags::none);
+            snapshot_ring.try_push(snapshot);  // freshest-wins; never blocks
         }
 
-        // Clean shutdown (plan R23): stop capture first (joins its thread),
-        // then let the socket/context unwind; LINGER handling arrives with the
-        // TRK-021 publisher in Phase D.
-        LOG_INFO("shutdown requested; stopping capture thread");
+        // Clean shutdown (plan R23): capture stops first (joins), then the
+        // export thread drains its ring and joins; LINGER=0 keeps the socket
+        // teardown non-blocking.
+        LOG_INFO("shutdown requested; stopping capture and export threads");
         capture.stop();
+        export_thread.stop();
     } catch (const std::exception& e) {
         LOG_CRITICAL("fatal error after startup: {}", e.what());
         tracking::logging::shutdown();

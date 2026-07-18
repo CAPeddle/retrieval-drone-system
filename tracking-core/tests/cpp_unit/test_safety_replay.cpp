@@ -252,6 +252,34 @@ TEST(SafetyCounterweight, MovingLaserIsInTransit) {
     EXPECT_GT(result.reason_counts[5], 0U);  // kLaserInTransit bit
 }
 
+TEST(PipelineThroughput, ProcessingSustainsTargetFrameRate) {
+    // Plan U17 / success criterion 2 (processing side): the per-frame cost of
+    // quality -> detect -> track -> map -> snapshot -> predicate must sustain
+    // >= 60 fps. Capture arrives via its own thread in production, so this
+    // measures the main-loop budget. Asserted in Release only; Debug records.
+    tracking::Config config = shipped_config();
+    SafetyHarness harness(config, 16'700'000);
+    cv::RNG rng(20260718);
+    // Pre-render a small frame pool so frame synthesis is outside the timing.
+    std::vector<cv::Mat> frames;
+    for (int i = 0; i < 8; ++i) {
+        frames.push_back(synthetic_frame(rng, config, true));
+    }
+    constexpr int kFrames = 600;  // ~10 s of 60 fps work
+    const auto start = std::chrono::steady_clock::now();
+    for (int i = 0; i < kFrames; ++i) {
+        harness.process(frames[static_cast<std::size_t>(i) % frames.size()],
+                        {laser_at_floor(0.01, 2.0)});
+    }
+    const double total_s =
+        std::chrono::duration<double>(std::chrono::steady_clock::now() - start).count();
+    const double fps = kFrames / total_s;
+    ::testing::Test::RecordProperty("processing_fps", static_cast<int>(fps));
+#ifdef NDEBUG
+    EXPECT_GE(fps, 60.0) << "main-loop processing cannot sustain 60 fps";
+#endif
+}
+
 // ── The Replay Gate (ADR-007; success criterion 3 — interim evidence) ────────
 
 class SafetyReplayGate : public ::testing::TestWithParam<const char*> {

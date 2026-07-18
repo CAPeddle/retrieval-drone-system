@@ -1,6 +1,6 @@
 ---
 id: VIEW-002
-status: backlog
+status: done
 subsystem: viewer
 tier: small
 created: 2026-05-31
@@ -48,3 +48,4 @@ U9. Integration test: mock ZMQ publisher → viewer receives and validates schem
 ## Log
 
 - 2026-05-31: created. Status: backlog. Depends on TRK-021 (ZMQ schema defined) but can start once schema is finalised.
+- 2026-07-18: backlog -> done. pygame floor viewer landed: strict pydantic models mirroring the C++ schema (drift/NaN = loud violations), RCVHWM=1/CONFLATE=1/empty-filter client, DISCONNECTED/CONNECTED/STALLED from local receive time, grid/objects/uncertainty/trails, violation counter on screen, trails reset on session change + reconnect. TRACKER_DEAD naming superseded by STALLED while the heartbeat (TRK-022) is deferred. 25/25 pytest; black+ruff clean.

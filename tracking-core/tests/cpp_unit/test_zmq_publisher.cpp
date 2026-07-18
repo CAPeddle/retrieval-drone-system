@@ -138,6 +138,33 @@ TEST(ZmqPublisherTest, SchemaRoundTripAndSocketContract) {
     EXPECT_EQ(safety["unsafe_reasons"][1], "LaserInTransit");
 }
 
+TEST(ZmqPublisherTest, SerialisationStaysWithinBudget) {
+    // TRK-021 / plan R16: <= 0.5 ms per snapshot. Asserted in Release only
+    // (the budget is a Release-on-Pi contract; Debug records the number).
+    tracking::ZmqPublisher publisher(zmq_config("tcp://127.0.0.1:25549"),
+                                     safety_config(), 0.03);
+    tracking::TrackingSnapshot snapshot = sample_snapshot();
+    snapshot.laser = snapshot.ball;  // worst case: both slots serialised
+    snapshot.laser.object_type = static_cast<std::uint8_t>(tracking::ObjectType::Laser);
+    publisher.publish(snapshot, 55.5);  // warm-up outside the measurement
+
+    constexpr int kIterations = 200;
+    const auto start = std::chrono::steady_clock::now();
+    for (int i = 0; i < kIterations; ++i) {
+        publisher.publish(snapshot, 55.5);
+    }
+    const double avg_ms =
+        std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() -
+                                                  start)
+            .count() /
+        kIterations;
+    ::testing::Test::RecordProperty("avg_publish_ms_x1000",
+                                    static_cast<int>(avg_ms * 1000));
+#ifdef NDEBUG
+    EXPECT_LT(avg_ms, 0.5) << "serialisation budget exceeded (R16)";
+#endif
+}
+
 TEST(ZmqPublisherTest, MessageIdsAreMonotonic) {
     tracking::ZmqPublisher publisher(zmq_config("tcp://127.0.0.1:25548"),
                                      safety_config(), 0.03);

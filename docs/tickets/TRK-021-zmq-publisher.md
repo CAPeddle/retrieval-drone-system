@@ -1,6 +1,6 @@
 ---
 id: TRK-021
-status: backlog
+status: done
 subsystem: tracking-core
 tier: small
 created: 2026-05-31
@@ -53,3 +53,4 @@ U9. Unit tests: schema validation, monotonic IDs, socket option verification.
 ## Log
 
 - 2026-05-31: created. Status: backlog. Depends on TRK-020 (SafetyResult in snapshot) and TRK-002 (cppzmq + nlohmann/json).
+- 2026-07-18: backlog -> done. ZmqPublisher + ExportThread + SpscRing<T> landed on feat/trk-021-export-viewer: v0.3 schema v1 documented in zmq_publisher.hpp (single-part — CONFLATE is multipart-incompatible, so the old topic frame is gone), per-message steady->wall clock mapping, session_id, thresholds block, reason names, monotonic ids (gaps normal under conflation), sockopts per ADR-002 verified by getsockopt test, serialisation budget test (<=0.5ms Release). Placeholder JPEG publisher removed from main.cpp.

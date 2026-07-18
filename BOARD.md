@@ -15,6 +15,9 @@ Workflow defined in [README.md → Workflow](README.md#workflow). Risk register 
 
 ## Done (recent)
 
+- [x] VIEW-003 — safe_for_control visualisation (2026-07-18)
+- [x] VIEW-002 — Python floor viewer (2026-07-18)
+- [x] TRK-021 — ZMQ publisher (schema v1) (2026-07-18)
 - [x] TRK-020 — safe_for_control predicate incl. TRK-020a/b/c (2026-07-18)
 - [x] TRK-019 — Uncertainty propagation (2026-07-18)
 - [x] TRK-018 — Z compensation CoordinateMapper (2026-07-18)
@@ -79,7 +82,6 @@ Workflow defined in [README.md → Workflow](README.md#workflow). Risk register 
 
 ### v0.3 implementation — export + health
 
-- [ ] TRK-021 — ZMQ publisher (JSON schema v1) → [story](docs/tickets/TRK-021-zmq-publisher.md)
 - [ ] TRK-022 — Heartbeat thread (≥1 Hz) → [story](docs/tickets/TRK-022-heartbeat-thread.md)
 - [ ] TRK-023 — System health reporting → [story](docs/tickets/TRK-023-system-health-reporting.md)
 - [ ] TRK-024 — Calibration health monitoring (ADR-004 Phase 2) → [story](docs/tickets/TRK-024-calibration-health-monitoring.md)
@@ -88,8 +90,6 @@ Workflow defined in [README.md → Workflow](README.md#workflow). Risk register 
 
 - [ ] TRK-025 — Replay test harness (design parent, resolves D-05) → [story](docs/tickets/TRK-025-replay-test-harness.md)
 - [ ] TRK-026 — Performance benchmark suite → [story](docs/tickets/TRK-026-performance-benchmarks.md)
-- [ ] VIEW-002 — Python ZMQ viewer (floor-plane display) → [story](docs/tickets/VIEW-002-python-viewer.md)
-- [ ] VIEW-003 — safe_for_control visualisation overlay → [story](docs/tickets/VIEW-003-safe-for-control-visualisation.md)
 
 ### Phase 3 — multi-camera + drone observation
 

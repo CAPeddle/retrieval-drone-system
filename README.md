@@ -56,7 +56,7 @@ Claude Code's `superpowers:brainstorming` and `superpowers:writing-plans` skills
 
 | Dir | Role | Hardware | Status | Notes |
 |---|---|---|---|---|
-| [`tracking-core/`](tracking-core/) | C++ tracking pipeline, ZMQ publisher, `safe_for_control` predicate | Pi 5 + NoIR CSI camera | **Scaffolded** | — |
+| [`tracking-core/`](tracking-core/) | C++ tracking pipeline, ZMQ publisher, `safe_for_control` predicate | Pi 5 + NoIR CSI camera | **Front pipeline + calibration tooling built** | Ingestion→quality→detection + replay harness + calibration tools landed (Pi-5-verified); coordinate mapping, `safe_for_control`, ZMQ v0.3 export, viewer still to come. See [CLAUDE.md §1](CLAUDE.md). |
 | [`viewer/`](viewer/) | Python ZMQ subscriber, floor-plane visualisation | Any host | Stub | Currently nested under `tracking-core/src/viewer/` — to be promoted |
 | [`camera-node/`](camera-node/) | Secondary camera streaming source | Pi 3B + NoIR CSI camera | Future | Phase 3+ (multi-camera) |
 | [`laser-controller/`](laser-controller/) | Laser MCU firmware + Python adapter (ADR-008) | MCU + Pi 5 | Future | Contract defined; no code |

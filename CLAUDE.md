@@ -21,10 +21,17 @@ safety-certified — `safe_for_control` is a careful engineering contract, not a
 proof. Not an open design space — the architectural direction is settled in the ADR
 pack; reason within it. Reopen foundations only when the user explicitly invites it.
 
-**Status.** Active design and early implementation. v0.3 is being specified. Initial
-C++/Python scaffolding is committed under `tracking-core/` (core entry point, a
-Python viewer, `tools/`, a CMake build, unit/integration test stubs); no v0.3
-vertical slice is complete.
+**Status.** Active implementation, mid-v0.3. Landed and on-target-verified (both
+build configs green on the Pi 5 via `tools/pi5-remote-test.sh`): the
+build/config/logging foundation (TRK-002/003/004), the ingestion→quality→detection
+front of the hot path — frame ring buffer, capture thread, frame metadata, quality
+gate, and the ball + ArUco-marker detectors (TRK-005/006/007/008/010/011) — a
+record-and-replay test harness (TRK-031), and the offline Python intrinsic/extrinsic
+calibration tools (TRK-012/013). Not yet built: the track lifecycle (TRK-014..016),
+coordinate mapping + Z compensation (TRK-017..019), the `safe_for_control` predicate
+(TRK-020), the v0.3 ZMQ schema publisher (TRK-021), and the floor-frame viewer
+(VIEW-002/003) — so no end-to-end v0.3 vertical slice is complete yet, and the
+detectors are unit/replay-verified but not all wired into `main.cpp`'s loop.
 
 **v0.3 scope** = "laser on tabletop": one camera, one laser, one ball, single-camera
 floor-plane tracking. Complete when: (1) the C++ core builds and runs on a Pi 5 at

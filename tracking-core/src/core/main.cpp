@@ -12,11 +12,32 @@
 #include <opencv2/videoio.hpp>
 #include <zmq.hpp>
 
+#include <atomic>
 #include <chrono>
+#include <csignal>
 #include <iostream>
 #include <string>
 #include <thread>
 #include <vector>
+
+namespace {
+
+// SIGINT/SIGTERM request a clean shutdown (plan R23). The handler only sets a
+// lock-free atomic flag — the only async-signal-safe action available to it.
+std::atomic<bool> g_stop_requested{false};
+static_assert(std::atomic<bool>::is_always_lock_free,
+              "signal handler requires a lock-free stop flag");
+
+void handle_stop_signal(int) { g_stop_requested.store(true, std::memory_order_relaxed); }
+
+// Capture-clock "now" in the same domain as FrameMetadata.capture_timestamp_ns.
+std::int64_t steady_now_ns() {
+    return std::chrono::duration_cast<std::chrono::nanoseconds>(
+               std::chrono::steady_clock::now().time_since_epoch())
+        .count();
+}
+
+}  // namespace
 
 int main(int argc, char** argv) {
     const std::string config_path =
@@ -74,10 +95,19 @@ int main(int argc, char** argv) {
         std::uint64_t captured_at_last_report = 0;
         std::uint64_t failures_at_last_report = 0;
 
+        std::signal(SIGINT, handle_stop_signal);
+        std::signal(SIGTERM, handle_stop_signal);
+
         cv::Mat frame(config.camera.height, config.camera.width, CV_8UC3);
-        while (true) {
+        while (!g_stop_requested.load(std::memory_order_relaxed)) {
             const auto metadata = ring_buffer.try_pop(frame);
+            // Plan R4: the tracker ticks every loop iteration on the capture
+            // clock, so REJECT bursts and frame gaps age tracks instead of
+            // freezing them at Confirmed.
+            const std::int64_t now_ns = steady_now_ns();
             if (!metadata.has_value()) {
+                observations.clear();
+                tracker.update(observations, now_ns);
                 std::this_thread::sleep_for(std::chrono::milliseconds(1));
                 continue;
             }
@@ -113,6 +143,8 @@ int main(int argc, char** argv) {
                 last_quality_report = now;
             }
             if (frame_quality == tracking::FrameQuality::REJECT) {
+                observations.clear();
+                tracker.update(observations, now_ns);  // R4: REJECT still ages tracks
                 continue;
             }
 
@@ -130,8 +162,7 @@ int main(int argc, char** argv) {
                 obs.capture_timestamp_ns = metadata->capture_timestamp_ns;
                 observations.push_back(obs);
             }
-            const auto& tracks =
-                tracker.update(observations, metadata->capture_timestamp_ns);
+            const auto& tracks = tracker.update(observations, now_ns);
             for (const tracking::Track& track : tracks) {
                 if (track.type() == tracking::ObjectType::Ball &&
                     track.state() == tracking::TrackState::Confirmed) {
@@ -151,6 +182,12 @@ int main(int argc, char** argv) {
             publisher.send(topic, zmq::send_flags::sndmore);
             publisher.send(zmq::buffer(encoded), zmq::send_flags::none);
         }
+
+        // Clean shutdown (plan R23): stop capture first (joins its thread),
+        // then let the socket/context unwind; LINGER handling arrives with the
+        // TRK-021 publisher in Phase D.
+        LOG_INFO("shutdown requested; stopping capture thread");
+        capture.stop();
     } catch (const std::exception& e) {
         LOG_CRITICAL("fatal error after startup: {}", e.what());
         tracking::logging::shutdown();

@@ -86,6 +86,11 @@ startup with an error naming the offending field. All fields are required in v0.
 | `zmq.bind_address` | string | Core BIND address (ADR-002) |
 | `calibration.intrinsics_path` | string | Per-camera intrinsics JSON (ADR-004) |
 | `calibration.extrinsics_path` | string | Floor-plane extrinsics JSON (ADR-006) |
+| `calibration.aruco_dictionary` | string | TRK-011 predefined dictionary (`4X4_50`/`4X4_100`/`5X5_50`) |
+| `calibration.marker_ids` | int list | Static health-monitoring marker IDs (ADR-004 Phase 2), non-empty |
+| `calibration.charuco.squares_x/y` | int | Board dimensions, both odd (KTD-4 future-proofing) |
+| `calibration.charuco.square_length_m` | double | Physical square edge (provisional) |
+| `calibration.charuco.marker_length_m` | double | Physical marker edge, < square (provisional) |
 | `logging.level` | string | Runtime log floor: `trace`\|`debug`\|`info`\|`warn`\|`error`\|`critical` (Release builds compile out `debug`/`trace`) |
 | `logging.output_dir` | string | Log directory — must be tmpfs, never the SD card (§7.1); init warns if not |
 | `logging.max_file_size_mb` | int | Rotating-sink file size limit (3 rotated files kept) |

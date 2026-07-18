@@ -2,6 +2,7 @@
 
 #include <stdexcept>
 #include <string>
+#include <vector>
 
 namespace tracking {
 
@@ -43,9 +44,19 @@ struct ZmqConfig {
     std::string bind_address;
 };
 
+struct CharucoConfig {
+    int squares_x = 0;             // Board columns (odd per KTD-4 future-proofing).
+    int squares_y = 0;             // Board rows (odd).
+    double square_length_m = 0.0;  // Physical square edge length.
+    double marker_length_m = 0.0;  // Physical marker edge length (< square).
+};
+
 struct CalibrationConfig {
     std::string intrinsics_path;
     std::string extrinsics_path;
+    std::string aruco_dictionary;      // TRK-011: predefined dictionary name.
+    std::vector<int> marker_ids;       // Expected static health-monitoring marker IDs (ADR-004 Phase 2).
+    CharucoConfig charuco;
 };
 
 struct PipelineConfig {

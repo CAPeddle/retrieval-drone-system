@@ -8,6 +8,7 @@ add_library(tracking_core_lib STATIC
     logging.cpp
     replay_source.cpp
     tracking/ball_detector.cpp
+    tracking/calibration_marker_detector.cpp
     tracking/tracker.cpp
 )
 

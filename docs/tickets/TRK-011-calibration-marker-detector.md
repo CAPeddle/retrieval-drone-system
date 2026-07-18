@@ -1,10 +1,10 @@
 ---
 id: TRK-011
-status: backlog
+status: done
 subsystem: tracking-core
 tier: small
 created: 2026-05-31
-updated: 2026-05-31
+updated: 2026-07-18
 depends_on:
   - "TRK-008"
 spec: null
@@ -40,3 +40,5 @@ U7. Unit tests: synthetic ArUco marker images generated with `cv::aruco::generat
 ## Log
 
 - 2026-05-31: created. Status: backlog. Depends on TRK-008 (frames in detection pipeline).
+- 2026-07-18: backlog → in-progress. Starting on feat/v03-detection-calibration.
+- 2026-07-18: in-progress → done. CalibrationMarkerDetector landed: KTD-2 version seam (guarded includes core/version.hpp->aruco.hpp|objdetect/aruco_detector.hpp + CMake aruco/objdetect component selection), 4.6 free-fn branch tested locally (6/6), 4.10 ArucoDetector branch verifies on Pi via pi5-remote-test. Individual markers only; Charuco board mode deliberately deferred to Python tools (KTD-2 scope note) — C++ runtime consumer (ADR-004 Phase2 health, TRK-024) needs individual markers. Field renamed reprojection_quality->corner_residual_px (honest naming). New require_int_list config helper; calibration.charuco.* geometry (odd squares). 78/78 green Release+Debug.

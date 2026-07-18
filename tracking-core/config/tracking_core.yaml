@@ -61,6 +61,13 @@ zmq:
 calibration:
   intrinsics_path: "config/intrinsics.json"    # Per-camera intrinsics (ADR-004 Phase 1).
   extrinsics_path: "config/extrinsics.json"    # Floor-plane extrinsics (ADR-006).
+  aruco_dictionary: "4X4_50"                   # TRK-011 predefined dictionary.
+  marker_ids: [0, 1, 2, 3]                     # Static health-monitoring marker IDs (ADR-004 Phase 2, provisional).
+  charuco:                                     # Install-time board geometry (Python tools).
+    squares_x: 5                               # Odd (KTD-4 future-proofing).
+    squares_y: 7                               # Odd.
+    square_length_m: 0.025                     # provisional — measure the printed board at bench time.
+    marker_length_m: 0.020                     # provisional (< square).
 
 logging:                        # §7.1: async ring-buffered spdlog, tmpfs only.
   level: warn                   # Runtime floor: trace|debug|info|warn|error|critical.

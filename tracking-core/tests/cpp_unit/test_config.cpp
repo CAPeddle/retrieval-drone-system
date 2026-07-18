@@ -64,6 +64,13 @@ zmq:
 calibration:
   intrinsics_path: "config/intrinsics.json"
   extrinsics_path: "config/extrinsics.json"
+  aruco_dictionary: "4X4_50"
+  marker_ids: [0, 1]
+  charuco:
+    squares_x: 5
+    squares_y: 7
+    square_length_m: 0.025
+    marker_length_m: 0.020
 logging:
   level: warn
   output_dir: "/tmp/tracking_core/"
@@ -111,7 +118,7 @@ laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5}
 safe_for_control: {age_max_ms: 50, laser_settled_speed_m_per_s: 0.05, alignment_tolerance_m: 0.02}
 ball: {}
 zmq: {bind_address: "tcp://*:5556"}
-calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json"}
+calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json", aruco_dictionary: "4X4_50", marker_ids: [0, 1], charuco: {squares_x: 5, squares_y: 7, square_length_m: 0.025, marker_length_m: 0.020}}
 logging: {level: warn, output_dir: "/tmp/tracking_core/", max_file_size_mb: 10}
 pipeline: {ring_buffer_capacity: 4, capture_cpu_core: 2, capture_thread_priority: 80}
 frame_quality: {underexposed_threshold: 20, overexposed_threshold: 240, blur_threshold: 100}
@@ -126,7 +133,7 @@ camera: {device_id: 0, target_fps: 60, width: 640, height: 480, exposure_us: 500
 safe_for_control: {age_max_ms: 50, laser_settled_speed_m_per_s: 0.05, alignment_tolerance_m: 0.02}
 ball: {radius_m: 0.03, expected_radius_px_min: 10, expected_radius_px_max: 80, min_circularity: 0.7, detection_blur_kernel: 5, brightness_threshold: 200}
 zmq: {bind_address: "tcp://*:5556"}
-calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json"}
+calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json", aruco_dictionary: "4X4_50", marker_ids: [0, 1], charuco: {squares_x: 5, squares_y: 7, square_length_m: 0.025, marker_length_m: 0.020}}
 logging: {level: warn, output_dir: "/tmp/tracking_core/", max_file_size_mb: 10}
 pipeline: {ring_buffer_capacity: 4, capture_cpu_core: 2, capture_thread_priority: 80}
 frame_quality: {underexposed_threshold: 20, overexposed_threshold: 240, blur_threshold: 100}
@@ -142,7 +149,7 @@ laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5}
 safe_for_control: {age_max_ms: 50, laser_settled_speed_m_per_s: 0.05, alignment_tolerance_m: 0.02}
 ball: {radius_m: "not_a_number", expected_radius_px_min: 10, expected_radius_px_max: 80, min_circularity: 0.7, detection_blur_kernel: 5, brightness_threshold: 200}
 zmq: {bind_address: "tcp://*:5556"}
-calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json"}
+calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json", aruco_dictionary: "4X4_50", marker_ids: [0, 1], charuco: {squares_x: 5, squares_y: 7, square_length_m: 0.025, marker_length_m: 0.020}}
 logging: {level: warn, output_dir: "/tmp/tracking_core/", max_file_size_mb: 10}
 pipeline: {ring_buffer_capacity: 4, capture_cpu_core: 2, capture_thread_priority: 80}
 frame_quality: {underexposed_threshold: 20, overexposed_threshold: 240, blur_threshold: 100}
@@ -169,7 +176,7 @@ laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5}
 safe_for_control: {age_max_ms: 50, laser_settled_speed_m_per_s: 0.05, alignment_tolerance_m: .nan}
 ball: {radius_m: 0.03, expected_radius_px_min: 10, expected_radius_px_max: 80, min_circularity: 0.7, detection_blur_kernel: 5, brightness_threshold: 200}
 zmq: {bind_address: "tcp://*:5556"}
-calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json"}
+calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json", aruco_dictionary: "4X4_50", marker_ids: [0, 1], charuco: {squares_x: 5, squares_y: 7, square_length_m: 0.025, marker_length_m: 0.020}}
 logging: {level: warn, output_dir: "/tmp/tracking_core/", max_file_size_mb: 10}
 pipeline: {ring_buffer_capacity: 4, capture_cpu_core: 2, capture_thread_priority: 80}
 frame_quality: {underexposed_threshold: 20, overexposed_threshold: 240, blur_threshold: 100}
@@ -184,7 +191,7 @@ laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5}
 safe_for_control: {age_max_ms: 50, laser_settled_speed_m_per_s: 0.05, alignment_tolerance_m: 0.02}
 ball: {radius_m: -0.03, expected_radius_px_min: 10, expected_radius_px_max: 80, min_circularity: 0.7, detection_blur_kernel: 5, brightness_threshold: 200}
 zmq: {bind_address: "tcp://*:5556"}
-calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json"}
+calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json", aruco_dictionary: "4X4_50", marker_ids: [0, 1], charuco: {squares_x: 5, squares_y: 7, square_length_m: 0.025, marker_length_m: 0.020}}
 logging: {level: warn, output_dir: "/tmp/tracking_core/", max_file_size_mb: 10}
 pipeline: {ring_buffer_capacity: 4, capture_cpu_core: 2, capture_thread_priority: 80}
 frame_quality: {underexposed_threshold: 20, overexposed_threshold: 240, blur_threshold: 100}
@@ -199,7 +206,7 @@ laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 5.0}
 safe_for_control: {age_max_ms: 50, laser_settled_speed_m_per_s: 0.05, alignment_tolerance_m: 0.02}
 ball: {radius_m: 0.03, expected_radius_px_min: 10, expected_radius_px_max: 80, min_circularity: 0.7, detection_blur_kernel: 5, brightness_threshold: 200}
 zmq: {bind_address: "tcp://*:5556"}
-calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json"}
+calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json", aruco_dictionary: "4X4_50", marker_ids: [0, 1], charuco: {squares_x: 5, squares_y: 7, square_length_m: 0.025, marker_length_m: 0.020}}
 logging: {level: warn, output_dir: "/tmp/tracking_core/", max_file_size_mb: 10}
 pipeline: {ring_buffer_capacity: 4, capture_cpu_core: 2, capture_thread_priority: 80}
 frame_quality: {underexposed_threshold: 20, overexposed_threshold: 240, blur_threshold: 100}
@@ -214,7 +221,7 @@ laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5}
 safe_for_control: {age_max_ms: 50, laser_settled_speed_m_per_s: 0.05, alignment_tolerance_m: 0.02}
 ball: {radius_m: 0.03, expected_radius_px_min: 10, expected_radius_px_max: 80, min_circularity: 0.7, detection_blur_kernel: 5, brightness_threshold: 200}
 zmq: {bind_address: ""}
-calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json"}
+calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json", aruco_dictionary: "4X4_50", marker_ids: [0, 1], charuco: {squares_x: 5, squares_y: 7, square_length_m: 0.025, marker_length_m: 0.020}}
 logging: {level: warn, output_dir: "/tmp/tracking_core/", max_file_size_mb: 10}
 pipeline: {ring_buffer_capacity: 4, capture_cpu_core: 2, capture_thread_priority: 80}
 frame_quality: {underexposed_threshold: 20, overexposed_threshold: 240, blur_threshold: 100}
@@ -229,7 +236,7 @@ laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5}
 safe_for_control: {age_max_ms: 50, laser_settled_speed_m_per_s: 0.05, alignment_tolerance_m: 0.02}
 ball: {radius_m: 0.03, expected_radius_px_min: 10, expected_radius_px_max: 80, min_circularity: 0.7, detection_blur_kernel: 5, brightness_threshold: 200}
 zmq: {bind_address: "tcp://*:5556"}
-calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json"}
+calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json", aruco_dictionary: "4X4_50", marker_ids: [0, 1], charuco: {squares_x: 5, squares_y: 7, square_length_m: 0.025, marker_length_m: 0.020}}
 pipeline: {ring_buffer_capacity: 4, capture_cpu_core: 2, capture_thread_priority: 80}
 frame_quality: {underexposed_threshold: 20, overexposed_threshold: 240, blur_threshold: 100}
 )";
@@ -244,7 +251,7 @@ laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5}
 safe_for_control: {age_max_ms: 50, laser_settled_speed_m_per_s: 0.05, alignment_tolerance_m: 0.02}
 ball: {radius_m: 0.03, expected_radius_px_min: 10, expected_radius_px_max: 80, min_circularity: 0.7, detection_blur_kernel: 5, brightness_threshold: 200}
 zmq: {bind_address: "tcp://*:5556"}
-calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json"}
+calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json", aruco_dictionary: "4X4_50", marker_ids: [0, 1], charuco: {squares_x: 5, squares_y: 7, square_length_m: 0.025, marker_length_m: 0.020}}
 logging: {level: verbose, output_dir: "/tmp/tracking_core/", max_file_size_mb: 10}
 pipeline: {ring_buffer_capacity: 4, capture_cpu_core: 2, capture_thread_priority: 80}
 frame_quality: {underexposed_threshold: 20, overexposed_threshold: 240, blur_threshold: 100}
@@ -268,7 +275,7 @@ laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5}
 safe_for_control: {age_max_ms: 50, laser_settled_speed_m_per_s: 0.05, alignment_tolerance_m: 0.02}
 ball: {radius_m: 0.03, expected_radius_px_min: 10, expected_radius_px_max: 80, min_circularity: 0.7, detection_blur_kernel: 5, brightness_threshold: 200}
 zmq: {bind_address: "tcp://*:5556"}
-calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json"}
+calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json", aruco_dictionary: "4X4_50", marker_ids: [0, 1], charuco: {squares_x: 5, squares_y: 7, square_length_m: 0.025, marker_length_m: 0.020}}
 pipeline: {ring_buffer_capacity: 4, capture_cpu_core: 2, capture_thread_priority: 80}
 frame_quality: {underexposed_threshold: 20, overexposed_threshold: 240, blur_threshold: 100}
 logging: {level: warn, output_dir: "/tmp/tracking_core/", max_file_size_mb: )") +
@@ -285,7 +292,7 @@ laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5}
 safe_for_control: {age_max_ms: 50, laser_settled_speed_m_per_s: 0.05, alignment_tolerance_m: 0.02}
 ball: {radius_m: 0.03, expected_radius_px_min: 10, expected_radius_px_max: 80, min_circularity: 0.7, detection_blur_kernel: 5, brightness_threshold: 200}
 zmq: {bind_address: "tcp://*:5556"}
-calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json"}
+calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json", aruco_dictionary: "4X4_50", marker_ids: [0, 1], charuco: {squares_x: 5, squares_y: 7, square_length_m: 0.025, marker_length_m: 0.020}}
 logging: {level: warn, output_dir: "", max_file_size_mb: 10}
 pipeline: {ring_buffer_capacity: 4, capture_cpu_core: 2, capture_thread_priority: 80}
 frame_quality: {underexposed_threshold: 20, overexposed_threshold: 240, blur_threshold: 100}
@@ -302,7 +309,7 @@ laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5}
 safe_for_control: {age_max_ms: 50, laser_settled_speed_m_per_s: 0.05, alignment_tolerance_m: 0.02}
 ball: {radius_m: 0.03, expected_radius_px_min: 10, expected_radius_px_max: 80, min_circularity: 0.7, detection_blur_kernel: 5, brightness_threshold: 200}
 zmq: {bind_address: "tcp://*:5556"}
-calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json"}
+calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json", aruco_dictionary: "4X4_50", marker_ids: [0, 1], charuco: {squares_x: 5, squares_y: 7, square_length_m: 0.025, marker_length_m: 0.020}}
 logging: {level: warn, output_dir: "/tmp/tracking_core/", max_file_size_mb: 10}
 pipeline: {ring_buffer_capacity: )") + cap + ", capture_cpu_core: 2, capture_thread_priority: 80}\nframe_quality: {underexposed_threshold: 20, overexposed_threshold: 240, blur_threshold: 100}\n";
         EXPECT_THROW(tracking::Config::load(write_temp(yaml)), tracking::ConfigError)
@@ -326,7 +333,7 @@ laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5}
 safe_for_control: {age_max_ms: 50, laser_settled_speed_m_per_s: 0.05, alignment_tolerance_m: 0.02}
 )") + ball + R"(
 zmq: {bind_address: "tcp://*:5556"}
-calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json"}
+calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json", aruco_dictionary: "4X4_50", marker_ids: [0, 1], charuco: {squares_x: 5, squares_y: 7, square_length_m: 0.025, marker_length_m: 0.020}}
 logging: {level: warn, output_dir: "/tmp/tracking_core/", max_file_size_mb: 10}
 pipeline: {ring_buffer_capacity: 4, capture_cpu_core: 2, capture_thread_priority: 80}
 frame_quality: {underexposed_threshold: 20, overexposed_threshold: 240, blur_threshold: 100}
@@ -342,7 +349,7 @@ laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5}
 safe_for_control: {age_max_ms: 50, laser_settled_speed_m_per_s: 0.05, alignment_tolerance_m: 0.02}
 ball: {radius_m: 0.03, expected_radius_px_min: 10, expected_radius_px_max: 80, min_circularity: 0.7, detection_blur_kernel: 5, brightness_threshold: 200}
 zmq: {bind_address: "tcp://*:5556"}
-calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json"}
+calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json", aruco_dictionary: "4X4_50", marker_ids: [0, 1], charuco: {squares_x: 5, squares_y: 7, square_length_m: 0.025, marker_length_m: 0.020}}
 logging: {level: warn, output_dir: "/tmp/tracking_core/", max_file_size_mb: 10}
 pipeline: {ring_buffer_capacity: 4, capture_cpu_core: 2, capture_thread_priority: 80}
 frame_quality: {underexposed_threshold: 240, overexposed_threshold: 20, blur_threshold: 100}
@@ -359,7 +366,7 @@ laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5}
 safe_for_control: {age_max_ms: 50, laser_settled_speed_m_per_s: 0.05, alignment_tolerance_m: 0.02}
 ball: {radius_m: 0.03, expected_radius_px_min: 10, expected_radius_px_max: 80, min_circularity: 0.7, detection_blur_kernel: 5, brightness_threshold: 200}
 zmq: {bind_address: "tcp://*:5556"}
-calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json"}
+calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json", aruco_dictionary: "4X4_50", marker_ids: [0, 1], charuco: {squares_x: 5, squares_y: 7, square_length_m: 0.025, marker_length_m: 0.020}}
 logging: {level: warn, output_dir: "/tmp/tracking_core/", max_file_size_mb: 10}
 pipeline: {ring_buffer_capacity: 4, capture_cpu_core: 2, capture_thread_priority: )") + prio + "}\nframe_quality: {underexposed_threshold: 20, overexposed_threshold: 240, blur_threshold: 100}\n";
         EXPECT_THROW(tracking::Config::load(write_temp(yaml)), tracking::ConfigError)
@@ -374,7 +381,7 @@ laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5}
 safe_for_control: {age_max_ms: 50, laser_settled_speed_m_per_s: 0.05, alignment_tolerance_m: 0.02}
 ball: {radius_m: 0.03, expected_radius_px_min: 10, expected_radius_px_max: 80, min_circularity: 0.7, detection_blur_kernel: 5, brightness_threshold: 200}
 zmq: {bind_address: "tcp://*:5556"}
-calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json"}
+calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json", aruco_dictionary: "4X4_50", marker_ids: [0, 1], charuco: {squares_x: 5, squares_y: 7, square_length_m: 0.025, marker_length_m: 0.020}}
 logging: {level: warn, output_dir: "/tmp/tracking_core/", max_file_size_mb: 10}
 pipeline: {ring_buffer_capacity: 4, capture_cpu_core: 2, capture_thread_priority: 80}
 frame_quality: {underexposed_threshold: 20, overexposed_threshold: 240, blur_threshold: 100}

@@ -38,6 +38,23 @@ T require(const YAML::Node& section_node, const char* section, const char* key) 
     }
 }
 
+// Reads a required non-empty YAML sequence of ints (the config system's first
+// list field, TRK-011 marker_ids). BadConversion maps to ConfigError with the
+// dotted path, matching require<T>.
+std::vector<int> require_int_list(const YAML::Node& section_node, const char* section,
+                                  const char* key) {
+    const YAML::Node node = section_node[key];
+    if (!node || node.IsNull()) {
+        throw ConfigError(std::string("missing required field: ") + section + "." + key);
+    }
+    try {
+        return node.as<std::vector<int>>();
+    } catch (const YAML::BadConversion&) {
+        throw ConfigError(std::string("type mismatch (expected int list) for field: ") +
+                          section + "." + key);
+    }
+}
+
 // Rejects non-finite (NaN/inf) doubles. A NaN threshold silently disables the
 // ADR-007 predicate, because every comparison against NaN is false.
 void require_finite(double value, const char* field) {
@@ -140,6 +157,17 @@ Config Config::load(const std::string& path) {
             require<std::string>(calibration, "calibration", "intrinsics_path");
         cfg.calibration.extrinsics_path =
             require<std::string>(calibration, "calibration", "extrinsics_path");
+        cfg.calibration.aruco_dictionary =
+            require<std::string>(calibration, "calibration", "aruco_dictionary");
+        cfg.calibration.marker_ids =
+            require_int_list(calibration, "calibration", "marker_ids");
+        const YAML::Node charuco = require_section(calibration, "charuco");
+        cfg.calibration.charuco.squares_x = require<int>(charuco, "calibration.charuco", "squares_x");
+        cfg.calibration.charuco.squares_y = require<int>(charuco, "calibration.charuco", "squares_y");
+        cfg.calibration.charuco.square_length_m =
+            require<double>(charuco, "calibration.charuco", "square_length_m");
+        cfg.calibration.charuco.marker_length_m =
+            require<double>(charuco, "calibration.charuco", "marker_length_m");
 
         const YAML::Node pipeline = require_section(root, "pipeline");
         cfg.pipeline.ring_buffer_capacity =
@@ -241,6 +269,33 @@ Config Config::load(const std::string& path) {
     require_nonempty(cfg.zmq.bind_address, "zmq.bind_address");
     require_nonempty(cfg.calibration.intrinsics_path, "calibration.intrinsics_path");
     require_nonempty(cfg.calibration.extrinsics_path, "calibration.extrinsics_path");
+    // TRK-011 marker detector.
+    require_one_of(cfg.calibration.aruco_dictionary, {"4X4_50", "4X4_100", "5X5_50"},
+                   "calibration.aruco_dictionary");
+    // ADR-004 Phase 2 health monitoring needs at least one static marker.
+    if (cfg.calibration.marker_ids.empty()) {
+        throw ConfigError("field must be a non-empty int list: calibration.marker_ids");
+    }
+    for (const int id : cfg.calibration.marker_ids) {
+        if (id < 0) {
+            throw ConfigError("field must contain only non-negative ids: calibration.marker_ids");
+        }
+    }
+    // Odd square counts per KTD-4 (future-proofing against legacy Charuco
+    // patterns and rows-vs-columns axis confusion; all our OpenCV versions
+    // already agree on the post-4.6.0 pattern).
+    if (cfg.calibration.charuco.squares_x < 3 || cfg.calibration.charuco.squares_x % 2 == 0) {
+        throw ConfigError("field must be an odd int >= 3: calibration.charuco.squares_x");
+    }
+    if (cfg.calibration.charuco.squares_y < 3 || cfg.calibration.charuco.squares_y % 2 == 0) {
+        throw ConfigError("field must be an odd int >= 3: calibration.charuco.squares_y");
+    }
+    require_gt(cfg.calibration.charuco.square_length_m, 0.0, "calibration.charuco.square_length_m");
+    require_gt(cfg.calibration.charuco.marker_length_m, 0.0, "calibration.charuco.marker_length_m");
+    if (cfg.calibration.charuco.marker_length_m >= cfg.calibration.charuco.square_length_m) {
+        throw ConfigError(
+            "calibration.charuco.marker_length_m must be < calibration.charuco.square_length_m");
+    }
     require_one_of(cfg.logging.level,
                    {"trace", "debug", "info", "warn", "error", "critical"},
                    "logging.level");

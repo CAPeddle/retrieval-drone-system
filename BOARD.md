@@ -36,6 +36,7 @@ Workflow defined in [README.md → Workflow](README.md#workflow). Risk register 
 - [x] TRK-008 — Frame quality assessment (2026-07-17)
 - [x] TRK-031 — Replay frame source and recorded scenario library (2026-07-17)
 - [x] TRK-010 — Ball detector (2026-07-18)
+- [x] TRK-011 — Calibration marker detector (2026-07-18)
 
 ## Backlog
 
@@ -66,7 +67,6 @@ Workflow defined in [README.md → Workflow](README.md#workflow). Risk register 
 - [ ] TRK-009b — Rolling buffer + PSD correlation engine → [story](docs/tickets/TRK-009b-rolling-buffer-correlation.md)
 - [ ] TRK-009c — Clustering + centroid extraction → [story](docs/tickets/TRK-009c-clustering-centroid.md)
 - [ ] TRK-009d — Grace period + pipeline integration → [story](docs/tickets/TRK-009d-grace-period-integration.md)
-- [ ] TRK-011 — Calibration marker detector (ArUco/Charuco) → [story](docs/tickets/TRK-011-calibration-marker-detector.md)
 
 ### v0.3 implementation — calibration tooling
 

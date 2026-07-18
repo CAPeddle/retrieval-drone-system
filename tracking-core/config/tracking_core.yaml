@@ -37,6 +37,8 @@ safe_for_control:               # ADR-007 predicate thresholds.
   age_max_ms: 50                # Max snapshot age before the predicate goes false.
   laser_settled_speed_m_per_s: 0.05   # Laser must be slower than this to be "settled".
   alignment_tolerance_m: 0.02   # ALIGNMENT_TOLERANCE_M (2 cm default).
+  min_unsafe_dwell_ms: 200      # Hysteresis dwell; re-anchors on every failing
+                                # evaluation (ADR-007 clarification 2026-07-18).
 
 ball:
   radius_m: 0.03            # Ball radius in metres (6 cm diameter, ADR-010 Z comp).

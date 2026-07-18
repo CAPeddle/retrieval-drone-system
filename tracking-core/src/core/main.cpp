@@ -7,6 +7,8 @@
 #include "frame_quality.hpp"
 #include "frame_ring_buffer.hpp"
 #include "logging.hpp"
+#include "safe_for_control.hpp"
+#include "snapshot_builder.hpp"
 #include "tracker.hpp"
 
 #include <opencv2/imgcodecs.hpp>
@@ -71,9 +73,13 @@ int main(int argc, char** argv) {
                  "{:.3f}) m",
                  calibration.intrinsics.camera_id, coordinate_mapper.camera_centre()[0],
                  coordinate_mapper.camera_centre()[1], coordinate_mapper.camera_centre()[2]);
-        // coordinate_mapper feeds the TRK-020 snapshot builder (Phase C); the
-        // tracker below still operates in pixel space.
-        (void)coordinate_mapper;
+        // TRK-020: snapshot assembly + the ADR-007 predicate, evaluated once
+        // per frame after tracking. The tracker operates in pixel space; the
+        // mapper projects at snapshot build.
+        tracking::SnapshotBuilder snapshot_builder(coordinate_mapper, config.coordinate);
+        tracking::SafeForControlEvaluator safety_evaluator(config.safe_for_control,
+                                                           config.ball.radius_m);
+        bool last_published_safe = false;
 
         tracking::CameraSource camera(config.camera);
         if (!camera.is_open()) {
@@ -161,10 +167,13 @@ int main(int argc, char** argv) {
                 last_quality_report = now;
             }
             if (frame_quality == tracking::FrameQuality::REJECT) {
+                snapshot_builder.note_frame_rejected();
                 observations.clear();
                 tracker.update(observations, now_ns);  // R4: REJECT still ages tracks
                 continue;
             }
+            snapshot_builder.mark_frame_admitted();  // INITIALISING -> RUNNING
+            snapshot_builder.note_frame_processed();
 
             // TRK-010 ball detection feeding the TRK-014/015 tracker. This is
             // the observation-build seam (plan U4/KTD-6): detector outputs are
@@ -181,6 +190,20 @@ int main(int argc, char** argv) {
                 observations.push_back(obs);
             }
             const auto& tracks = tracker.update(observations, now_ns);
+
+            // TRK-020c: one snapshot + predicate evaluation per frame. The
+            // snapshot feeds the TRK-021 publisher in Phase D; until then only
+            // flip events surface (never per-frame logging).
+            tracking::TrackingSnapshot snapshot = snapshot_builder.build(
+                tracks, metadata->capture_timestamp_ns, now_ns);
+            const tracking::SafetyResult safety =
+                safety_evaluator.evaluate(snapshot, now_ns);
+            if (safety.safe != last_published_safe) {
+                LOG_INFO("safe_for_control -> {} (reasons=0x{:02x})", safety.safe,
+                         safety.unsafe_reasons);
+                last_published_safe = safety.safe;
+            }
+
             for (const tracking::Track& track : tracks) {
                 if (track.type() == tracking::ObjectType::Ball &&
                     track.state() == tracking::TrackState::Confirmed) {

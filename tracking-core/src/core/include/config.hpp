@@ -29,6 +29,7 @@ struct SafeForControlConfig {
     double age_max_ms = 0.0;
     double laser_settled_speed_m_per_s = 0.0;
     double alignment_tolerance_m = 0.0;
+    double min_unsafe_dwell_ms = 0.0;  // ADR-007 hysteresis dwell (TRK-020c).
 };
 
 struct BallConfig {

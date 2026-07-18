@@ -123,6 +123,8 @@ Config Config::load(const std::string& path) {
             require<double>(sfc, "safe_for_control", "laser_settled_speed_m_per_s");
         cfg.safe_for_control.alignment_tolerance_m =
             require<double>(sfc, "safe_for_control", "alignment_tolerance_m");
+        cfg.safe_for_control.min_unsafe_dwell_ms =
+            require<double>(sfc, "safe_for_control", "min_unsafe_dwell_ms");
 
         const YAML::Node ball = require_section(root, "ball");
         cfg.ball.radius_m = require<double>(ball, "ball", "radius_m");
@@ -253,6 +255,8 @@ Config Config::load(const std::string& path) {
     }
     require_gt(cfg.safe_for_control.alignment_tolerance_m, 0.0,
               "safe_for_control.alignment_tolerance_m");
+    require_gt(cfg.safe_for_control.min_unsafe_dwell_ms, 0.0,
+               "safe_for_control.min_unsafe_dwell_ms");
     require_gt(cfg.ball.radius_m, 0.0, "ball.radius_m");
     // TRK-010 ball detector gates. All defaults are provisional (guessed,
     // pending real-footage validation) — see the yaml provenance comments.

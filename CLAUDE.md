@@ -189,7 +189,9 @@ see. Apply the C++/Python conventions without being asked. Verify ADR IDs and se
 references before citing — a wrong citation undermines cross-checkability.
 `docs/solutions/` is a searchable library of documented fixes, patterns, and recovery
 procedures (queryable by `applies_to` / `tags` / `problem_type`) — worth a grep when
-debugging or building in an area it may already cover.
+debugging or building in an area it may already cover. `CONCEPTS.md` at the repo root
+is the shared domain vocabulary (entities, named processes, status concepts) — relevant
+when orienting to a subsystem or when terminology is ambiguous.
 
 For substantial deliverables (>~500 lines or structure-under-design), use the checkpoint
 workflow (propose structure → draft section by section → lock each → assemble); detail in

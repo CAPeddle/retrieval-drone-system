@@ -28,6 +28,7 @@ See [`.claude/rules/solutions.md`](../../.claude/rules/solutions.md) for the req
 
 | Date | File | Type | Applies to | Tags |
 |---|---|---|---|---|
+| 2026-07-18 | [cpp/2026-07-18-composite-test-targets-model-occlusion.md](cpp/2026-07-18-composite-test-targets-model-occlusion.md) | pattern | tracking-core | testing, replay-harness, ball-detector, synthetic-compositing, occlusion |
 | 2026-07-16 | [cpp/2026-07-16-spdlog-async-hot-path-logging.md](cpp/2026-07-16-spdlog-async-hot-path-logging.md) | pattern | tracking-core | spdlog, logging, hot-path, compile-time-gating, cmake |
 | 2026-07-15 | [hardware/pi3b-camera-node-undervoltage.md](hardware/pi3b-camera-node-undervoltage.md) | recovery | camera-node | raspberry-pi, power, under-voltage, camera, hardware |
 | 2026-06-22 | [tooling-decisions/2026-06-22-gh-cli-authentication-custom-ssh-host.md](tooling-decisions/2026-06-22-gh-cli-authentication-custom-ssh-host.md) | tooling_decision | * | gh-cli, github, authentication, ssh, git-remote |

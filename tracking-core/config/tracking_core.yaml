@@ -64,6 +64,10 @@ track:                          # TRK-014 lifecycle state machine.
                                 # All provisional — ticket defaults, pending
                                 # replay-footage validation (ball-in-scene clip).
 
+gating:                         # TRK-015 observation association.
+  max_distance_px: 50           # Gate radius; observation beyond this spawns a
+                                # new track. Provisional — ticket default.
+
 zmq:
   bind_address: "tcp://*:5555"   # ADR-002: core BINDs (default port 5555); consumers CONNECT.
 

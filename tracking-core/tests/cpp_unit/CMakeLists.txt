@@ -12,7 +12,7 @@ add_executable(tracking_core_tests
     test_logging.cpp
     test_logging_default_level.cpp
     test_track.cpp
-    test_tracking_pipeline.cpp
+    test_tracker.cpp
 )
 
 target_include_directories(tracking_core_tests

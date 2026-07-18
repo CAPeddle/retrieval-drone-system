@@ -143,6 +143,9 @@ Config Config::load(const std::string& path) {
         cfg.track.max_predict_duration_ms =
             require<double>(track, "track", "max_predict_duration_ms");
 
+        const YAML::Node gating = require_section(root, "gating");
+        cfg.gating.max_distance_px = require<double>(gating, "gating", "max_distance_px");
+
         const YAML::Node calibration = require_section(root, "calibration");
         cfg.calibration.intrinsics_path =
             require<std::string>(calibration, "calibration", "intrinsics_path");
@@ -275,6 +278,7 @@ Config Config::load(const std::string& path) {
     if (cfg.track.retire_timeout_ms <= cfg.track.occlude_timeout_ms) {
         throw ConfigError("track.retire_timeout_ms must be > track.occlude_timeout_ms");
     }
+    require_gt(cfg.gating.max_distance_px, 0.0, "gating.max_distance_px");
     require_nonempty(cfg.zmq.bind_address, "zmq.bind_address");
     require_nonempty(cfg.calibration.intrinsics_path, "calibration.intrinsics_path");
     require_nonempty(cfg.calibration.extrinsics_path, "calibration.extrinsics_path");

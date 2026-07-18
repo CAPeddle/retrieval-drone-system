@@ -5,7 +5,7 @@
 #include "frame_quality.hpp"
 #include "frame_ring_buffer.hpp"
 #include "logging.hpp"
-#include "tracking_pipeline.hpp"
+#include "tracker.hpp"
 
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
@@ -16,6 +16,7 @@
 #include <iostream>
 #include <string>
 #include <thread>
+#include <vector>
 
 int main(int argc, char** argv) {
     const std::string config_path =
@@ -49,7 +50,9 @@ int main(int argc, char** argv) {
 
         tracking::BallDetector ball_detector(config.ball, config.camera.height,
                                              config.camera.width);
-        tracking::Tracker tracker;
+        tracking::Tracker tracker(config.track, config.gating);
+        std::vector<tracking::Observation> observations;
+        observations.reserve(tracking::Tracker::kMaxObservations);
 
         // Capture (producer) and processing (consumer) sides of the TRK-005
         // ring buffer. Frames arrive as 8-bit BGR at the configured size.
@@ -113,22 +116,30 @@ int main(int argc, char** argv) {
                 continue;
             }
 
-            // TRK-010 ball detection. Bridge the observation to the cv::Rect
-            // the stub Tracker still consumes (centroid +/- radius); an empty
-            // Rect on nullopt preserves the stub's hold-last-box behaviour
-            // until TRK-014 replaces the tracker.
+            // TRK-010 ball detection feeding the TRK-014/015 tracker. This is
+            // the observation-build seam (plan U4/KTD-6): detector outputs are
+            // normalised to Observation here and nowhere else.
             const std::optional<tracking::BallObservation> ball =
                 ball_detector.detect(frame);
-            cv::Rect detection;
+            observations.clear();
             if (ball.has_value()) {
-                const int r = static_cast<int>(ball->radius_px);
-                detection = cv::Rect(static_cast<int>(ball->centroid_px.x) - r,
-                                     static_cast<int>(ball->centroid_px.y) - r,
-                                     2 * r, 2 * r);
+                tracking::Observation obs;
+                obs.type = tracking::ObjectType::Ball;
+                obs.centroid_px = ball->centroid_px;
+                obs.radius_px = ball->radius_px;
+                obs.capture_timestamp_ns = metadata->capture_timestamp_ns;
+                observations.push_back(obs);
             }
-            const cv::Rect box = tracker.update(detection);
-            if (box.area() > 0) {
-                cv::rectangle(frame, box, cv::Scalar(0, 255, 0), 2);
+            const auto& tracks =
+                tracker.update(observations, metadata->capture_timestamp_ns);
+            for (const tracking::Track& track : tracks) {
+                if (track.type() == tracking::ObjectType::Ball &&
+                    track.state() == tracking::TrackState::Confirmed) {
+                    const int r = static_cast<int>(track.radius_px());
+                    const cv::Point centre(static_cast<int>(track.position_px().x),
+                                           static_cast<int>(track.position_px().y));
+                    cv::circle(frame, centre, r > 0 ? r : 4, cv::Scalar(0, 255, 0), 2);
+                }
             }
 
             std::vector<uchar> encoded;

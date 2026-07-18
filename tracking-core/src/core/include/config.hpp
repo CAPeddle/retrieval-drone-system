@@ -59,6 +59,10 @@ struct CalibrationConfig {
     CharucoConfig charuco;
 };
 
+struct GatingConfig {
+    double max_distance_px = 0.0;  // Association gate radius in image pixels (TRK-015).
+};
+
 struct TrackConfig {
     int confirm_threshold = 0;            // Observations required for Provisional -> Confirmed (TRK-014).
     double predict_timeout_ms = 0.0;      // Predicted -> Occluded age threshold.
@@ -96,6 +100,7 @@ struct Config {
     BallConfig ball;
     ZmqConfig zmq;
     TrackConfig track;
+    GatingConfig gating;
     CalibrationConfig calibration;
     LoggingConfig logging;
     PipelineConfig pipeline;

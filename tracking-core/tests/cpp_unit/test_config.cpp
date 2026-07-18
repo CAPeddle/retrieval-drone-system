@@ -317,6 +317,31 @@ pipeline: {ring_buffer_capacity: )") + cap + ", capture_cpu_core: 2, capture_thr
     }
 }
 
+TEST_F(ConfigTest, ThrowsOnBadCalibrationFields) {
+    // Each entry is a bad calibration: block; every other section is valid.
+    const char* bad_calibs[] = {
+        R"(calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json", aruco_dictionary: "BOGUS", marker_ids: [0, 1], charuco: {squares_x: 5, squares_y: 7, square_length_m: 0.025, marker_length_m: 0.020}})",   // unknown dictionary
+        R"(calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json", aruco_dictionary: "4X4_50", marker_ids: [], charuco: {squares_x: 5, squares_y: 7, square_length_m: 0.025, marker_length_m: 0.020}})",           // empty marker_ids
+        R"(calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json", aruco_dictionary: "4X4_50", marker_ids: [-1], charuco: {squares_x: 5, squares_y: 7, square_length_m: 0.025, marker_length_m: 0.020}})",         // negative id
+        R"(calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json", aruco_dictionary: "4X4_50", marker_ids: [0], charuco: {squares_x: 4, squares_y: 7, square_length_m: 0.025, marker_length_m: 0.020}})",          // even squares_x
+        R"(calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json", aruco_dictionary: "4X4_50", marker_ids: [0], charuco: {squares_x: 5, squares_y: 7, square_length_m: 0.020, marker_length_m: 0.025}})",          // marker >= square
+    };
+    for (const char* calib : bad_calibs) {
+        const std::string yaml = std::string(R"(
+camera: {device_id: 0, target_fps: 60, width: 640, height: 480, exposure_us: 5000}
+laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5}
+safe_for_control: {age_max_ms: 50, laser_settled_speed_m_per_s: 0.05, alignment_tolerance_m: 0.02}
+ball: {radius_m: 0.03, expected_radius_px_min: 10, expected_radius_px_max: 80, min_circularity: 0.7, detection_blur_kernel: 5, brightness_threshold: 200}
+zmq: {bind_address: "tcp://*:5556"}
+)") + calib + R"(
+logging: {level: warn, output_dir: "/tmp/tracking_core/", max_file_size_mb: 10}
+pipeline: {ring_buffer_capacity: 4, capture_cpu_core: 2, capture_thread_priority: 80}
+frame_quality: {underexposed_threshold: 20, overexposed_threshold: 240, blur_threshold: 100}
+)";
+        EXPECT_THROW(tracking::Config::load(write_temp(yaml)), tracking::ConfigError) << calib;
+    }
+}
+
 TEST_F(ConfigTest, ThrowsOnBadBallDetectorFields) {
     // Each entry is a bad ball: block; every other section is valid.
     const char* bad_balls[] = {

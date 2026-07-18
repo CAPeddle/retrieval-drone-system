@@ -17,13 +17,17 @@ from __future__ import annotations
 import argparse
 import datetime
 import json
-import os
 import sys
 from pathlib import Path
 
 import cv2
 import numpy as np
-import yaml
+
+from calibration_common import (
+    aruco_dictionary,
+    atomic_write_json,
+    default_output,
+)
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_CONFIG = REPO_ROOT / "config" / "tracking_core.yaml"
@@ -38,12 +42,7 @@ def detect_marker_centroids(
     image: np.ndarray, config_path: Path
 ) -> dict[int, np.ndarray]:
     """Return {marker_id: image centroid (px)} for every detected marker."""
-    with open(config_path, "r", encoding="utf-8") as handle:
-        cfg = yaml.safe_load(handle)
-    dict_name = cfg["calibration"]["aruco_dictionary"]
-    dictionary = cv2.aruco.getPredefinedDictionary(
-        getattr(cv2.aruco, f"DICT_{dict_name}")
-    )
+    dictionary = aruco_dictionary(config_path)
     detector = cv2.aruco.ArucoDetector(dictionary, cv2.aruco.DetectorParameters())
     gray = image if image.ndim == 2 else cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     corners, ids, _ = detector.detectMarkers(gray)
@@ -104,6 +103,7 @@ def write_json(
     homography: np.ndarray,
     anchors: list[dict[str, float]],
     reprojection_error_m: float,
+    undistorted: bool,
 ) -> None:
     payload = {
         "extrinsics_version": EXTRINSICS_VERSION,
@@ -111,24 +111,16 @@ def write_json(
         "homography_3x3": homography.tolist(),
         "floor_anchor_points": anchors,
         "reprojection_error_m": reprojection_error_m,
-        # The homography operates on UNDISTORTED image pixels; the runtime
-        # consumer (TRK-017) must undistort before applying it.
-        "undistorted_coordinates": True,
+        # Whether the homography operates on undistorted pixels — true only when
+        # --intrinsics was supplied. The runtime consumer (TRK-017) must
+        # undistort first iff this is true; a false value means the fit was on
+        # raw distorted pixels and the contract differs.
+        "undistorted_coordinates": undistorted,
         "calibration_timestamp": datetime.datetime.now(
             datetime.timezone.utc
         ).isoformat(),
     }
-    path.parent.mkdir(parents=True, exist_ok=True)
-    tmp = path.with_suffix(path.suffix + ".tmp")
-    with open(tmp, "w", encoding="utf-8") as handle:
-        json.dump(payload, handle, indent=2)
-    os.replace(tmp, path)
-
-
-def default_output(config_path: Path) -> Path:
-    with open(config_path, "r", encoding="utf-8") as handle:
-        cfg = yaml.safe_load(handle)
-    return (config_path.parent.parent / cfg["calibration"]["extrinsics_path"]).resolve()
+    atomic_write_json(path, payload)
 
 
 def run(args: argparse.Namespace) -> int:
@@ -165,7 +157,8 @@ def run(args: argparse.Namespace) -> int:
         )
         return 1
 
-    image_pts = undistort(image_pts, Path(args.intrinsics) if args.intrinsics else None)
+    undistorted = args.intrinsics is not None
+    image_pts = undistort(image_pts, Path(args.intrinsics) if undistorted else None)
     homography, _ = cv2.findHomography(image_pts, floor_pts, method=0)
     if homography is None:
         print("error: homography fit failed", file=sys.stderr)
@@ -187,17 +180,22 @@ def run(args: argparse.Namespace) -> int:
         )
         return 1
 
+    # Store the image points the homography was actually fitted on (undistorted
+    # when intrinsics were supplied) so applying H to them reproduces the floor
+    # coords — self-consistent with the undistorted_coordinates flag.
     anchors = [
         {
-            "marker_id": int(i),
-            "floor_x_m": float(layout[i][0]),
-            "floor_y_m": float(layout[i][1]),
-            "image_x_px": float(centroids[i][0]),
-            "image_y_px": float(centroids[i][1]),
+            "marker_id": int(marker_id),
+            "floor_x_m": float(layout[marker_id][0]),
+            "floor_y_m": float(layout[marker_id][1]),
+            "image_x_px": float(image_pts[k][0]),
+            "image_y_px": float(image_pts[k][1]),
         }
-        for i in matched_ids
+        for k, marker_id in enumerate(matched_ids)
     ]
-    write_json(Path(args.output), args.camera_id, homography, anchors, error_m)
+    write_json(
+        Path(args.output), args.camera_id, homography, anchors, error_m, undistorted
+    )
     print(
         f"extrinsics written to {args.output} "
         f"(reprojection error {error_m * 1000:.1f} mm / {error_px:.2f} px, "
@@ -231,7 +229,7 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     if args.output is None:
-        args.output = str(default_output(args.config))
+        args.output = str(default_output(args.config, "extrinsics_path"))
     try:
         return run(args)
     except (OSError, ValueError, KeyError, cv2.error) as exc:

@@ -38,23 +38,6 @@ T require(const YAML::Node& section_node, const char* section, const char* key) 
     }
 }
 
-// Reads a required non-empty YAML sequence of ints (the config system's first
-// list field, TRK-011 marker_ids). BadConversion maps to ConfigError with the
-// dotted path, matching require<T>.
-std::vector<int> require_int_list(const YAML::Node& section_node, const char* section,
-                                  const char* key) {
-    const YAML::Node node = section_node[key];
-    if (!node || node.IsNull()) {
-        throw ConfigError(std::string("missing required field: ") + section + "." + key);
-    }
-    try {
-        return node.as<std::vector<int>>();
-    } catch (const YAML::BadConversion&) {
-        throw ConfigError(std::string("type mismatch (expected int list) for field: ") +
-                          section + "." + key);
-    }
-}
-
 // Rejects non-finite (NaN/inf) doubles. A NaN threshold silently disables the
 // ADR-007 predicate, because every comparison against NaN is false.
 void require_finite(double value, const char* field) {
@@ -159,8 +142,9 @@ Config Config::load(const std::string& path) {
             require<std::string>(calibration, "calibration", "extrinsics_path");
         cfg.calibration.aruco_dictionary =
             require<std::string>(calibration, "calibration", "aruco_dictionary");
+        // The generic require<T> handles sequences via yaml-cpp's vector convert.
         cfg.calibration.marker_ids =
-            require_int_list(calibration, "calibration", "marker_ids");
+            require<std::vector<int>>(calibration, "calibration", "marker_ids");
         const YAML::Node charuco = require_section(calibration, "charuco");
         cfg.calibration.charuco.squares_x = require<int>(charuco, "calibration.charuco", "squares_x");
         cfg.calibration.charuco.squares_y = require<int>(charuco, "calibration.charuco", "squares_y");

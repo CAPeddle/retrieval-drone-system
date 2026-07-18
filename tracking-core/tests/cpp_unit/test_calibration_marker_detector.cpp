@@ -59,6 +59,20 @@ TEST(CalibrationMarkerDetectorTest, DetectsSingleMarkerWithCorrectId) {
     // Centroid near the pasted marker's centre (220 + 100, 140 + 100).
     EXPECT_NEAR(obs[0].centroid_px.x, 320, 5.0);
     EXPECT_NEAR(obs[0].centroid_px.y, 240, 5.0);
+    // Corner positions must match the pasted 200x200 region at (220,140) —
+    // the ticket requires "correct corner positions", not just the centroid.
+    float min_x = 1e9f, min_y = 1e9f, max_x = -1e9f, max_y = -1e9f;
+    for (const cv::Point2f& corner : obs[0].corners_px) {
+        min_x = std::min(min_x, corner.x);
+        min_y = std::min(min_y, corner.y);
+        max_x = std::max(max_x, corner.x);
+        max_y = std::max(max_y, corner.y);
+    }
+    EXPECT_NEAR(min_x, 220, 4.0);
+    EXPECT_NEAR(min_y, 140, 4.0);
+    EXPECT_NEAR(max_x, 420, 4.0);
+    EXPECT_NEAR(max_y, 340, 4.0);
+    EXPECT_GE(obs[0].corner_residual_px, 0.0);  // refinement magnitude is defined
 }
 
 TEST(CalibrationMarkerDetectorTest, NoMarkersReturnsEmpty) {

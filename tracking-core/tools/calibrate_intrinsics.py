@@ -14,14 +14,13 @@ from __future__ import annotations
 
 import argparse
 import datetime
-import json
-import os
 import sys
 from pathlib import Path
 
 import cv2
 import numpy as np
-import yaml
+
+from calibration_common import atomic_write_json, default_output, load_config
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_CONFIG = REPO_ROOT / "config" / "tracking_core.yaml"
@@ -33,8 +32,7 @@ def load_board(
     config_path: Path,
 ) -> tuple[cv2.aruco.CharucoBoard, cv2.aruco.CharucoDetector]:
     """Build the Charuco board + detector from the YAML calibration section."""
-    with open(config_path, "r", encoding="utf-8") as handle:
-        cfg = yaml.safe_load(handle)
+    cfg = load_config(config_path)
     charuco = cfg["calibration"]["charuco"]
     dict_name = cfg["calibration"]["aruco_dictionary"]
     dictionary = cv2.aruco.getPredefinedDictionary(
@@ -109,17 +107,7 @@ def write_json(
             datetime.timezone.utc
         ).isoformat(),
     }
-    path.parent.mkdir(parents=True, exist_ok=True)
-    tmp = path.with_suffix(path.suffix + ".tmp")
-    with open(tmp, "w", encoding="utf-8") as handle:
-        json.dump(payload, handle, indent=2)
-    os.replace(tmp, path)
-
-
-def default_output(config_path: Path) -> Path:
-    with open(config_path, "r", encoding="utf-8") as handle:
-        cfg = yaml.safe_load(handle)
-    return (config_path.parent.parent / cfg["calibration"]["intrinsics_path"]).resolve()
+    atomic_write_json(path, payload)
 
 
 def run(args: argparse.Namespace) -> int:
@@ -202,7 +190,7 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     if args.output is None:
-        args.output = str(default_output(args.config))
+        args.output = str(default_output(args.config, "intrinsics_path"))
     try:
         return run(args)
     except (OSError, ValueError, cv2.error) as exc:

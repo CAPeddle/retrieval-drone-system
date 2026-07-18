@@ -77,7 +77,8 @@ def test_recovers_homography(tmp_path: Path) -> None:
         "calibration_timestamp",
     ):
         assert key in data, f"missing key {key}"
-    assert data["undistorted_coordinates"] is True
+    # No --intrinsics -> the fit is on raw pixels, so the flag must be False.
+    assert data["undistorted_coordinates"] is False
     assert data["reprojection_error_m"] < 0.005
     assert len(data["floor_anchor_points"]) == 6
     # The recovered homography maps a known image point to its floor coord.
@@ -86,6 +87,43 @@ def test_recovers_homography(tmp_path: Path) -> None:
         _project(np.array([0.9, 0.7])).reshape(1, 1, 2), h
     ).reshape(2)
     assert np.linalg.norm(recovered - np.array([0.9, 0.7])) < 0.01
+
+
+def _write_intrinsics(path: Path, distortion: list[float]) -> None:
+    """A minimal intrinsics JSON matching calibrate_intrinsics' schema."""
+    path.write_text(
+        json.dumps(
+            {
+                "camera_matrix": [
+                    [250.0, 0.0, 320.0],
+                    [0.0, 250.0, 240.0],
+                    [0.0, 0.0, 1.0],
+                ],
+                "dist_coeffs": distortion,
+            }
+        )
+    )
+
+
+def test_intrinsics_path_sets_undistorted_flag(tmp_path: Path) -> None:
+    # With --intrinsics (zero distortion here), the undistort branch runs and
+    # the flag is True; recovery still succeeds through the pass-through.
+    floor = {
+        0: (0.2, 0.2),
+        1: (1.6, 0.2),
+        2: (1.6, 1.2),
+        3: (0.2, 1.2),
+        4: (0.9, 0.7),
+        5: (0.5, 1.0),
+    }
+    image, layout = build_scene(tmp_path, floor)
+    intrinsics = tmp_path / "intrinsics.json"
+    _write_intrinsics(intrinsics, [0.0, 0.0, 0.0, 0.0, 0.0])
+    output = tmp_path / "extrinsics.json"
+    assert _run(image, layout, output, ["--intrinsics", str(intrinsics)]) == 0
+    data = json.loads(output.read_text())
+    assert data["undistorted_coordinates"] is True
+    assert data["reprojection_error_m"] < 0.005
 
 
 def test_rejects_too_few_anchors(tmp_path: Path) -> None:

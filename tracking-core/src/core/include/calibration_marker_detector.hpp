@@ -35,10 +35,10 @@ struct MarkerObservation {
     int marker_id = 0;
     std::array<cv::Point2f, 4> corners_px{};  // refined corner order per ArUco
     cv::Point2f centroid_px{0.0f, 0.0f};      // mean of the 4 corners
-    // Mean cv::cornerSubPix refinement shift, in pixels. NOTE: this is a
-    // refinement-magnitude proxy, not a geometric reprojection residual — the
-    // ticket's "reprojection_quality" name is renamed to avoid promising
-    // reprojection information the value does not carry (record for TRK-024).
+    // Mean over the 4 corners of the cv::cornerSubPix refinement shift, in
+    // pixels. NOTE: a refinement-magnitude proxy, not a geometric reprojection
+    // residual — the ticket's "reprojection_quality" name is renamed to avoid
+    // promising reprojection information the value does not carry (TRK-024).
     double corner_residual_px = 0.0;
 };
 
@@ -53,6 +53,11 @@ public:
     std::vector<MarkerObservation> detect(const cv::Mat& frame);
 
 private:
+    // Refines the detected corners in corners_/ids_ (filled by the version-
+    // specific detect call) into observations. Shared by both API branches so
+    // the refinement/centroid/residual logic lives in one place.
+    std::vector<MarkerObservation> build_observations(const cv::Mat& gray) const;
+
 #if CV_VERSION_MAJOR == 4 && CV_VERSION_MINOR < 7
     cv::Ptr<cv::aruco::Dictionary> dictionary_;
     cv::Ptr<cv::aruco::DetectorParameters> params_;
@@ -61,6 +66,10 @@ private:
     cv::aruco::ArucoDetector detector_;
 #endif
     cv::Mat gray_;  // pre-allocated grayscale target for BGR inputs
+    // Reused across calls to avoid churning per frame; the returned vector is
+    // the one intentional allocation (the public API returns by value).
+    std::vector<int> ids_;
+    std::vector<std::vector<cv::Point2f>> corners_;
 };
 
 // Maps a config dictionary name ("4X4_50", ...) to the OpenCV predefined

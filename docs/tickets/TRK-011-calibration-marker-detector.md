@@ -20,7 +20,7 @@ The calibration marker detector identifies ArUco/Charuco markers in the camera's
 
 - A `CalibrationMarkerDetector` class with `detect(const cv::Mat& frame) -> std::vector<MarkerObservation>`.
 - `MarkerObservation` struct: `marker_id` (int), `corners_px` (array of 4 cv::Point2f), `centroid_px` (float x, y), `reprojection_quality` (float).
-- Supports both individual ArUco markers and Charuco board detection.
+- Supports individual ArUco markers. (Charuco *board* detection was deliberately deferred to the Python calibration tools per the plan KTD-2; the C++ runtime consumer — ADR-004 Phase 2 health monitoring, TRK-024 — needs only individual markers. See Log 2026-07-18.)
 - Uses a configurable ArUco dictionary (default: `DICT_4X4_50` for low false-positive rate).
 - Sub-pixel corner refinement enabled (`cv::cornerSubPix`).
 - Processing time ≤ 2 ms per frame for marker detection (ArUco is fast on small dictionaries).

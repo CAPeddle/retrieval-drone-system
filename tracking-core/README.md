@@ -78,6 +78,11 @@ startup with an error naming the offending field. All fields are required in v0.
 | `safe_for_control.laser_settled_speed_m_per_s` | double | "Settled" laser speed threshold |
 | `safe_for_control.alignment_tolerance_m` | double | `ALIGNMENT_TOLERANCE_M` (2 cm default) |
 | `ball.radius_m` | double | Ball radius in metres |
+| `ball.expected_radius_px_min` | int | TRK-010 size gate lower bound (provisional) |
+| `ball.expected_radius_px_max` | int | TRK-010 size gate upper bound (provisional) |
+| `ball.min_circularity` | double | Minimum 4πA/P² for a ball candidate (0–1, provisional) |
+| `ball.detection_blur_kernel` | int | Odd Gaussian kernel size, 3–15 (provisional) |
+| `ball.brightness_threshold` | int | Fixed brightness prior 1–254; NoIR ball is bright (provisional) |
 | `zmq.bind_address` | string | Core BIND address (ADR-002) |
 | `calibration.intrinsics_path` | string | Per-camera intrinsics JSON (ADR-004) |
 | `calibration.extrinsics_path` | string | Floor-plane extrinsics JSON (ADR-006) |

@@ -126,6 +126,11 @@ Config Config::load(const std::string& path) {
 
         const YAML::Node ball = require_section(root, "ball");
         cfg.ball.radius_m = require<double>(ball, "ball", "radius_m");
+        cfg.ball.expected_radius_px_min = require<int>(ball, "ball", "expected_radius_px_min");
+        cfg.ball.expected_radius_px_max = require<int>(ball, "ball", "expected_radius_px_max");
+        cfg.ball.min_circularity = require<double>(ball, "ball", "min_circularity");
+        cfg.ball.detection_blur_kernel = require<int>(ball, "ball", "detection_blur_kernel");
+        cfg.ball.brightness_threshold = require<int>(ball, "ball", "brightness_threshold");
 
         const YAML::Node zmq = require_section(root, "zmq");
         cfg.zmq.bind_address = require<std::string>(zmq, "zmq", "bind_address");
@@ -212,6 +217,27 @@ Config Config::load(const std::string& path) {
     require_gt(cfg.safe_for_control.alignment_tolerance_m, 0.0,
               "safe_for_control.alignment_tolerance_m");
     require_gt(cfg.ball.radius_m, 0.0, "ball.radius_m");
+    // TRK-010 ball detector gates. All defaults are provisional (guessed,
+    // pending real-footage validation) — see the yaml provenance comments.
+    if (cfg.ball.expected_radius_px_min <= 0) {
+        throw ConfigError("field must be > 0: ball.expected_radius_px_min");
+    }
+    if (cfg.ball.expected_radius_px_max <= cfg.ball.expected_radius_px_min) {
+        throw ConfigError(
+            "ball.expected_radius_px_max must be > ball.expected_radius_px_min");
+    }
+    require_in(cfg.ball.min_circularity, 0.0, 1.0, "ball.min_circularity");
+    if (cfg.ball.min_circularity <= 0.0) {
+        throw ConfigError("field must be > 0: ball.min_circularity");
+    }
+    // Odd kernel required by cv::GaussianBlur; bounded to keep denoising sane.
+    if (cfg.ball.detection_blur_kernel < 3 || cfg.ball.detection_blur_kernel > 15 ||
+        cfg.ball.detection_blur_kernel % 2 == 0) {
+        throw ConfigError("field must be an odd int in [3, 15]: ball.detection_blur_kernel");
+    }
+    if (cfg.ball.brightness_threshold < 1 || cfg.ball.brightness_threshold > 254) {
+        throw ConfigError("field must be in [1, 254]: ball.brightness_threshold");
+    }
     require_nonempty(cfg.zmq.bind_address, "zmq.bind_address");
     require_nonempty(cfg.calibration.intrinsics_path, "calibration.intrinsics_path");
     require_nonempty(cfg.calibration.extrinsics_path, "calibration.extrinsics_path");

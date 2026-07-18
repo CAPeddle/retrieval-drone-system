@@ -54,6 +54,11 @@ safe_for_control:
   alignment_tolerance_m: 0.02
 ball:
   radius_m: 0.03
+  expected_radius_px_min: 10
+  expected_radius_px_max: 80
+  min_circularity: 0.7
+  detection_blur_kernel: 5
+  brightness_threshold: 200
 zmq:
   bind_address: "tcp://*:5556"
 calibration:
@@ -68,6 +73,11 @@ logging:
 TEST_F(ConfigTest, LoadsValidConfig) {
     const tracking::Config cfg = tracking::Config::load(write_temp(kValidYaml));
 
+    EXPECT_EQ(cfg.ball.expected_radius_px_min, 10);
+    EXPECT_EQ(cfg.ball.expected_radius_px_max, 80);
+    EXPECT_DOUBLE_EQ(cfg.ball.min_circularity, 0.7);
+    EXPECT_EQ(cfg.ball.detection_blur_kernel, 5);
+    EXPECT_EQ(cfg.ball.brightness_threshold, 200);
     EXPECT_EQ(cfg.camera.device_id, 0);
     EXPECT_EQ(cfg.camera.target_fps, 60);
     EXPECT_EQ(cfg.camera.width, 640);
@@ -114,7 +124,7 @@ TEST_F(ConfigTest, ThrowsOnMissingRequiredSection) {
     const std::string yaml = R"(
 camera: {device_id: 0, target_fps: 60, width: 640, height: 480, exposure_us: 5000}
 safe_for_control: {age_max_ms: 50, laser_settled_speed_m_per_s: 0.05, alignment_tolerance_m: 0.02}
-ball: {radius_m: 0.03}
+ball: {radius_m: 0.03, expected_radius_px_min: 10, expected_radius_px_max: 80, min_circularity: 0.7, detection_blur_kernel: 5, brightness_threshold: 200}
 zmq: {bind_address: "tcp://*:5556"}
 calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json"}
 logging: {level: warn, output_dir: "/tmp/tracking_core/", max_file_size_mb: 10}
@@ -130,7 +140,7 @@ TEST_F(ConfigTest, ThrowsOnTypeMismatch) {
 camera: {device_id: 0, target_fps: 60, width: 640, height: 480, exposure_us: 5000}
 laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5}
 safe_for_control: {age_max_ms: 50, laser_settled_speed_m_per_s: 0.05, alignment_tolerance_m: 0.02}
-ball: {radius_m: "not_a_number"}
+ball: {radius_m: "not_a_number", expected_radius_px_min: 10, expected_radius_px_max: 80, min_circularity: 0.7, detection_blur_kernel: 5, brightness_threshold: 200}
 zmq: {bind_address: "tcp://*:5556"}
 calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json"}
 logging: {level: warn, output_dir: "/tmp/tracking_core/", max_file_size_mb: 10}
@@ -157,7 +167,7 @@ TEST_F(ConfigTest, ThrowsOnNonFiniteThreshold) {
 camera: {device_id: 0, target_fps: 60, width: 640, height: 480, exposure_us: 5000}
 laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5}
 safe_for_control: {age_max_ms: 50, laser_settled_speed_m_per_s: 0.05, alignment_tolerance_m: .nan}
-ball: {radius_m: 0.03}
+ball: {radius_m: 0.03, expected_radius_px_min: 10, expected_radius_px_max: 80, min_circularity: 0.7, detection_blur_kernel: 5, brightness_threshold: 200}
 zmq: {bind_address: "tcp://*:5556"}
 calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json"}
 logging: {level: warn, output_dir: "/tmp/tracking_core/", max_file_size_mb: 10}
@@ -172,7 +182,7 @@ TEST_F(ConfigTest, ThrowsOnNonPositiveRadius) {
 camera: {device_id: 0, target_fps: 60, width: 640, height: 480, exposure_us: 5000}
 laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5}
 safe_for_control: {age_max_ms: 50, laser_settled_speed_m_per_s: 0.05, alignment_tolerance_m: 0.02}
-ball: {radius_m: -0.03}
+ball: {radius_m: -0.03, expected_radius_px_min: 10, expected_radius_px_max: 80, min_circularity: 0.7, detection_blur_kernel: 5, brightness_threshold: 200}
 zmq: {bind_address: "tcp://*:5556"}
 calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json"}
 logging: {level: warn, output_dir: "/tmp/tracking_core/", max_file_size_mb: 10}
@@ -187,7 +197,7 @@ TEST_F(ConfigTest, ThrowsOnDutyCycleOutOfRange) {
 camera: {device_id: 0, target_fps: 60, width: 640, height: 480, exposure_us: 5000}
 laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 5.0}
 safe_for_control: {age_max_ms: 50, laser_settled_speed_m_per_s: 0.05, alignment_tolerance_m: 0.02}
-ball: {radius_m: 0.03}
+ball: {radius_m: 0.03, expected_radius_px_min: 10, expected_radius_px_max: 80, min_circularity: 0.7, detection_blur_kernel: 5, brightness_threshold: 200}
 zmq: {bind_address: "tcp://*:5556"}
 calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json"}
 logging: {level: warn, output_dir: "/tmp/tracking_core/", max_file_size_mb: 10}
@@ -202,7 +212,7 @@ TEST_F(ConfigTest, ThrowsOnEmptyBindAddress) {
 camera: {device_id: 0, target_fps: 60, width: 640, height: 480, exposure_us: 5000}
 laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5}
 safe_for_control: {age_max_ms: 50, laser_settled_speed_m_per_s: 0.05, alignment_tolerance_m: 0.02}
-ball: {radius_m: 0.03}
+ball: {radius_m: 0.03, expected_radius_px_min: 10, expected_radius_px_max: 80, min_circularity: 0.7, detection_blur_kernel: 5, brightness_threshold: 200}
 zmq: {bind_address: ""}
 calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json"}
 logging: {level: warn, output_dir: "/tmp/tracking_core/", max_file_size_mb: 10}
@@ -217,7 +227,7 @@ TEST_F(ConfigTest, ThrowsOnMissingLoggingSection) {
 camera: {device_id: 0, target_fps: 60, width: 640, height: 480, exposure_us: 5000}
 laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5}
 safe_for_control: {age_max_ms: 50, laser_settled_speed_m_per_s: 0.05, alignment_tolerance_m: 0.02}
-ball: {radius_m: 0.03}
+ball: {radius_m: 0.03, expected_radius_px_min: 10, expected_radius_px_max: 80, min_circularity: 0.7, detection_blur_kernel: 5, brightness_threshold: 200}
 zmq: {bind_address: "tcp://*:5556"}
 calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json"}
 pipeline: {ring_buffer_capacity: 4, capture_cpu_core: 2, capture_thread_priority: 80}
@@ -232,7 +242,7 @@ TEST_F(ConfigTest, ThrowsOnInvalidLogLevel) {
 camera: {device_id: 0, target_fps: 60, width: 640, height: 480, exposure_us: 5000}
 laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5}
 safe_for_control: {age_max_ms: 50, laser_settled_speed_m_per_s: 0.05, alignment_tolerance_m: 0.02}
-ball: {radius_m: 0.03}
+ball: {radius_m: 0.03, expected_radius_px_min: 10, expected_radius_px_max: 80, min_circularity: 0.7, detection_blur_kernel: 5, brightness_threshold: 200}
 zmq: {bind_address: "tcp://*:5556"}
 calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json"}
 logging: {level: verbose, output_dir: "/tmp/tracking_core/", max_file_size_mb: 10}
@@ -256,7 +266,7 @@ TEST_F(ConfigTest, ThrowsOnNonPositiveMaxFileSize) {
 camera: {device_id: 0, target_fps: 60, width: 640, height: 480, exposure_us: 5000}
 laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5}
 safe_for_control: {age_max_ms: 50, laser_settled_speed_m_per_s: 0.05, alignment_tolerance_m: 0.02}
-ball: {radius_m: 0.03}
+ball: {radius_m: 0.03, expected_radius_px_min: 10, expected_radius_px_max: 80, min_circularity: 0.7, detection_blur_kernel: 5, brightness_threshold: 200}
 zmq: {bind_address: "tcp://*:5556"}
 calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json"}
 pipeline: {ring_buffer_capacity: 4, capture_cpu_core: 2, capture_thread_priority: 80}
@@ -273,7 +283,7 @@ TEST_F(ConfigTest, ThrowsOnEmptyLogOutputDir) {
 camera: {device_id: 0, target_fps: 60, width: 640, height: 480, exposure_us: 5000}
 laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5}
 safe_for_control: {age_max_ms: 50, laser_settled_speed_m_per_s: 0.05, alignment_tolerance_m: 0.02}
-ball: {radius_m: 0.03}
+ball: {radius_m: 0.03, expected_radius_px_min: 10, expected_radius_px_max: 80, min_circularity: 0.7, detection_blur_kernel: 5, brightness_threshold: 200}
 zmq: {bind_address: "tcp://*:5556"}
 calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json"}
 logging: {level: warn, output_dir: "", max_file_size_mb: 10}
@@ -290,7 +300,7 @@ TEST_F(ConfigTest, ThrowsOnBadRingBufferCapacity) {
 camera: {device_id: 0, target_fps: 60, width: 640, height: 480, exposure_us: 5000}
 laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5}
 safe_for_control: {age_max_ms: 50, laser_settled_speed_m_per_s: 0.05, alignment_tolerance_m: 0.02}
-ball: {radius_m: 0.03}
+ball: {radius_m: 0.03, expected_radius_px_min: 10, expected_radius_px_max: 80, min_circularity: 0.7, detection_blur_kernel: 5, brightness_threshold: 200}
 zmq: {bind_address: "tcp://*:5556"}
 calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json"}
 logging: {level: warn, output_dir: "/tmp/tracking_core/", max_file_size_mb: 10}
@@ -300,12 +310,37 @@ pipeline: {ring_buffer_capacity: )") + cap + ", capture_cpu_core: 2, capture_thr
     }
 }
 
+TEST_F(ConfigTest, ThrowsOnBadBallDetectorFields) {
+    // Each entry is a bad ball: block; every other section is valid.
+    const char* bad_balls[] = {
+        "ball: {radius_m: 0.03, expected_radius_px_min: 80, expected_radius_px_max: 10, min_circularity: 0.7, detection_blur_kernel: 5, brightness_threshold: 200}",   // min >= max
+        "ball: {radius_m: 0.03, expected_radius_px_min: 10, expected_radius_px_max: 80, min_circularity: 0.0, detection_blur_kernel: 5, brightness_threshold: 200}",     // circularity 0
+        "ball: {radius_m: 0.03, expected_radius_px_min: 10, expected_radius_px_max: 80, min_circularity: 1.5, detection_blur_kernel: 5, brightness_threshold: 200}",     // circularity > 1
+        "ball: {radius_m: 0.03, expected_radius_px_min: 10, expected_radius_px_max: 80, min_circularity: 0.7, detection_blur_kernel: 4, brightness_threshold: 200}",     // even kernel
+        "ball: {radius_m: 0.03, expected_radius_px_min: 10, expected_radius_px_max: 80, min_circularity: 0.7, detection_blur_kernel: 5, brightness_threshold: 0}",       // brightness out of range
+    };
+    for (const char* ball : bad_balls) {
+        const std::string yaml = std::string(R"(
+camera: {device_id: 0, target_fps: 60, width: 640, height: 480, exposure_us: 5000}
+laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5}
+safe_for_control: {age_max_ms: 50, laser_settled_speed_m_per_s: 0.05, alignment_tolerance_m: 0.02}
+)") + ball + R"(
+zmq: {bind_address: "tcp://*:5556"}
+calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json"}
+logging: {level: warn, output_dir: "/tmp/tracking_core/", max_file_size_mb: 10}
+pipeline: {ring_buffer_capacity: 4, capture_cpu_core: 2, capture_thread_priority: 80}
+frame_quality: {underexposed_threshold: 20, overexposed_threshold: 240, blur_threshold: 100}
+)";
+        EXPECT_THROW(tracking::Config::load(write_temp(yaml)), tracking::ConfigError) << ball;
+    }
+}
+
 TEST_F(ConfigTest, ThrowsOnInvertedExposureThresholds) {
     const std::string yaml = R"(
 camera: {device_id: 0, target_fps: 60, width: 640, height: 480, exposure_us: 5000}
 laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5}
 safe_for_control: {age_max_ms: 50, laser_settled_speed_m_per_s: 0.05, alignment_tolerance_m: 0.02}
-ball: {radius_m: 0.03}
+ball: {radius_m: 0.03, expected_radius_px_min: 10, expected_radius_px_max: 80, min_circularity: 0.7, detection_blur_kernel: 5, brightness_threshold: 200}
 zmq: {bind_address: "tcp://*:5556"}
 calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json"}
 logging: {level: warn, output_dir: "/tmp/tracking_core/", max_file_size_mb: 10}
@@ -322,7 +357,7 @@ TEST_F(ConfigTest, ThrowsOnCaptureThreadPriorityOutOfRange) {
 camera: {device_id: 0, target_fps: 60, width: 640, height: 480, exposure_us: 5000}
 laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5}
 safe_for_control: {age_max_ms: 50, laser_settled_speed_m_per_s: 0.05, alignment_tolerance_m: 0.02}
-ball: {radius_m: 0.03}
+ball: {radius_m: 0.03, expected_radius_px_min: 10, expected_radius_px_max: 80, min_circularity: 0.7, detection_blur_kernel: 5, brightness_threshold: 200}
 zmq: {bind_address: "tcp://*:5556"}
 calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json"}
 logging: {level: warn, output_dir: "/tmp/tracking_core/", max_file_size_mb: 10}
@@ -337,7 +372,7 @@ TEST_F(ConfigTest, ThrowsOnNonPositiveFrameDimensions) {
 camera: {device_id: 0, target_fps: 60, width: 0, height: 480, exposure_us: 5000}
 laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5}
 safe_for_control: {age_max_ms: 50, laser_settled_speed_m_per_s: 0.05, alignment_tolerance_m: 0.02}
-ball: {radius_m: 0.03}
+ball: {radius_m: 0.03, expected_radius_px_min: 10, expected_radius_px_max: 80, min_circularity: 0.7, detection_blur_kernel: 5, brightness_threshold: 200}
 zmq: {bind_address: "tcp://*:5556"}
 calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json"}
 logging: {level: warn, output_dir: "/tmp/tracking_core/", max_file_size_mb: 10}

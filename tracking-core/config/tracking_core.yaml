@@ -39,7 +39,21 @@ safe_for_control:               # ADR-007 predicate thresholds.
   alignment_tolerance_m: 0.02   # ALIGNMENT_TOLERANCE_M (2 cm default).
 
 ball:
-  radius_m: 0.03            # Ball radius in metres (6 cm diameter).
+  radius_m: 0.03            # Ball radius in metres (6 cm diameter, ADR-010 Z comp).
+  # TRK-010 detector gates. ALL provisional — guessed, pending real-footage
+  # validation against a ball-in-scene replay clip recorded at bench time.
+  # The zero-false-positive replay gate (U3) validates only that a ball-free
+  # room produces no detection; true-positive thresholds get measured provenance
+  # once a ball clip exists (see the TRK-008 blur_threshold precedent above).
+  expected_radius_px_min: 10    # provisional
+  expected_radius_px_max: 80    # provisional
+  min_circularity: 0.82         # provisional — above a square's ceiling
+                                # (4*pi*A/P^2 = pi/4 ~= 0.785 for a square), so
+                                # the gate actually excludes non-round blobs;
+                                # the ticket's 0.7 guess admitted squares
+  detection_blur_kernel: 5      # provisional (odd, 3-15)
+  brightness_threshold: 200     # provisional — NoIR ball is bright; a room scene
+                                # should have nothing brighter that is also circular
 
 zmq:
   bind_address: "tcp://*:5555"   # ADR-002: core BINDs (default port 5555); consumers CONNECT.

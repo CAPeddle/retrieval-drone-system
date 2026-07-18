@@ -1,3 +1,4 @@
+#include "ball_detector.hpp"
 #include "camera_source.hpp"
 #include "capture_thread.hpp"
 #include "config.hpp"
@@ -46,7 +47,8 @@ int main(int argc, char** argv) {
         publisher.set(zmq::sockopt::sndhwm, 1);  // ADR-002: drop stale frames on lag.
         publisher.bind(config.zmq.bind_address);
 
-        tracking::Detector detector;
+        tracking::BallDetector ball_detector(config.ball, config.camera.height,
+                                             config.camera.width);
         tracking::Tracker tracker;
 
         // Capture (producer) and processing (consumer) sides of the TRK-005
@@ -111,7 +113,19 @@ int main(int argc, char** argv) {
                 continue;
             }
 
-            const cv::Rect detection = detector.detect(frame);
+            // TRK-010 ball detection. Bridge the observation to the cv::Rect
+            // the stub Tracker still consumes (centroid +/- radius); an empty
+            // Rect on nullopt preserves the stub's hold-last-box behaviour
+            // until TRK-014 replaces the tracker.
+            const std::optional<tracking::BallObservation> ball =
+                ball_detector.detect(frame);
+            cv::Rect detection;
+            if (ball.has_value()) {
+                const int r = static_cast<int>(ball->radius_px);
+                detection = cv::Rect(static_cast<int>(ball->centroid_px.x) - r,
+                                     static_cast<int>(ball->centroid_px.y) - r,
+                                     2 * r, 2 * r);
+            }
             const cv::Rect box = tracker.update(detection);
             if (box.area() > 0) {
                 cv::rectangle(frame, box, cv::Scalar(0, 255, 0), 2);

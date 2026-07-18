@@ -4,12 +4,6 @@
 
 #include "tracking_pipeline.hpp"
 
-TEST(DetectorTest, ReturnsEmptyForEmptyFrame) {
-    tracking::Detector detector;
-    const cv::Rect box = detector.detect(cv::Mat());
-    EXPECT_EQ(box.area(), 0);
-}
-
 TEST(TrackerTest, PersistsLastNonEmptyDetection) {
     tracking::Tracker tracker;
     const cv::Rect first = tracker.update(cv::Rect(10, 10, 20, 20));

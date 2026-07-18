@@ -31,7 +31,12 @@ struct SafeForControlConfig {
 };
 
 struct BallConfig {
-    double radius_m = 0.0;
+    double radius_m = 0.0;                // Physical radius (ADR-010 Z compensation).
+    int expected_radius_px_min = 0;       // TRK-010 size gate, lower bound.
+    int expected_radius_px_max = 0;       // TRK-010 size gate, upper bound.
+    double min_circularity = 0.0;         // 4*pi*area/perimeter^2 must exceed this.
+    int detection_blur_kernel = 0;        // Odd Gaussian kernel size for denoising.
+    int brightness_threshold = 0;         // Fixed prior: pixels above this are ball-candidate (NoIR).
 };
 
 struct ZmqConfig {

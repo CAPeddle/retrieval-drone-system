@@ -1,6 +1,6 @@
 ---
 id: TRK-016
-status: backlog
+status: done
 subsystem: tracking-core
 tier: small
 created: 2026-05-31
@@ -38,3 +38,4 @@ U6. Unit tests: prediction accuracy for linear motion, stationary handling, unce
 ## Log
 
 - 2026-05-31: created. Status: backlog. Depends on TRK-014 (track struct) and TRK-015 (tracker calls predict for unobserved tracks).
+- 2026-07-18: backlog -> done. Constant-velocity prediction landed: observation-backed velocity with dt<=0 guards, extrapolation capped at max_predict_duration_ms, linear uncertainty growth (faster without velocity). Rates provisional pending replay footage.

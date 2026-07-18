@@ -1,6 +1,6 @@
 ---
 id: TRK-015
-status: backlog
+status: done
 subsystem: tracking-core
 tier: small
 created: 2026-05-31
@@ -44,3 +44,4 @@ U9. Unit tests: association, creation, aging, retirement, type constraints.
 ## Log
 
 - 2026-05-31: created. Status: backlog. Depends on TRK-014 (Track class with state machine).
+- 2026-07-18: backlog -> done. Tracker landed: globally nearest-first association, strictly type-keyed gates (cross-type capture structurally impossible), per-type slots (1/1/8) released at Lost, Retired removal, pre-allocated working sets; `gating` config section. Stub tracking_pipeline.hpp deleted.

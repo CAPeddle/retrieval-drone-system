@@ -1,6 +1,6 @@
 ---
 id: TRK-017
-status: backlog
+status: done
 subsystem: tracking-core
 tier: small
 created: 2026-05-31
@@ -37,3 +37,4 @@ U6. Unit tests: valid/invalid JSON files, mathematical validation edge cases.
 ## Log
 
 - 2026-05-31: created. Status: backlog. Depends on TRK-013 (produces the JSON this consumes) and TRK-002 (nlohmann/json available).
+- 2026-07-18: backlog -> done. Loader landed on feat/trk-017-019-coordinate-mapping: fail-fast artifact validation — version, UNIT-NORMALISED condition gate, projective-denominator horizon safety (replaces the determinant-sign acceptance line: det sign is not a homography invariant), anchor self-consistency, camera_id+timestamp pairing, fatal undistorted_coordinates=false. `coordinate` config section.

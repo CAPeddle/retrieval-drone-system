@@ -1,6 +1,6 @@
 ---
 id: TRK-020c
-status: backlog
+status: done
 subsystem: tracking-core
 tier: small
 created: 2026-05-31
@@ -43,3 +43,4 @@ U7. Validate all TRK-020 parent acceptance criteria.
 ## Log
 
 - 2026-05-31: created. Status: backlog. Final child of TRK-020. Blocked on TRK-020a and TRK-020b.
+- 2026-07-18: backlog -> done. Hysteresis + integration landed. SEMANTICS NOTE (plan KTD-8): this ticket's acceptance wording (continuous-pass) and ADR-007's letter (anchor-at-flip) diverged; resolved to the conservative re-anchor-on-every-failing-evaluation rule, user-approved and recorded as the ADR-007 clarification dated 2026-07-18. Anchor arms at RUNNING entry (no startup false positive); chatter can never flip true. Evaluated once per frame in main.cpp; flip events logged.

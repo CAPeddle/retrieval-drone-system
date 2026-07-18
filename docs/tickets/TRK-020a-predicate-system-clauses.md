@@ -1,6 +1,6 @@
 ---
 id: TRK-020a
-status: backlog
+status: done
 subsystem: tracking-core
 tier: small
 created: 2026-05-31
@@ -41,3 +41,4 @@ U7. Unit tests: individual clause failures with all-else-passing snapshots.
 ## Log
 
 - 2026-05-31: created. Status: backlog. Child of TRK-020. Can proceed in parallel with TRK-020b.
+- 2026-07-18: backlog -> done. Clauses 1-4 landed on feat/trk-020-safety-predicate within SafeForControlEvaluator: per-clause reason bits, invalid slot fails its clause (undefined-fails).

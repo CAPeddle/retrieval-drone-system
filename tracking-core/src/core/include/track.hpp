@@ -76,6 +76,17 @@ public:
     int observation_count() const noexcept { return observation_count_; }
     cv::Point2f position_px() const noexcept { return position_px_; }
     double radius_px() const noexcept { return radius_px_; }
+
+    // TRK-016 constant-velocity prediction. Velocity is estimated from the
+    // last two observations (observation-backed only — predicted positions
+    // never feed it); valid once two distinct-timestamp observations exist.
+    bool has_velocity() const noexcept { return has_velocity_; }
+    cv::Point2f velocity_px_per_s() const noexcept { return velocity_px_per_s_; }
+
+    // Additional positional uncertainty from prediction, in pixels. Zero while
+    // observed; grows linearly with prediction time (faster with no velocity
+    // estimate), frozen once the prediction cap is reached.
+    double prediction_uncertainty_px() const noexcept { return prediction_uncertainty_px_; }
     std::int64_t last_observation_ns() const noexcept { return last_observation_ns_; }
     std::int64_t creation_timestamp_ns() const noexcept { return creation_ns_; }
 
@@ -95,7 +106,11 @@ private:
     TrackState state_ = TrackState::Provisional;
     int observation_count_ = 0;
     int missed_cycles_ = 0;  // consecutive; Provisional deletion counter (plan R3)
-    cv::Point2f position_px_{0.0F, 0.0F};
+    cv::Point2f position_px_{0.0F, 0.0F};       // predicted while coasting (TRK-016)
+    cv::Point2f last_obs_position_px_{0.0F, 0.0F};  // observation-backed anchor
+    cv::Point2f velocity_px_per_s_{0.0F, 0.0F};
+    bool has_velocity_ = false;
+    double prediction_uncertainty_px_ = 0.0;
     double radius_px_ = 0.0;
     std::int64_t last_observation_ns_ = 0;
     std::int64_t creation_ns_ = 0;
@@ -105,6 +120,9 @@ private:
     std::int64_t predict_timeout_ns_ = 0;
     std::int64_t occlude_timeout_ns_ = 0;
     std::int64_t retire_timeout_ns_ = 0;
+    std::int64_t max_predict_duration_ns_ = 0;
+
+    void predict(std::int64_t now_ns);  // TRK-016, called from tick() while coasting
 };
 
 }  // namespace tracking

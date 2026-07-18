@@ -1,3 +1,5 @@
-opencv-python
+opencv-python>=4.8
 pyzmq
 numpy
+pytest
+pyyaml

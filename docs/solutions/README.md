@@ -28,6 +28,8 @@ See [`.claude/rules/solutions.md`](../../.claude/rules/solutions.md) for the req
 
 | Date | File | Type | Applies to | Tags |
 |---|---|---|---|---|
+| 2026-07-18 | [python/2026-07-18-artifact-metadata-derived-not-asserted.md](python/2026-07-18-artifact-metadata-derived-not-asserted.md) | pattern | tracking-core | calibration, extrinsics, artifact-contract, undistortion, metadata |
+| 2026-07-18 | [cpp/2026-07-18-opencv-aruco-version-portability-seam.md](cpp/2026-07-18-opencv-aruco-version-portability-seam.md) | pattern | tracking-core | opencv, aruco, cmake, version-portability, preprocessor-seam |
 | 2026-07-18 | [cpp/2026-07-18-composite-test-targets-model-occlusion.md](cpp/2026-07-18-composite-test-targets-model-occlusion.md) | pattern | tracking-core | testing, replay-harness, ball-detector, synthetic-compositing, occlusion |
 | 2026-07-16 | [cpp/2026-07-16-spdlog-async-hot-path-logging.md](cpp/2026-07-16-spdlog-async-hot-path-logging.md) | pattern | tracking-core | spdlog, logging, hot-path, compile-time-gating, cmake |
 | 2026-07-15 | [hardware/pi3b-camera-node-undervoltage.md](hardware/pi3b-camera-node-undervoltage.md) | recovery | camera-node | raspberry-pi, power, under-voltage, camera, hardware |

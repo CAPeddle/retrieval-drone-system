@@ -59,6 +59,14 @@ struct CalibrationConfig {
     CharucoConfig charuco;
 };
 
+struct TrackConfig {
+    int confirm_threshold = 0;            // Observations required for Provisional -> Confirmed (TRK-014).
+    double predict_timeout_ms = 0.0;      // Predicted -> Occluded age threshold.
+    double occlude_timeout_ms = 0.0;      // Occluded -> Lost age threshold.
+    double retire_timeout_ms = 0.0;       // Lost -> Retired age threshold.
+    double max_predict_duration_ms = 0.0; // Constant-velocity extrapolation cap (TRK-016).
+};
+
 struct PipelineConfig {
     int ring_buffer_capacity = 0;      // Frame slots pre-allocated between capture and processing.
     int capture_cpu_core = 0;          // Core the ingestion thread is pinned to (§7.1 affinity).
@@ -87,6 +95,7 @@ struct Config {
     SafeForControlConfig safe_for_control;
     BallConfig ball;
     ZmqConfig zmq;
+    TrackConfig track;
     CalibrationConfig calibration;
     LoggingConfig logging;
     PipelineConfig pipeline;

@@ -38,6 +38,7 @@ Workflow defined in [README.md → Workflow](README.md#workflow). Risk register 
 - [x] TRK-010 — Ball detector (2026-07-18)
 - [x] TRK-011 — Calibration marker detector (2026-07-18)
 - [x] TRK-012 — Intrinsic calibration tool (2026-07-18)
+- [x] TRK-013 — Extrinsic calibration tool (2026-07-18)
 
 ## Backlog
 
@@ -71,7 +72,6 @@ Workflow defined in [README.md → Workflow](README.md#workflow). Risk register 
 
 ### v0.3 implementation — calibration tooling
 
-- [ ] TRK-013 — Extrinsic calibration tool (Python) → [story](docs/tickets/TRK-013-extrinsic-calibration-tool.md)
 
 ### v0.3 implementation — tracking
 

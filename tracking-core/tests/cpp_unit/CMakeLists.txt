@@ -11,7 +11,9 @@ add_executable(tracking_core_tests
     test_replay_source.cpp
     test_logging.cpp
     test_logging_default_level.cpp
-    test_tracking_pipeline.cpp
+    test_pipeline_tracking.cpp
+    test_track.cpp
+    test_tracker.cpp
 )
 
 target_include_directories(tracking_core_tests

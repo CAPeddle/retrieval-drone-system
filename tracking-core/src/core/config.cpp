@@ -135,6 +135,17 @@ Config Config::load(const std::string& path) {
         const YAML::Node zmq = require_section(root, "zmq");
         cfg.zmq.bind_address = require<std::string>(zmq, "zmq", "bind_address");
 
+        const YAML::Node track = require_section(root, "track");
+        cfg.track.confirm_threshold = require<int>(track, "track", "confirm_threshold");
+        cfg.track.predict_timeout_ms = require<double>(track, "track", "predict_timeout_ms");
+        cfg.track.occlude_timeout_ms = require<double>(track, "track", "occlude_timeout_ms");
+        cfg.track.retire_timeout_ms = require<double>(track, "track", "retire_timeout_ms");
+        cfg.track.max_predict_duration_ms =
+            require<double>(track, "track", "max_predict_duration_ms");
+
+        const YAML::Node gating = require_section(root, "gating");
+        cfg.gating.max_distance_px = require<double>(gating, "gating", "max_distance_px");
+
         const YAML::Node calibration = require_section(root, "calibration");
         cfg.calibration.intrinsics_path =
             require<std::string>(calibration, "calibration", "intrinsics_path");
@@ -250,6 +261,24 @@ Config Config::load(const std::string& path) {
     if (cfg.ball.brightness_threshold < 1 || cfg.ball.brightness_threshold > 254) {
         throw ConfigError("field must be in [1, 254]: ball.brightness_threshold");
     }
+    // TRK-014 track lifecycle. Timeouts feed the ADR-007 clause 3/4 inputs via
+    // track state, so every value gets the finite check.
+    if (cfg.track.confirm_threshold < 1) {
+        throw ConfigError("field must be >= 1: track.confirm_threshold");
+    }
+    require_gt(cfg.track.predict_timeout_ms, 0.0, "track.predict_timeout_ms");
+    require_gt(cfg.track.occlude_timeout_ms, 0.0, "track.occlude_timeout_ms");
+    require_gt(cfg.track.retire_timeout_ms, 0.0, "track.retire_timeout_ms");
+    require_gt(cfg.track.max_predict_duration_ms, 0.0, "track.max_predict_duration_ms");
+    // The decay chain only makes sense strictly ordered (Predicted before
+    // Occluded before Lost); equal values would collapse states.
+    if (cfg.track.occlude_timeout_ms <= cfg.track.predict_timeout_ms) {
+        throw ConfigError("track.occlude_timeout_ms must be > track.predict_timeout_ms");
+    }
+    if (cfg.track.retire_timeout_ms <= cfg.track.occlude_timeout_ms) {
+        throw ConfigError("track.retire_timeout_ms must be > track.occlude_timeout_ms");
+    }
+    require_gt(cfg.gating.max_distance_px, 0.0, "gating.max_distance_px");
     require_nonempty(cfg.zmq.bind_address, "zmq.bind_address");
     require_nonempty(cfg.calibration.intrinsics_path, "calibration.intrinsics_path");
     require_nonempty(cfg.calibration.extrinsics_path, "calibration.extrinsics_path");

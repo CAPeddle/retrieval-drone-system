@@ -5,17 +5,39 @@
 #include "frame_quality.hpp"
 #include "frame_ring_buffer.hpp"
 #include "logging.hpp"
-#include "tracking_pipeline.hpp"
+#include "tracker.hpp"
 
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
 #include <opencv2/videoio.hpp>
 #include <zmq.hpp>
 
+#include <atomic>
 #include <chrono>
+#include <csignal>
 #include <iostream>
 #include <string>
 #include <thread>
+#include <vector>
+
+namespace {
+
+// SIGINT/SIGTERM request a clean shutdown (plan R23). The handler only sets a
+// lock-free atomic flag — the only async-signal-safe action available to it.
+std::atomic<bool> g_stop_requested{false};
+static_assert(std::atomic<bool>::is_always_lock_free,
+              "signal handler requires a lock-free stop flag");
+
+void handle_stop_signal(int) { g_stop_requested.store(true, std::memory_order_relaxed); }
+
+// Capture-clock "now" in the same domain as FrameMetadata.capture_timestamp_ns.
+std::int64_t steady_now_ns() {
+    return std::chrono::duration_cast<std::chrono::nanoseconds>(
+               std::chrono::steady_clock::now().time_since_epoch())
+        .count();
+}
+
+}  // namespace
 
 int main(int argc, char** argv) {
     const std::string config_path =
@@ -49,7 +71,9 @@ int main(int argc, char** argv) {
 
         tracking::BallDetector ball_detector(config.ball, config.camera.height,
                                              config.camera.width);
-        tracking::Tracker tracker;
+        tracking::Tracker tracker(config.track, config.gating);
+        std::vector<tracking::Observation> observations;
+        observations.reserve(tracking::Tracker::kMaxObservations);
 
         // Capture (producer) and processing (consumer) sides of the TRK-005
         // ring buffer. Frames arrive as 8-bit BGR at the configured size.
@@ -71,10 +95,19 @@ int main(int argc, char** argv) {
         std::uint64_t captured_at_last_report = 0;
         std::uint64_t failures_at_last_report = 0;
 
+        std::signal(SIGINT, handle_stop_signal);
+        std::signal(SIGTERM, handle_stop_signal);
+
         cv::Mat frame(config.camera.height, config.camera.width, CV_8UC3);
-        while (true) {
+        while (!g_stop_requested.load(std::memory_order_relaxed)) {
             const auto metadata = ring_buffer.try_pop(frame);
+            // Plan R4: the tracker ticks every loop iteration on the capture
+            // clock, so REJECT bursts and frame gaps age tracks instead of
+            // freezing them at Confirmed.
+            const std::int64_t now_ns = steady_now_ns();
             if (!metadata.has_value()) {
+                observations.clear();
+                tracker.update(observations, now_ns);
                 std::this_thread::sleep_for(std::chrono::milliseconds(1));
                 continue;
             }
@@ -110,25 +143,34 @@ int main(int argc, char** argv) {
                 last_quality_report = now;
             }
             if (frame_quality == tracking::FrameQuality::REJECT) {
+                observations.clear();
+                tracker.update(observations, now_ns);  // R4: REJECT still ages tracks
                 continue;
             }
 
-            // TRK-010 ball detection. Bridge the observation to the cv::Rect
-            // the stub Tracker still consumes (centroid +/- radius); an empty
-            // Rect on nullopt preserves the stub's hold-last-box behaviour
-            // until TRK-014 replaces the tracker.
+            // TRK-010 ball detection feeding the TRK-014/015 tracker. This is
+            // the observation-build seam (plan U4/KTD-6): detector outputs are
+            // normalised to Observation here and nowhere else.
             const std::optional<tracking::BallObservation> ball =
                 ball_detector.detect(frame);
-            cv::Rect detection;
+            observations.clear();
             if (ball.has_value()) {
-                const int r = static_cast<int>(ball->radius_px);
-                detection = cv::Rect(static_cast<int>(ball->centroid_px.x) - r,
-                                     static_cast<int>(ball->centroid_px.y) - r,
-                                     2 * r, 2 * r);
+                tracking::Observation obs;
+                obs.type = tracking::ObjectType::Ball;
+                obs.centroid_px = ball->centroid_px;
+                obs.radius_px = ball->radius_px;
+                obs.capture_timestamp_ns = metadata->capture_timestamp_ns;
+                observations.push_back(obs);
             }
-            const cv::Rect box = tracker.update(detection);
-            if (box.area() > 0) {
-                cv::rectangle(frame, box, cv::Scalar(0, 255, 0), 2);
+            const auto& tracks = tracker.update(observations, now_ns);
+            for (const tracking::Track& track : tracks) {
+                if (track.type() == tracking::ObjectType::Ball &&
+                    track.state() == tracking::TrackState::Confirmed) {
+                    const int r = static_cast<int>(track.radius_px());
+                    const cv::Point centre(static_cast<int>(track.position_px().x),
+                                           static_cast<int>(track.position_px().y));
+                    cv::circle(frame, centre, r > 0 ? r : 4, cv::Scalar(0, 255, 0), 2);
+                }
             }
 
             std::vector<uchar> encoded;
@@ -140,6 +182,12 @@ int main(int argc, char** argv) {
             publisher.send(topic, zmq::send_flags::sndmore);
             publisher.send(zmq::buffer(encoded), zmq::send_flags::none);
         }
+
+        // Clean shutdown (plan R23): stop capture first (joins its thread),
+        // then let the socket/context unwind; LINGER handling arrives with the
+        // TRK-021 publisher in Phase D.
+        LOG_INFO("shutdown requested; stopping capture thread");
+        capture.stop();
     } catch (const std::exception& e) {
         LOG_CRITICAL("fatal error after startup: {}", e.what());
         tracking::logging::shutdown();

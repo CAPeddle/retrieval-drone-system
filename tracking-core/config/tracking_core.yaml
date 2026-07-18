@@ -55,6 +55,19 @@ ball:
   brightness_threshold: 200     # provisional — NoIR ball is bright; a room scene
                                 # should have nothing brighter that is also circular
 
+track:                          # TRK-014 lifecycle state machine.
+  confirm_threshold: 3          # Observations before Provisional -> Confirmed.
+  predict_timeout_ms: 50        # Predicted -> Occluded at this age (ties decay).
+  occlude_timeout_ms: 200       # Occluded -> Lost.
+  retire_timeout_ms: 1000       # Lost -> Retired (removed; IDs never reused).
+  max_predict_duration_ms: 100  # TRK-016 constant-velocity extrapolation cap.
+                                # All provisional — ticket defaults, pending
+                                # replay-footage validation (ball-in-scene clip).
+
+gating:                         # TRK-015 observation association.
+  max_distance_px: 50           # Gate radius; observation beyond this spawns a
+                                # new track. Provisional — ticket default.
+
 zmq:
   bind_address: "tcp://*:5555"   # ADR-002: core BINDs (default port 5555); consumers CONNECT.
 

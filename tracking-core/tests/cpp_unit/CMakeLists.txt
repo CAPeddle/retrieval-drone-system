@@ -7,6 +7,7 @@ add_executable(tracking_core_tests
     test_frame_metadata.cpp
     test_frame_quality.cpp
     test_frame_ring_buffer.cpp
+    test_coordinate_mapper.cpp
     test_homography_loader.cpp
     test_replay_integration.cpp
     test_replay_source.cpp

@@ -49,13 +49,23 @@ ball:
   # once a ball clip exists (see the TRK-008 blur_threshold precedent above).
   expected_radius_px_min: 10    # provisional
   expected_radius_px_max: 80    # provisional
-  min_circularity: 0.82         # provisional — above a square's ceiling
+  min_circularity: 0.82         # above a square's ceiling
                                 # (4*pi*A/P^2 = pi/4 ~= 0.785 for a square), so
                                 # the gate actually excludes non-round blobs;
-                                # the ticket's 0.7 guess admitted squares
+                                # the ticket's 0.7 guess admitted squares.
+                                # Measured 2026-07-19: the real ball's thresholded
+                                # blob sits at 0.77-0.81 in uncontrolled lighting —
+                                # deliberately NOT lowered (would admit squares).
   detection_blur_kernel: 5      # provisional (odd, 3-15)
-  brightness_threshold: 200     # provisional — NoIR ball is bright; a room scene
-                                # should have nothing brighter that is also circular
+  brightness_threshold: 130     # Measured 2026-07-19 (ov5647 NoIR, ball-in-scene
+                                # replay library, uncontrolled room lighting):
+                                # ball peaks at 191 grey, so the original guess of
+                                # 200 could never fire; sweep 130-190 showed zero
+                                # false positives on all clips at every value and
+                                # max ball response at 130 (~4-5% of frames; the
+                                # limiting gate is now min_circularity, above).
+                                # REVISIT with the ball lit under controlled
+                                # lighting (user decision 2026-07-19).
 
 track:                          # TRK-014 lifecycle state machine.
   confirm_threshold: 3          # Observations before Provisional -> Confirmed.

@@ -7,6 +7,8 @@
 #include "frame_quality.hpp"
 #include "export_thread.hpp"
 #include "frame_ring_buffer.hpp"
+#include "frame_source.hpp"
+#include "replay_source.hpp"
 #include "logging.hpp"
 #include "safe_for_control.hpp"
 #include "snapshot_builder.hpp"
@@ -21,6 +23,7 @@
 #include <chrono>
 #include <csignal>
 #include <iostream>
+#include <optional>
 #include <string>
 #include <thread>
 #include <vector>
@@ -45,8 +48,21 @@ std::int64_t steady_now_ns() {
 }  // namespace
 
 int main(int argc, char** argv) {
-    const std::string config_path =
-        (argc > 1) ? argv[1] : "config/tracking_core.yaml";
+    // Usage: tracking_core [config.yaml] [--replay <clip>]
+    // --replay swaps the camera for a looped recorded clip paced at
+    // camera.target_fps — the remote live-verification mode (plan U17: real
+    // threaded binary, real ZMQ stream, no camera attached). Verification
+    // evidence, not deployment.
+    std::string config_path = "config/tracking_core.yaml";
+    std::string replay_clip;
+    for (int i = 1; i < argc; ++i) {
+        const std::string arg = argv[i];
+        if (arg == "--replay" && i + 1 < argc) {
+            replay_clip = argv[++i];
+        } else {
+            config_path = arg;
+        }
+    }
     tracking::Config config;
     try {
         config = tracking::Config::load(config_path);
@@ -82,11 +98,31 @@ int main(int argc, char** argv) {
                                                            config.ball.radius_m);
         bool last_published_safe = false;
 
-        tracking::CameraSource camera(config.camera);
-        if (!camera.is_open()) {
-            LOG_ERROR("Unable to open camera device {}", config.camera.device_id);
-            tracking::logging::shutdown();
-            return 1;
+        std::optional<tracking::CameraSource> camera;
+        std::optional<tracking::ReplaySource> replay;
+        tracking::FrameSource* source = nullptr;
+        if (!replay_clip.empty()) {
+            tracking::ReplaySource::Options replay_options;
+            replay_options.fps = static_cast<double>(config.camera.target_fps);
+            replay_options.loop = true;
+            replay.emplace(replay_clip, replay_options);
+            if (!replay->is_open()) {
+                LOG_ERROR("Unable to open replay clip {}", replay_clip);
+                tracking::logging::shutdown();
+                return 1;
+            }
+            LOG_WARN("REPLAY MODE: frames from '{}' looped at {} fps — "
+                     "verification evidence, not deployment",
+                     replay_clip, config.camera.target_fps);
+            source = &*replay;
+        } else {
+            camera.emplace(config.camera);
+            if (!camera->is_open()) {
+                LOG_ERROR("Unable to open camera device {}", config.camera.device_id);
+                tracking::logging::shutdown();
+                return 1;
+            }
+            source = &*camera;
         }
 
         // TRK-021: snapshot publisher on its own export thread, fed through a
@@ -112,12 +148,13 @@ int main(int argc, char** argv) {
         capture_options.cpu_core = config.pipeline.capture_cpu_core;
         capture_options.thread_priority = config.pipeline.capture_thread_priority;
         capture_options.camera_id = 0;
-        tracking::CaptureThread capture(camera, ring_buffer, capture_options);
+        tracking::CaptureThread capture(*source, ring_buffer, capture_options);
         capture.start();
 
         tracking::FrameQualityAssessor quality(config.frame_quality,
                                                config.camera.height, config.camera.width);
         auto last_quality_report = std::chrono::steady_clock::now();
+        std::uint64_t processed_in_window = 0;
         std::uint64_t degraded_in_window = 0;
         std::uint64_t rejected_at_last_report = 0;
         std::uint64_t captured_at_last_report = 0;
@@ -146,8 +183,14 @@ int main(int argc, char** argv) {
             if (frame_quality == tracking::FrameQuality::DEGRADED) {
                 ++degraded_in_window;
             }
+            ++processed_in_window;
             const auto now = std::chrono::steady_clock::now();
             if (now - last_quality_report >= std::chrono::seconds(1)) {
+                // Throughput evidence for the U17 sustained-fps gate (1 Hz
+                // aggregate, never per-frame).
+                LOG_INFO("pipeline: {} frames processed in the last second",
+                         processed_in_window);
+                processed_in_window = 0;
                 const std::uint64_t rejected = quality.rejected_count();
                 if (rejected != rejected_at_last_report || degraded_in_window > 0) {
                     LOG_WARN("frame quality: {} rejected, {} degraded in the last second",

@@ -333,8 +333,13 @@ TEST_P(SafetyReplayGate, ZeroSafeForControlTruePositives) {
     RecordProperty("reason_age", static_cast<int>(result.reason_counts[4]));
 }
 
+// The ball-free trio is the original library; the -ball trio is the ship-gate
+// static-ball library (2 min per scenario, ball in scene). Each clip skips
+// when absent, so the gate degrades gracefully on partial libraries.
 INSTANTIATE_TEST_SUITE_P(RecordedScenarios, SafetyReplayGate,
                          ::testing::Values("normal.avi", "underexposed.avi",
-                                           "overexposed.avi"));
+                                           "overexposed.avi", "normal-ball.avi",
+                                           "underexposed-ball.avi",
+                                           "overexposed-ball.avi"));
 
 }  // namespace

@@ -90,9 +90,21 @@ protected:
 // Detection false-positive counts over a clip, restricted to the frames the
 // production pipeline would actually feed the detectors (GOOD/DEGRADED — the
 // quality gate rejects the rest first). Matches the runtime contract.
+// Scene truth (verified 2026-07-19 by the threshold-provenance sweep): the
+// physical ball sits at ~(490, 205) px in the recorded library — it was
+// already in scene when the 2026-07-17 clips were captured, so the library is
+// NOT ball-free. The zero-FP claim is therefore SPATIAL: no detection may fire
+// anywhere except the ball's neighbourhood; detections at the ball are true
+// positives, counted separately. A genuinely ball-free exact-zero gate returns
+// once the ball can be physically removed for a re-recording.
+constexpr float kSceneBallX = 490.0F;
+constexpr float kSceneBallY = 205.0F;
+constexpr float kSceneBallRadiusPx = 40.0F;
+
 struct DetectionCounts {
-    int frames_assessed = 0;   // frames that passed the quality gate
-    int ball_detections = 0;
+    int frames_assessed = 0;         // frames that passed the quality gate
+    int ball_detections = 0;         // total ball-detector firings
+    int ball_at_scene_ball = 0;      // firings within the known ball neighbourhood
     int marker_detections = 0;
 };
 
@@ -111,8 +123,13 @@ DetectionCounts detect_over_clip(const std::string& path, const tracking::Config
             continue;  // production never feeds rejected frames to detection
         }
         ++counts.frames_assessed;
-        if (ball.detect(frame).has_value()) {
+        if (const auto obs = ball.detect(frame); obs.has_value()) {
             ++counts.ball_detections;
+            const float dx = obs->centroid_px.x - kSceneBallX;
+            const float dy = obs->centroid_px.y - kSceneBallY;
+            if (dx * dx + dy * dy < kSceneBallRadiusPx * kSceneBallRadiusPx) {
+                ++counts.ball_at_scene_ball;
+            }
         }
         counts.marker_detections += static_cast<int>(markers.detect(frame).size());
     } while (source.grab(frame));
@@ -147,18 +164,24 @@ TEST_F(ReplayIntegration, NormalClipPassesTheGate) {
 }
 
 // --- TRK-010/011 replay false-positive gates (U3) --------------------------
-// The shipped detector defaults must not fire on a ball-free, marker-free room
-// scene. A failure here is calibration signal, handled by the plan's
-// gate-failure protocol (record counts, done-with-deferral) — never tune the
-// thresholds to pass.
+// The shipped detector defaults must not fire anywhere except the known scene
+// ball (spatial zero-FP; see the scene-truth note above DetectionCounts). A
+// failure here is calibration signal, handled by the plan's gate-failure
+// protocol (record counts, done-with-deferral) — never tune the thresholds to
+// pass.
 
 TEST_F(ReplayIntegration, NormalClipNoBallFalsePositives) {
     const DetectionCounts counts =
         detect_over_clip(replay_dir() + "/normal.avi", shipped_config());
     ASSERT_GT(counts.frames_assessed, 0) << "normal.avi missing, unreadable, or all-rejected";
-    EXPECT_EQ(counts.ball_detections, 0)
-        << counts.ball_detections << " ball false positives in "
+    // Spatial zero-FP: every firing must be at the physical ball; anything
+    // elsewhere is a spurious detection (gate premise re-scoped 2026-07-19
+    // with user approval — the library is not ball-free).
+    EXPECT_EQ(counts.ball_detections - counts.ball_at_scene_ball, 0)
+        << (counts.ball_detections - counts.ball_at_scene_ball)
+        << " spurious ball detections (away from the scene ball) in "
         << counts.frames_assessed << " quality-passed frames";
+    RecordProperty("ball_true_positives_at_scene_ball", counts.ball_at_scene_ball);
 }
 
 TEST_F(ReplayIntegration, NormalClipNoMarkerFalsePositives) {

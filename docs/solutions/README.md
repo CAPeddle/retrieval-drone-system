@@ -28,6 +28,9 @@ See [`.claude/rules/solutions.md`](../../.claude/rules/solutions.md) for the req
 
 | Date | File | Type | Applies to | Tags |
 |---|---|---|---|---|
+| 2026-07-19 | [workflow/2026-07-19-replay-gate-premises-are-scene-assertions.md](workflow/2026-07-19-replay-gate-premises-are-scene-assertions.md) | pattern | * | replay-gate, test-premise, scene-truth, false-positive, safety-gate |
+| 2026-07-19 | [cpp/2026-07-19-production-binary-oracle-for-threshold-provenance.md](cpp/2026-07-19-production-binary-oracle-for-threshold-provenance.md) | pattern | tracking-core | threshold-provenance, replica-testing, probe-binary, opencv, oracle |
+| 2026-07-19 | [workflow/2026-07-19-decompose-physical-blockers-via-remote-probing.md](workflow/2026-07-19-decompose-physical-blockers-via-remote-probing.md) | pattern | * | remote-development, hardware, feasibility, probing, replay-verification |
 | 2026-07-18 | [cpp/2026-07-18-camera-centre-from-plane-homography.md](cpp/2026-07-18-camera-centre-from-plane-homography.md) | pattern | tracking-core | opencv, homography, plane-pose, decomposehomographymat, camera-centre, z-compensation, adr-010 |
 | 2026-07-18 | [cpp/2026-07-18-opencv-svd-outputarray-matx-silent-failure.md](cpp/2026-07-18-opencv-svd-outputarray-matx-silent-failure.md) | pattern | tracking-core | opencv, svd, outputarray, matx, silent-failure, homography |
 | 2026-07-18 | [workflow/2026-07-18-stacked-pr-merge-order-recovery.md](workflow/2026-07-18-stacked-pr-merge-order-recovery.md) | recovery | * | stacked-prs, github, merge-order, pull-requests, recovery, gh-cli |

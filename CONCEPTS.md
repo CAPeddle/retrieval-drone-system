@@ -8,7 +8,10 @@ Shared domain vocabulary for this project — entities, named processes, and sta
 A recorded clip of real camera footage under a named condition (normal, underexposed, overexposed) used to replay the perception pipeline deterministically without hardware. Scenarios are the unit the ship gate counts: the release gate requires a minimum number of distinct scenarios, not a minimum duration of one.
 
 ### Replay Gate
-A test that runs a detector over a Scenario's frames and asserts its behaviour on real footage — most importantly zero false positives, the project's cardinal failure. A failing Replay Gate is calibration signal, never a tuning target: thresholds are not adjusted to make one pass.
+A test that runs a detector over a Scenario's frames and asserts its behaviour on real footage — most importantly zero false positives, the project's cardinal failure. A failing Replay Gate is calibration signal, never a tuning target: thresholds are not adjusted to make one pass. A gate's assertion rests on its Scene Truth; a failure can mean the premise rotted rather than the code regressed, and a green gate proves nothing when the detector cannot see the target at all.
+
+### Scene Truth
+What was physically present in a Scenario's field of view at recording time — which objects, where. Every Replay Gate assertion is implicitly conditioned on it, and no code change can keep it true: objects enter and leave scenes between recordings. Scene truth is verified evidence (a photograph, a spatial analysis of detections), recorded when clips are captured; premise corrections to a safety gate require explicit user sign-off.
 
 ### True-Positive Counterweight
 A companion test to a zero-false-positive Replay Gate that composites a synthetic target into the same real footage and requires the detector to find it. It bounds the detector from the opposite direction, so "detect nothing" cannot satisfy the gates. Composited targets must model the target's physical effect on the scene (an opaque target occludes what is behind it), not merely its appearance.

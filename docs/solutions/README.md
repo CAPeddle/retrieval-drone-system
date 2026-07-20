@@ -28,6 +28,7 @@ See [`.claude/rules/solutions.md`](../../.claude/rules/solutions.md) for the req
 
 | Date | File | Type | Applies to | Tags |
 |---|---|---|---|---|
+| 2026-07-20 | [tooling-decisions/2026-07-20-model-tier-allocation-policy.md](tooling-decisions/2026-07-20-model-tier-allocation-policy.md) | reference | * | agent-workflow, model-tiers, planning, goal-execution, capability-allocation |
 | 2026-07-19 | [workflow/2026-07-19-replay-gate-premises-are-scene-assertions.md](workflow/2026-07-19-replay-gate-premises-are-scene-assertions.md) | pattern | * | replay-gate, test-premise, scene-truth, false-positive, safety-gate |
 | 2026-07-19 | [cpp/2026-07-19-production-binary-oracle-for-threshold-provenance.md](cpp/2026-07-19-production-binary-oracle-for-threshold-provenance.md) | pattern | tracking-core | threshold-provenance, replica-testing, probe-binary, opencv, oracle |
 | 2026-07-19 | [workflow/2026-07-19-decompose-physical-blockers-via-remote-probing.md](workflow/2026-07-19-decompose-physical-blockers-via-remote-probing.md) | pattern | * | remote-development, hardware, feasibility, probing, replay-verification |

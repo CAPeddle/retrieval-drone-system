@@ -64,3 +64,13 @@ Tier `design` — this ticket spawns sub-tickets for its major sub-work. The ove
 ## Log
 
 - 2026-05-31: created. Status: backlog. Tier is `design` because the PSD computation strategy (full-frame vs ROI-gated) is a non-trivial performance trade-off requiring a benchmark spike. Depends on TRK-008 (frames enter detection after quality check).
+- 2026-07-21: **TRK-009a PSD strategy benchmark — DECISION: Option A (full-frame DFT).** Measured on the Pi 5 (aarch64, `build-release`) via `benchmarks/psd_strategy_bench` over the shared synthetic fixture (U1). Window = 8 frames (two modulation periods, KTD-1 deviation from the ticket's original 4-frame window). On-target Release numbers (dev-host timings are not evidence — production-binary-oracle learning):
+
+  | Strategy | overall mean | overall p99 |
+  |---|---|---|
+  | A — full-frame 8-point DFT | 5.10 ms | **5.52 ms** |
+  | B — brightness-prefiltered | 2.30 ms | 5.92 ms |
+
+  Both meet every expected synthetic outcome (detect the three true-dot amplitudes incl. dim-at-floor and the bright-clutter dim dot; reject step / moving-edge / empty). B is admissible (matches A everywhere A is correct) and ~2.2× lower on *mean*, but **its p99 is not lower than A's**: the bright adversarial scenes (light-switch step, translating edge) render the brightness prefilter useless (whole frame becomes candidate), so B collapses to A's cost with extra tail jitter exactly where the per-frame budget is tightest. Per the KTD-4 rule (among admissible strategies choose lower p99; tie/ambiguity → A) the choice is **A** — also simpler, with no prefilter threshold to re-provision on real footage. A's admissibility-independence means the provisional Option-B prefilter (30, PROVISIONAL) does not affect the outcome.
+
+  **Execution signal for TRK-009b/d (not a gate here):** the benchmark's per-pixel *scalar* 8-tap DFT costs ~5 ms/window on the Pi — above the R10 ≤4 ms detect-cycle budget. That is the fair model for the A-vs-B pixel-set comparison, not the shipped detector: U3 implements Option A with the four-phase accumulation into pre-allocated float Mats (whole-Mat weighted sums, `re += coef·frame`), which removes the scalar per-pixel overhead. The R10 budget is proven against that vectorised implementation at the Phase C perf gate, not against this reference binary. Thresholds in the benchmark (`power_min`, `purity_min`, `prefilter`) are PROVISIONAL pending the operator's modulated-laser recording session (R14).

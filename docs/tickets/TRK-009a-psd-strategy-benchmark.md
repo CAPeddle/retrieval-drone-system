@@ -40,3 +40,4 @@ U6. Document decision in parent ticket log and update TRK-009b's plan with the c
 ## Log
 
 - 2026-05-31: created. Status: backlog. First child of TRK-009; gates implementation strategy.
+- 2026-07-21: benchmark built and run on the Pi 5 (`benchmarks/psd_strategy_bench`, U1 fixture + U2 binary, Phase A of the modulation-detector plan). **Decision: Option A (full-frame DFT)** on a p99 basis — full record + timings in the TRK-009 parent Log. Note the KTD-1 deviation: window is 8 frames (two periods), not the ticket's original 4. Status left `backlog` — all TRK-009* status transitions are batched at the plan's Phase C close-out (U8).

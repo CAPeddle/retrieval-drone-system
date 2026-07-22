@@ -92,3 +92,5 @@ enable_testing()
 # ─── Subdirectories ──────────────────────────────────────────────────────────
 add_subdirectory(src/core)
 add_subdirectory(tests/cpp_unit)
+# Standalone benchmarks (TRK-009a): built with the tree, excluded from ctest.
+add_subdirectory(benchmarks)

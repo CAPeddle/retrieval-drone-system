@@ -14,7 +14,9 @@
 //     are the ones that a naive single-period detector would false-fire on; the
 //     benchmark and the U3+ detector suite assert zero detections on them.
 //   - The on-bin interferer (an ambient source aliasing exactly onto f_mod) IS
-//     detected — expected behaviour, asserted as such (R3), not a failure.
+//     detected — expected behaviour, asserted as such (R3), to be recorded as a
+//     residual exposure in the planned ADR-005 amendment (U9, lands with
+//     Phase B).
 //   - Opaque occlusion for the moving edge follows the composite-occlusion
 //     learning: the edge overwrites the pixels behind it, it does not add to
 //     them.
@@ -123,26 +125,39 @@ inline cv::Mat to_u8(const cv::Mat& acc) {
 
 }  // namespace detail
 
+// ─── Sequence scaffold ───────────────────────────────────────────────────────
+// The one loop every generator shares: seeded RNG, per-frame paint callback,
+// CV_8U conversion, contiguous metadata at nominal 60 fps. `paint(acc, rng, i)`
+// must fill `acc` completely (background included) as CV_32F. New generators
+// should build on this rather than hand-rolling the scaffold.
+template <typename PaintFrame>
+std::vector<Frame> generate_sequence(int num_frames, unsigned seed,
+                                     PaintFrame&& paint) {
+    cv::RNG rng(seed);
+    std::vector<Frame> out;
+    out.reserve(num_frames);
+    for (int i = 0; i < num_frames; ++i) {
+        cv::Mat acc;
+        paint(acc, rng, i);
+        out.push_back({detail::to_u8(acc),
+                       detail::make_meta(kBaseSequence + i,
+                                         kBaseTimestampNs + i * kFramePeriodNs)});
+    }
+    return out;
+}
+
 // ─── Generators ──────────────────────────────────────────────────────────────
 
 // Square-wave-modulated Gaussian dot over dark noise — the true laser.
 inline std::vector<Frame> modulated_dot(unsigned seed, const DotSpec& spec,
                                         int num_frames, double bg_base = 12.0,
                                         double bg_sigma = 3.0) {
-    cv::RNG rng(seed);
-    std::vector<Frame> out;
-    out.reserve(num_frames);
-    for (int i = 0; i < num_frames; ++i) {
-        cv::Mat acc;
+    return generate_sequence(num_frames, seed, [&](cv::Mat& acc, cv::RNG& rng, int i) {
         detail::fill_background(acc, rng, bg_base, bg_sigma);
         if (square_on(spec.freq_hz, spec.phase_frac, i)) {
             detail::add_gaussian(acc, spec.cx, spec.cy, spec.radius, spec.amplitude);
         }
-        out.push_back({detail::to_u8(acc),
-                       detail::make_meta(kBaseSequence + i,
-                                         kBaseTimestampNs + i * kFramePeriodNs)});
-    }
-    return out;
+    });
 }
 
 // Off-frequency interferer (20 Hz by default): decoheres across two periods and
@@ -156,8 +171,8 @@ inline std::vector<Frame> off_frequency_dot(unsigned seed, const DotSpec& base,
 
 // On-bin interferer: an ambient source at `source_hz` (45 Hz PWM) that ALIASES
 // onto the modulation bin when sampled at 60 fps (|45-60| = 15 Hz). This IS
-// detected — a genuine residual exposure recorded in the ADR-005 amendment (U9),
-// asserted as expected behaviour, not a failure.
+// detected — expected behaviour, asserted as such; a residual exposure to be
+// recorded in the planned ADR-005 amendment (U9, Phase B), not a failure.
 inline std::vector<Frame> on_bin_interferer(unsigned seed, const DotSpec& base,
                                             int num_frames, double source_hz = 45.0) {
     DotSpec spec = base;
@@ -169,26 +184,21 @@ inline std::vector<Frame> on_bin_interferer(unsigned seed, const DotSpec& base,
 // straddles ON/OFF transitions, so the per-period amplitude schedule is
 // [a, a/2, 0, a/2] rather than a clean [a, a, 0, 0] — ~3 dB bin-power loss. Must
 // still detect at the provisional thresholds (R3 boundary characterisation).
+// Models the canonical 4-frame period (15 Hz @ 60 fps) only; spec.freq_hz is
+// intentionally unused — the half-amplitude schedule has no meaning at other
+// integer frame-per-period ratios.
 inline std::vector<Frame> fractional_phase_dot(unsigned seed, const DotSpec& spec,
                                                int num_frames, double bg_base = 12.0,
                                                double bg_sigma = 3.0) {
     static const double kSchedule[4] = {1.0, 0.5, 0.0, 0.5};
-    cv::RNG rng(seed);
-    std::vector<Frame> out;
-    out.reserve(num_frames);
-    for (int i = 0; i < num_frames; ++i) {
-        cv::Mat acc;
+    return generate_sequence(num_frames, seed, [&](cv::Mat& acc, cv::RNG& rng, int i) {
         detail::fill_background(acc, rng, bg_base, bg_sigma);
         const double scale = kSchedule[i % 4];
         if (scale > 0.0) {
             detail::add_gaussian(acc, spec.cx, spec.cy, spec.radius,
                                  spec.amplitude * scale);
         }
-        out.push_back({detail::to_u8(acc),
-                       detail::make_meta(kBaseSequence + i,
-                                         kBaseTimestampNs + i * kFramePeriodNs)});
-    }
-    return out;
+    });
 }
 
 // Static luminance step (light switch) at `offset`: the whole frame jumps from
@@ -198,18 +208,10 @@ inline std::vector<Frame> fractional_phase_dot(unsigned seed, const DotSpec& spe
 inline std::vector<Frame> static_step(unsigned seed, int offset, int num_frames,
                                       double level_before = 12.0,
                                       double level_after = 90.0, double bg_sigma = 3.0) {
-    cv::RNG rng(seed);
-    std::vector<Frame> out;
-    out.reserve(num_frames);
-    for (int i = 0; i < num_frames; ++i) {
-        cv::Mat acc;
+    return generate_sequence(num_frames, seed, [&](cv::Mat& acc, cv::RNG& rng, int i) {
         detail::fill_background(acc, rng, i < offset ? level_before : level_after,
                                 bg_sigma);
-        out.push_back({detail::to_u8(acc),
-                       detail::make_meta(kBaseSequence + i,
-                                         kBaseTimestampNs + i * kFramePeriodNs)});
-    }
-    return out;
+    });
 }
 
 // Translating opaque bright edge (moving-ball surrogate). A bright half-plane
@@ -221,22 +223,14 @@ inline std::vector<Frame> translating_edge(unsigned seed, int num_frames,
                                            double edge_x0 = 80.0, double speed_px = 40.0,
                                            double bright = 200.0, double bg_base = 12.0,
                                            double bg_sigma = 3.0) {
-    cv::RNG rng(seed);
-    std::vector<Frame> out;
-    out.reserve(num_frames);
-    for (int i = 0; i < num_frames; ++i) {
-        cv::Mat acc;
+    return generate_sequence(num_frames, seed, [&](cv::Mat& acc, cv::RNG& rng, int i) {
         detail::fill_background(acc, rng, bg_base, bg_sigma);
         const int edge_x =
             std::clamp(static_cast<int>(edge_x0 + i * speed_px), 0, kCols);
         if (edge_x > 0) {
             acc.colRange(0, edge_x).setTo(bright);  // opaque overwrite
         }
-        out.push_back({detail::to_u8(acc),
-                       detail::make_meta(kBaseSequence + i,
-                                         kBaseTimestampNs + i * kFramePeriodNs)});
-    }
-    return out;
+    });
 }
 
 // Bright-clutter scene: a DIM modulated dot beside a larger, brighter SATURATED
@@ -249,11 +243,7 @@ inline std::vector<Frame> bright_clutter_scene(unsigned seed, const DotSpec& dim
                                                double blob_cy = 300.0,
                                                double blob_sigma = 22.0,
                                                double blob_amplitude = 600.0) {
-    cv::RNG rng(seed);
-    std::vector<Frame> out;
-    out.reserve(num_frames);
-    for (int i = 0; i < num_frames; ++i) {
-        cv::Mat acc;
+    return generate_sequence(num_frames, seed, [&](cv::Mat& acc, cv::RNG& rng, int i) {
         detail::fill_background(acc, rng, 12.0, 3.0);
         // Static saturated blob every frame (unmodulated → no bin power).
         detail::add_gaussian(acc, blob_cx, blob_cy, blob_sigma, blob_amplitude);
@@ -261,11 +251,7 @@ inline std::vector<Frame> bright_clutter_scene(unsigned seed, const DotSpec& dim
             detail::add_gaussian(acc, dim_dot.cx, dim_dot.cy, dim_dot.radius,
                                  dim_dot.amplitude);
         }
-        out.push_back({detail::to_u8(acc),
-                       detail::make_meta(kBaseSequence + i,
-                                         kBaseTimestampNs + i * kFramePeriodNs)});
-    }
-    return out;
+    });
 }
 
 // Saturated (clipped) modulated dot with asymmetric bloom: high amplitude clips
@@ -276,21 +262,13 @@ inline std::vector<Frame> saturated_dot(unsigned seed, const DotSpec& base,
     if (spec.amplitude < 300.0) {
         spec.amplitude = 400.0;  // ensure it clips
     }
-    cv::RNG rng(seed);
-    std::vector<Frame> out;
-    out.reserve(num_frames);
-    for (int i = 0; i < num_frames; ++i) {
-        cv::Mat acc;
+    return generate_sequence(num_frames, seed, [&](cv::Mat& acc, cv::RNG& rng, int i) {
         detail::fill_background(acc, rng, 12.0, 3.0);
         if (square_on(spec.freq_hz, spec.phase_frac, i)) {
             detail::add_gaussian(acc, spec.cx, spec.cy, spec.radius, spec.amplitude,
                                  aniso_x);
         }
-        out.push_back({detail::to_u8(acc),
-                       detail::make_meta(kBaseSequence + i,
-                                         kBaseTimestampNs + i * kFramePeriodNs)});
-    }
-    return out;
+    });
 }
 
 // Settled-then-departing dot: modulated for `present_frames`, then gone. Drives
@@ -299,20 +277,12 @@ inline std::vector<Frame> saturated_dot(unsigned seed, const DotSpec& base,
 inline std::vector<Frame> departing_dot(unsigned seed, const DotSpec& spec,
                                         int present_frames, int num_frames,
                                         double bg_base = 12.0, double bg_sigma = 3.0) {
-    cv::RNG rng(seed);
-    std::vector<Frame> out;
-    out.reserve(num_frames);
-    for (int i = 0; i < num_frames; ++i) {
-        cv::Mat acc;
+    return generate_sequence(num_frames, seed, [&](cv::Mat& acc, cv::RNG& rng, int i) {
         detail::fill_background(acc, rng, bg_base, bg_sigma);
         if (i < present_frames && square_on(spec.freq_hz, spec.phase_frac, i)) {
             detail::add_gaussian(acc, spec.cx, spec.cy, spec.radius, spec.amplitude);
         }
-        out.push_back({detail::to_u8(acc),
-                       detail::make_meta(kBaseSequence + i,
-                                         kBaseTimestampNs + i * kFramePeriodNs)});
-    }
-    return out;
+    });
 }
 
 // ─── Gap-injection hooks (R4 window-integrity tests) ─────────────────────────
@@ -320,6 +290,8 @@ inline std::vector<Frame> departing_dot(unsigned seed, const DotSpec& spec,
 // Simulate `missing` dropped frames from `at_index` onward: the sequence number
 // jumps (breaking contiguity) and timestamps shift by the same span, as a real
 // capture would report after a dropped-frame burst.
+// Precondition: 0 < at_index < frames.size(). at_index == 0 shifts the WHOLE
+// sequence uniformly — pairwise contiguity is preserved and no gap exists.
 inline void inject_sequence_gap(std::vector<Frame>& frames, std::size_t at_index,
                                 std::uint64_t missing) {
     for (std::size_t i = at_index; i < frames.size(); ++i) {
@@ -332,6 +304,7 @@ inline void inject_sequence_gap(std::vector<Frame>& frames, std::size_t at_index
 // Simulate a camera stall of `extra_ns` at `at_index`: sequence numbers stay
 // contiguous but the inter-frame capture gap exceeds the nominal period, which
 // the detector's 1.5x-period gap ceiling must catch.
+// Precondition: 0 < at_index < frames.size() (see inject_sequence_gap).
 inline void inject_capture_stall(std::vector<Frame>& frames, std::size_t at_index,
                                  std::int64_t extra_ns) {
     for (std::size_t i = at_index; i < frames.size(); ++i) {

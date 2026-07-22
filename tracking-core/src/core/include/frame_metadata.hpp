@@ -15,6 +15,11 @@ struct FrameMetadata {
     std::uint64_t sequence_number = 0;       // monotonic, gap-free per source
     std::uint32_t capture_duration_us = 0;   // grab start -> grab complete
     std::uint8_t camera_id = 0;              // multi-camera scaffolding (N=1 in v0.3)
+    // TRK-009 U5 (R4): set on the first frame after a replay-clip loop restart so
+    // the modulation detector flushes its window at the discontinuity. Frame-
+    // aligned by construction (stamped by the capture thread, carried per frame)
+    // — a polled accessor would not be, letting a window span the wrap.
+    bool wrapped = false;
 };
 
 // Hot-path contract: copied by value into ring-buffer slots at frame rate.

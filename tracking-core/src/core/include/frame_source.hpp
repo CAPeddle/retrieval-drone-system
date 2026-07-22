@@ -15,6 +15,14 @@ public:
     // Fills `out` with the next frame; false on failure/disconnect. The
     // source owns pacing (a real camera blocks at its frame rate).
     virtual bool grab(cv::Mat& out) = 0;
+
+    // TRK-009 U5 (R4): returns true exactly once for the frame that begins a new
+    // pass after a discontinuity (e.g. a replay clip looping back to its start),
+    // then clears. The capture thread calls this immediately after a successful
+    // grab and stamps the result into that frame's FrameMetadata.wrapped, so the
+    // marker is frame-aligned across the ring buffer. Live cameras never wrap;
+    // the default is false.
+    virtual bool consume_wrap() { return false; }
 };
 
 }  // namespace tracking

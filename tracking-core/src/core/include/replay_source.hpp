@@ -28,12 +28,15 @@ public:
 
     bool is_open() const { return capture_.isOpened(); }
     bool grab(cv::Mat& out) override;
+    // True once for the first frame after a loop restart (R4/U5), then clears.
+    bool consume_wrap() override;
 
 private:
     cv::VideoCapture capture_;
     Options options_;
     std::chrono::steady_clock::time_point next_{};
     bool started_ = false;
+    bool wrapped_pending_ = false;  // set on loop rewind, consumed by consume_wrap()
 };
 
 }  // namespace tracking

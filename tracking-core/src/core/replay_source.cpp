@@ -26,11 +26,23 @@ bool ReplaySource::grab(cv::Mat& out) {
         return true;
     }
     if (options_.loop) {
-        // Rewind and retry once; a clip that still yields nothing is dead.
+        // Rewind and retry once; a clip that still yields nothing is dead. The
+        // first frame of the new pass carries the wrap marker (R4/U5) so a
+        // consumer's rolling window flushes at the discontinuity.
         capture_.set(cv::CAP_PROP_POS_FRAMES, 0);
-        return capture_.read(out);
+        if (capture_.read(out)) {
+            wrapped_pending_ = true;
+            return true;
+        }
+        return false;
     }
     return false;
+}
+
+bool ReplaySource::consume_wrap() {
+    const bool wrapped = wrapped_pending_;
+    wrapped_pending_ = false;
+    return wrapped;
 }
 
 }  // namespace tracking

@@ -253,10 +253,14 @@ The safety-critical subset is summarised always-read in CLAUDE.md; full detail h
   and was wrong. ADR-005 correlates intensity over time against the modulation
   pattern because sunlight/LEDs/reflections/a second pointer all produce bright
   pixels. A fast path bypassing the correlation window is a correctness regression.
-- **P-03 — Conflating per-stage latency and pipeline depth.** The 4-frame window is
-  ~67 ms of inherent latency by design, not per-stage slowness. Don't "optimise the
-  detector"; the consumer hovers when data is stale. Don't reopen ADR-005 without
-  the user's instruction.
+- **P-03 — Conflating per-stage latency and pipeline depth.** The detection window
+  is a **two-period, 8-frame window (~133 ms of inherent first-detection latency)**
+  by design (ADR-005 amendment 2026-07-23; a single-period 4-frame window has a
+  structural false-SAFE — a luminance step is indistinguishable from one period in
+  a 4-point DFT), not per-stage slowness. Departure worst-case flip-to-false is
+  ~117 ms (accepted provisional v0.3 bound). Don't "optimise the detector"; the
+  consumer hovers when data is stale. Don't reopen ADR-005 without the user's
+  instruction.
 - **P-04 — Treating ZMQ silence as a signal.** The core heartbeats ≥1 Hz even when
   the data plane is silent. Silence = "process dead", never "tracker dead" from a
   data-plane gap. The heartbeat thread is load-bearing — never let the core go

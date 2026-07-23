@@ -115,6 +115,11 @@ Config Config::load(const std::string& path) {
             require<double>(laser, "laser", "modulation_frequency_hz");
         cfg.laser.modulation_duty_cycle =
             require<double>(laser, "laser", "modulation_duty_cycle");
+        cfg.laser.psd_power_min = require<double>(laser, "laser", "psd_power_min");
+        cfg.laser.psd_purity_min = require<double>(laser, "laser", "psd_purity_min");
+        cfg.laser.min_cluster_size_px = require<int>(laser, "laser", "min_cluster_size_px");
+        cfg.laser.max_cluster_size_px = require<int>(laser, "laser", "max_cluster_size_px");
+        cfg.laser.grace_period_cycles = require<int>(laser, "laser", "grace_period_cycles");
 
         const YAML::Node sfc = require_section(root, "safe_for_control");
         cfg.safe_for_control.age_max_ms =
@@ -247,6 +252,45 @@ Config Config::load(const std::string& path) {
     require_gt(cfg.frame_quality.blur_threshold, 0.0, "frame_quality.blur_threshold");
     require_gt(cfg.laser.modulation_frequency_hz, 0.0, "laser.modulation_frequency_hz");
     require_in(cfg.laser.modulation_duty_cycle, 0.0, 1.0, "laser.modulation_duty_cycle");
+    // TRK-009 modulation detector (ADR-005, KTD-8). The correlation window derives
+    // from the capture rate and modulation frequency — it is not configured. The
+    // detector implements a two-modulation-period window (KTD-1); at 60 fps / 15 Hz
+    // that is 8 frames. It must be an exact integer (the DFT bins must align) and
+    // >= 8 (a shorter window cannot distinguish a luminance step from one period —
+    // the structural false-SAFE KTD-1 closes). A non-integral ratio forecloses the
+    // ADR-005 14/16 Hz aliasing fallback without a Goertzel-class correlator.
+    require_gt(cfg.laser.psd_power_min, 0.0, "laser.psd_power_min");
+    // Structural floor (KTD-2): the worst-case luminance step scores purity 1/3
+    // under the two-sided convention, so a threshold at or below 0.4 would reopen
+    // step admission. Upper-bounded at 1.0 (a pure on-frequency signal scores 1.0;
+    // a higher floor could never fire).
+    require_in(cfg.laser.psd_purity_min, 0.0, 1.0, "laser.psd_purity_min");
+    if (cfg.laser.psd_purity_min <= 0.4) {
+        throw ConfigError("field must be > 0.4 (KTD-2 step-rejection floor): laser.psd_purity_min");
+    }
+    if (cfg.laser.min_cluster_size_px < 1) {
+        throw ConfigError("field must be >= 1: laser.min_cluster_size_px");
+    }
+    if (cfg.laser.max_cluster_size_px <= cfg.laser.min_cluster_size_px) {
+        throw ConfigError("laser.max_cluster_size_px must be > laser.min_cluster_size_px");
+    }
+    if (cfg.laser.grace_period_cycles < 2) {
+        throw ConfigError("field must be >= 2: laser.grace_period_cycles");
+    }
+    {
+        const double window = 2.0 * static_cast<double>(cfg.camera.target_fps) /
+                              cfg.laser.modulation_frequency_hz;
+        if (std::fabs(window - std::round(window)) > 1e-6) {
+            throw ConfigError(
+                "2 * camera.target_fps / laser.modulation_frequency_hz must be an "
+                "integer (the correlation-window length): laser.modulation_frequency_hz");
+        }
+        if (std::round(window) < 8.0) {
+            throw ConfigError(
+                "2 * camera.target_fps / laser.modulation_frequency_hz must be >= 8 "
+                "(two modulation periods, KTD-1): laser.modulation_frequency_hz");
+        }
+    }
     require_gt(cfg.safe_for_control.age_max_ms, 0.0, "safe_for_control.age_max_ms");
     require_finite(cfg.safe_for_control.laser_settled_speed_m_per_s,
                    "safe_for_control.laser_settled_speed_m_per_s");

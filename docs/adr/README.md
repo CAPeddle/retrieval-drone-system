@@ -18,6 +18,7 @@ ADRs are the source of truth for **why** major architectural choices were made. 
 | [ADR-008](ADR-008-laser-controller-adapter.md) | LaserController Adapter | Accepted | 2026-05-08 |
 | [ADR-009](ADR-009-active-calibration-refinement-proposed.md) | Active Calibration Refinement Using the Laser as a Probe | **Proposed** | 2026-05-08 |
 | [ADR-010](ADR-010-object-class-z-compensation.md) | Object-Class Z Compensation in Coordinate Mapping | Accepted | 2026-05-08 |
+| [ADR-011](ADR-011-camera-hardware-and-libcamera-frame-acquisition.md) | Primary Camera Hardware and libcamera Frame Acquisition | **Proposed** | 2026-07-26 |
 
 ## Conventions
 

@@ -1,6 +1,6 @@
 # Drone System — Board
 
-Last updated: 2026-07-18
+Last updated: 2026-07-26
 
 Workflow defined in [README.md → Workflow](README.md#workflow). Risk register (R-NN / D-NN items) lives in [CLAUDE.md §13](CLAUDE.md).
 
@@ -59,6 +59,12 @@ Workflow defined in [README.md → Workflow](README.md#workflow). Risk register 
 
 ### v0.3 implementation — infrastructure
 
+
+### v0.3 implementation — camera hardware (ADR-011)
+
+- [ ] TRK-034 — IMX708 camera bring-up and threshold re-derivation → [story](docs/tickets/TRK-034-imx708-camera-bring-up-and-threshold-re-derivation.md)
+- [ ] TRK-032 — libcamera FrameSource for Pi 5 CSI capture → [story](docs/tickets/TRK-032-libcamera-framesource-for-pi-5-csi-capture.md)
+- [ ] TRK-033 — Greyscale frame-format migration (CV_8UC3 to CV_8UC1) → [story](docs/tickets/TRK-033-greyscale-frame-format-migration-cv8uc3-to-cv8uc1.md)
 
 ### v0.3 implementation — detection
 

@@ -83,11 +83,21 @@ Home environment, Raspberry Pi 5, children present. Treat these as preconditions
 - **Thermal:** throttles under sustained load without active cooling. Passive
   heatsink assumed, active fan permitted but not guaranteed. Surface thermal state
   in `system_health.cpu_temp_c` and degrade when throttling (ADR-002 heartbeat).
-- **Camera:** 5 MP NoIR CSI (OV5647 family). Effectively monochrome under typical
-  lighting (IR-cut filter absent). Rolling shutter. Manual focus ring — must be
-  physically locked at install.
-- **CSI cable:** ~15 cm practical reach. Multi-camera CSI on one Pi 5 is
-  constrained → Phase 3+ multi-camera assumes a sibling Pi 3B sensor node.
+- **Camera (selected, ADR-011, not yet purchased):** Raspberry Pi Camera Module 3
+  Wide NoIR (IMX708) on Pi 5 `CAM0`. No IR-cut filter. Rolling shutter, run in the
+  1536×864 mode (~8.3 ms readout) delivered at 60 fps. Focus is software-locked
+  (`AfMode=Manual` + fixed `LensPosition`), not a mechanical ring. Frames are
+  single-channel greyscale (`CV_8UC1`), taken from the YUV420 Y plane.
+- **Camera (as-built, recording rig only):** 5 MP NoIR CSI (OV5647 family) on the
+  **Pi 3B**. Effectively monochrome under typical lighting. Rolling shutter, ~16.6 ms
+  readout. Manual focus ring — must be physically locked. Every recording in the
+  replay library came from this unit. It is **not** a tracking-hot-path frame source
+  (ADR-011 D2); measured ceiling is 720p15 at ~50 ms freshness.
+- **CSI cable:** the ~15 cm cable in the box is not the reach limit. Raspberry Pi
+  sells shielded 22-pin cables at 200/300/500 mm, and CSI-over-HDMI extenders reach
+  several metres. **The Pi 5 CSI port is 22-pin; the 15-pin cable supplied with a
+  camera module does not fit it.** Multi-camera on one Pi 5 is not blocked by cable
+  reach; it is deferred by scope (ADR-006, Phase 3+).
 - **Laser:** modulated under MCU control (ADR-005/008). IR preferred. Controllable
   hardware, not an environmental input.
 - **Storage:** SD card. No hot-path writes; logging via async ring buffer to
@@ -167,16 +177,29 @@ Identifiers are never reused.
   install-time flatness probe (board at N positions; assert max reprojected-Z
   deviation) is required before ship; tolerance not yet pinned.
 - **R-03 — Modulation/shutter row-time interaction near frame edges.** Rolling
-  scan (16.6 ms at 60 fps) vs modulation period (67 ms at 15 Hz) may degrade
-  correlation at top/bottom → faster-than-expected `Lost`. Resolution during
-  detector implementation.
+  scan vs modulation period (67 ms at 15 Hz) may degrade correlation at top/bottom →
+  faster-than-expected `Lost`. **Reduced, not retired, by ADR-011 D4:** selecting the
+  IMX708 1536×864 mode and delivering at 60 fps keeps the active readout at ~8.3 ms
+  instead of 16.6 ms, because skew tracks readout time, not frame period. The residual
+  is closed in software by per-row temporal alignment in the modulation detector
+  (TRK-009b) — the option ADR-005 names. **Falsification test** (ADR-011 gate G4):
+  compare correlation strength with the laser near the top vs near the bottom of frame,
+  before and after alignment. A surviving position-dependent gap escalates to a
+  global-shutter sensor (ADR-011 Alternatives).
 - **R-04 — Specular reflection produces a modulated ghost detection.** Glossy
   floor/glass/screen → two valid observations for one laser; tracker may attach
   the wrong one during fast motion. Mitigation: documented residual (ADR-005);
   secondary disambiguation (prefer the brighter cluster) at implementation.
 - **R-05 — Camera focus drift after install.** A bumped focus ring silently
-  invalidates intrinsics; undetectable without a known-size reference. Mitigation:
-  physically lock the ring at install (accepted residual if the operator declines).
+  invalidates intrinsics; undetectable without a known-size reference. Mitigation on
+  the OV5647 recording rig: physically lock the ring at install (accepted residual if
+  the operator declines). **On the ADR-011 camera the mitigation changes shape:** the
+  IMX708 has no focus ring, so `LibcameraSource` sets `AfMode=Manual` with a fixed
+  `LensPosition` at every start — deterministic across reboots and immune to knocks.
+  The new failure mode is *failing to apply it*: if autofocus is left enabled, a
+  silent refocus invalidates intrinsics exactly as a bumped ring would. Mitigation:
+  read back and log the applied lens position at startup and surface it in
+  `system_health` so it can be compared against the calibrated value.
 - **R-06 — Pi 5 thermal throttling under sustained load.** Latency doubles, budget
   violations, frame drops. Mitigation: surface `cpu_temp_c`; degrade (target 30 fps,
   `tracker_state = DEGRADED`) above 80 °C; validate under the performance suite.
@@ -190,7 +213,14 @@ Identifiers are never reused.
 - **D-02** — ADR-009 active calibration deferred to Phase 5+; gated on servo
   repeatability characterisation AND simulated observability validation.
 - **D-03** — Per-camera intrinsic calibration files not yet generated; shared
-  profile only during early development.
+  profile only during early development. Widened by ADR-011: the selected IMX708
+  is a different sensor with a much wider lens, so the OV5647 shared profile is
+  not even a valid bootstrap aid for it, and TRK-012's five-parameter distortion
+  model needs its reprojection error checked at 102° before it is trusted.
+- **D-07** — The Pi 5 has no camera and no live frame source. ADR-011 selects one
+  but is `Proposed` until gates G1–G6 are measured on target (TRK-034, TRK-032).
+  Until then every claim about live capture on the Pi 5 is a projection from
+  replayed OV5647 footage, and should be stated as such.
 - **D-04** — MAVLink adapter is contract-only; Phase 3+.
 - **D-05** — Replay-test harness does not yet exist; blocking on v0.3 ship
   (ADR-007). Framework choice is open.

@@ -56,9 +56,9 @@ Claude Code's `superpowers:brainstorming` and `superpowers:writing-plans` skills
 
 | Dir | Role | Hardware | Status | Notes |
 |---|---|---|---|---|
-| [`tracking-core/`](tracking-core/) | C++ tracking pipeline, ZMQ publisher, `safe_for_control` predicate | Pi 5 + NoIR CSI camera | **Front pipeline + calibration tooling built** | Ingestion→quality→detection + replay harness + calibration tools landed (Pi-5-verified); coordinate mapping, `safe_for_control`, ZMQ v0.3 export, viewer still to come. See [CLAUDE.md §1](CLAUDE.md). |
+| [`tracking-core/`](tracking-core/) | C++ tracking pipeline, ZMQ publisher, `safe_for_control` predicate | Pi 5 + IMX708 NoIR CSI camera (ADR-011; **camera not yet fitted**) | **Front pipeline + calibration tooling built** | Ingestion→quality→detection + replay harness + calibration tools landed (Pi-5-verified); coordinate mapping, `safe_for_control`, ZMQ v0.3 export, viewer still to come. The Pi 5 has no camera attached yet — all frames to date are replayed from the Pi 3B rig. See [CLAUDE.md §1](CLAUDE.md). |
 | [`viewer/`](viewer/) | Python ZMQ subscriber, floor-plane visualisation | Any host | Stub | Currently nested under `tracking-core/src/viewer/` — to be promoted |
-| [`camera-node/`](camera-node/) | Secondary camera streaming source | Pi 3B + NoIR CSI camera | Future | Phase 3+ (multi-camera) |
+| [`camera-node/`](camera-node/) | Recording/replay rig today; supplementary streaming source later | Pi 3B + OV5647 NoIR CSI camera | **Recording rig in use** | Source of every clip in the replay library. **Not** a tracking hot-path frame source (ADR-011 D2) — measured ceiling 720p15, ~50 ms freshness. Streaming node is Phase 3+ (CAM-001). |
 | [`laser-controller/`](laser-controller/) | Laser MCU firmware + Python adapter (ADR-008) | MCU + Pi 5 | Future | Contract defined; no code |
 | [`mavlink-adapter/`](mavlink-adapter/) | ZMQ → MAVLink translator for drone EKF | Pi 5 or drone companion | Future | Phase 3+ |
 | [`drone/`](drone/) | Flight controller config, electronics, mechanical | Drone hardware | Future | — |

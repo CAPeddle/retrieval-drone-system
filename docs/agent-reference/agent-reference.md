@@ -98,8 +98,27 @@ Home environment, Raspberry Pi 5, children present. Treat these as preconditions
   several metres. **The Pi 5 CSI port is 22-pin; the 15-pin cable supplied with a
   camera module does not fit it.** Multi-camera on one Pi 5 is not blocked by cable
   reach; it is deferred by scope (ADR-006, Phase 3+).
-- **Laser:** modulated under MCU control (ADR-005/008). IR preferred. Controllable
-  hardware, not an environmental input.
+- **Laser (production, ADR-005/008/011 — not yet purchased):** 850 nm IR, modulated
+  under MCU control. The camera choice leads; the wavelength follows it (ADR-011 D6).
+  Controllable hardware, not an environmental input.
+- **Laser (bench kit, owned — NOT the production laser):** two visible 650 nm
+  modules, useful for aiming, servo characterisation (LASER-004) and debugging
+  precisely because the beam is visible.
+  - LASERFUCHS 650 nm, 1 mW, **Class 2**, collimated. Class 2 relies on the blink
+    reflex, which works for visible light. This is the one to reach for.
+  - Hailege KY-008, 650 nm, nominally 5 mW. **Treat as Class 3R until measured.**
+    Sellers label these "Class 2", which is inconsistent with the rated power: the
+    Class 2 ceiling for visible CW is 1 mW, and 5 mW at 650 nm falls in Class 3R,
+    where the aversion response is no longer considered adequate protection. Actual
+    output on these modules varies widely and is unverified. Bench use only, beam
+    terminated, never pointed into the room.
+  - **Neither may be modulated in an occupied room.** Visible modulation is ruled
+    out by ADR-011 D6, not merely disfavoured: `f_mod ≤ f_capture/4` caps modulation
+    at 15–30 Hz on this platform, flicker fusion is ~50–60 Hz, and 15 Hz sits near
+    the peak of the photosensitive-epilepsy provocation band.
+- **Ball:** non-red (ADR-011 D6). Recorded as a constraint, not an accident: if the
+  laser ever became visible-spectrum, red-channel chroma would be the natural
+  discriminator and a red ball would collide with it.
 - **Storage:** SD card. No hot-path writes; logging via async ring buffer to
   tmpfs or a dedicated mount.
 

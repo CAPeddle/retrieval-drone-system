@@ -13,6 +13,7 @@ add_library(tracking_core_lib STATIC
     replay_source.cpp
     tracking/ball_detector.cpp
     tracking/calibration_marker_detector.cpp
+    tracking/modulation_detector.cpp
     safety/safe_for_control.cpp
     tracking/snapshot_builder.cpp
     tracking/track.cpp

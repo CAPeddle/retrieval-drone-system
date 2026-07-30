@@ -23,6 +23,16 @@ struct CameraConfig {
 struct LaserConfig {
     double modulation_frequency_hz = 0.0;
     double modulation_duty_cycle = 0.0;
+    // TRK-009 modulation detector (ADR-005, KTD-8). All PROVISIONAL pending the
+    // operator's modulated-laser recording session (R14). The correlation window
+    // length is NOT a field — it derives as 2 * camera.target_fps /
+    // modulation_frequency_hz (two modulation periods, KTD-1) and is validated
+    // integral and >= 8 at load.
+    double psd_power_min = 0.0;    // absolute modulation-bin power floor, |X2|^2 units
+    double psd_purity_min = 0.0;   // two-sided spectral purity floor; structural > 0.4 (KTD-2)
+    int min_cluster_size_px = 0;   // connected-component area gate, lower bound
+    int max_cluster_size_px = 0;   // connected-component area gate, upper bound
+    int grace_period_cycles = 0;   // >= 2; detection starts at max(cycles*fpc, window) pushes
 };
 
 struct SafeForControlConfig {

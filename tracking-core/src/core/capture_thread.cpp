@@ -116,6 +116,10 @@ void CaptureThread::run() {
             std::chrono::duration_cast<std::chrono::microseconds>(grab_end - grab_start)
                 .count());
         metadata.camera_id = options_.camera_id;
+        // Frame-aligned wrap marker (R4/U5): stamped on the frame that begins a
+        // new pass after a source discontinuity (replay loop restart), so the
+        // detector flushes at exactly the wrap. Live cameras always return false.
+        metadata.wrapped = source_.consume_wrap();
 
         if (buffer_.try_push(scratch_, metadata)) {
             frames_dropped_.fetch_add(1, std::memory_order_relaxed);

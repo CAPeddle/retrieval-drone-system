@@ -48,6 +48,11 @@ frame_quality:
 laser:
   modulation_frequency_hz: 15.0
   modulation_duty_cycle: 0.5
+  psd_power_min: 2500.0
+  psd_purity_min: 0.5
+  min_cluster_size_px: 4
+  max_cluster_size_px: 6000
+  grace_period_cycles: 2
 safe_for_control:
   age_max_ms: 50
   laser_settled_speed_m_per_s: 0.05
@@ -114,6 +119,11 @@ TEST_F(ConfigTest, LoadsValidConfig) {
     EXPECT_DOUBLE_EQ(cfg.frame_quality.blur_threshold, 100.0);
     EXPECT_DOUBLE_EQ(cfg.laser.modulation_frequency_hz, 15.0);
     EXPECT_DOUBLE_EQ(cfg.laser.modulation_duty_cycle, 0.5);
+    EXPECT_DOUBLE_EQ(cfg.laser.psd_power_min, 2500.0);
+    EXPECT_DOUBLE_EQ(cfg.laser.psd_purity_min, 0.5);
+    EXPECT_EQ(cfg.laser.min_cluster_size_px, 4);
+    EXPECT_EQ(cfg.laser.max_cluster_size_px, 6000);
+    EXPECT_EQ(cfg.laser.grace_period_cycles, 2);
     EXPECT_DOUBLE_EQ(cfg.safe_for_control.age_max_ms, 50.0);
     EXPECT_DOUBLE_EQ(cfg.safe_for_control.laser_settled_speed_m_per_s, 0.05);
     EXPECT_DOUBLE_EQ(cfg.safe_for_control.alignment_tolerance_m, 0.02);
@@ -130,7 +140,7 @@ TEST_F(ConfigTest, ThrowsOnMissingRequiredField) {
     // ball.radius_m is absent.
     const std::string yaml = R"(
 camera: {device_id: 0, target_fps: 60, width: 640, height: 480, exposure_us: 5000}
-laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5}
+laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5, psd_power_min: 2500.0, psd_purity_min: 0.5, min_cluster_size_px: 4, max_cluster_size_px: 6000, grace_period_cycles: 2}
 safe_for_control: {age_max_ms: 50, laser_settled_speed_m_per_s: 0.05, alignment_tolerance_m: 0.02, min_unsafe_dwell_ms: 200}
 ball: {}
 zmq: {bind_address: "tcp://*:5556"}
@@ -167,7 +177,7 @@ TEST_F(ConfigTest, ThrowsOnTypeMismatch) {
     // ball.radius_m is a non-numeric string.
     const std::string yaml = R"(
 camera: {device_id: 0, target_fps: 60, width: 640, height: 480, exposure_us: 5000}
-laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5}
+laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5, psd_power_min: 2500.0, psd_purity_min: 0.5, min_cluster_size_px: 4, max_cluster_size_px: 6000, grace_period_cycles: 2}
 safe_for_control: {age_max_ms: 50, laser_settled_speed_m_per_s: 0.05, alignment_tolerance_m: 0.02, min_unsafe_dwell_ms: 200}
 ball: {radius_m: "not_a_number", expected_radius_px_min: 10, expected_radius_px_max: 80, min_circularity: 0.7, detection_blur_kernel: 5, brightness_threshold: 200}
 zmq: {bind_address: "tcp://*:5556"}
@@ -197,7 +207,7 @@ TEST_F(ConfigTest, ThrowsOnNonFiniteThreshold) {
     // A NaN safety threshold must be rejected — it silently disables ADR-007.
     const std::string yaml = R"(
 camera: {device_id: 0, target_fps: 60, width: 640, height: 480, exposure_us: 5000}
-laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5}
+laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5, psd_power_min: 2500.0, psd_purity_min: 0.5, min_cluster_size_px: 4, max_cluster_size_px: 6000, grace_period_cycles: 2}
 safe_for_control: {age_max_ms: 50, laser_settled_speed_m_per_s: 0.05, alignment_tolerance_m: .nan}
 ball: {radius_m: 0.03, expected_radius_px_min: 10, expected_radius_px_max: 80, min_circularity: 0.7, detection_blur_kernel: 5, brightness_threshold: 200}
 zmq: {bind_address: "tcp://*:5556"}
@@ -215,7 +225,7 @@ frame_quality: {underexposed_threshold: 20, overexposed_threshold: 240, blur_thr
 TEST_F(ConfigTest, ThrowsOnNonPositiveRadius) {
     const std::string yaml = R"(
 camera: {device_id: 0, target_fps: 60, width: 640, height: 480, exposure_us: 5000}
-laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5}
+laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5, psd_power_min: 2500.0, psd_purity_min: 0.5, min_cluster_size_px: 4, max_cluster_size_px: 6000, grace_period_cycles: 2}
 safe_for_control: {age_max_ms: 50, laser_settled_speed_m_per_s: 0.05, alignment_tolerance_m: 0.02, min_unsafe_dwell_ms: 200}
 ball: {radius_m: -0.03, expected_radius_px_min: 10, expected_radius_px_max: 80, min_circularity: 0.7, detection_blur_kernel: 5, brightness_threshold: 200}
 zmq: {bind_address: "tcp://*:5556"}
@@ -230,10 +240,32 @@ frame_quality: {underexposed_threshold: 20, overexposed_threshold: 240, blur_thr
     EXPECT_THROW(tracking::Config::load(write_temp(yaml)), tracking::ConfigError);
 }
 
+// Splices a full valid config around a caller-supplied `camera:` and `laser:`
+// line pair, so the TRK-009 detector-config tests can vary just those two
+// sections (the window derives from both) without repeating the whole body.
+std::string YamlWithCameraLaser(const std::string& camera_line,
+                                const std::string& laser_line) {
+    return camera_line + "\n" + laser_line + "\n" + R"(
+safe_for_control: {age_max_ms: 50, laser_settled_speed_m_per_s: 0.05, alignment_tolerance_m: 0.02, min_unsafe_dwell_ms: 200}
+ball: {radius_m: 0.03, expected_radius_px_min: 10, expected_radius_px_max: 80, min_circularity: 0.7, detection_blur_kernel: 5, brightness_threshold: 200}
+zmq: {bind_address: "tcp://*:5556"}
+track: {confirm_threshold: 3, predict_timeout_ms: 50, occlude_timeout_ms: 200, retire_timeout_ms: 1000, max_predict_duration_ms: 100}
+gating: {max_distance_px: 50}
+coordinate: {pixel_uncertainty_stddev_px: 1.0, condition_number_max: 1000, floor_aoi_x_min_m: -1.0, floor_aoi_x_max_m: 5.0, floor_aoi_y_min_m: -1.0, floor_aoi_y_max_m: 5.0}
+calibration: {intrinsics_path: "a.json", extrinsics_path: "b.json", aruco_dictionary: "4X4_50", marker_ids: [0, 1], charuco: {squares_x: 5, squares_y: 7, square_length_m: 0.025, marker_length_m: 0.020}}
+logging: {level: warn, output_dir: "/tmp/tracking_core/", max_file_size_mb: 10}
+pipeline: {ring_buffer_capacity: 4, capture_cpu_core: 2, capture_thread_priority: 80}
+frame_quality: {underexposed_threshold: 20, overexposed_threshold: 240, blur_threshold: 100}
+)";
+}
+
+constexpr const char* kCamera60 =
+    "camera: {device_id: 0, target_fps: 60, width: 640, height: 480, exposure_us: 5000}";
+
 TEST_F(ConfigTest, ThrowsOnDutyCycleOutOfRange) {
     const std::string yaml = R"(
 camera: {device_id: 0, target_fps: 60, width: 640, height: 480, exposure_us: 5000}
-laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 5.0}
+laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 5.0, psd_power_min: 2500.0, psd_purity_min: 0.5, min_cluster_size_px: 4, max_cluster_size_px: 6000, grace_period_cycles: 2}
 safe_for_control: {age_max_ms: 50, laser_settled_speed_m_per_s: 0.05, alignment_tolerance_m: 0.02, min_unsafe_dwell_ms: 200}
 ball: {radius_m: 0.03, expected_radius_px_min: 10, expected_radius_px_max: 80, min_circularity: 0.7, detection_blur_kernel: 5, brightness_threshold: 200}
 zmq: {bind_address: "tcp://*:5556"}
@@ -251,7 +283,7 @@ frame_quality: {underexposed_threshold: 20, overexposed_threshold: 240, blur_thr
 TEST_F(ConfigTest, ThrowsOnEmptyBindAddress) {
     const std::string yaml = R"(
 camera: {device_id: 0, target_fps: 60, width: 640, height: 480, exposure_us: 5000}
-laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5}
+laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5, psd_power_min: 2500.0, psd_purity_min: 0.5, min_cluster_size_px: 4, max_cluster_size_px: 6000, grace_period_cycles: 2}
 safe_for_control: {age_max_ms: 50, laser_settled_speed_m_per_s: 0.05, alignment_tolerance_m: 0.02, min_unsafe_dwell_ms: 200}
 ball: {radius_m: 0.03, expected_radius_px_min: 10, expected_radius_px_max: 80, min_circularity: 0.7, detection_blur_kernel: 5, brightness_threshold: 200}
 zmq: {bind_address: ""}
@@ -269,7 +301,7 @@ frame_quality: {underexposed_threshold: 20, overexposed_threshold: 240, blur_thr
 TEST_F(ConfigTest, ThrowsOnMissingLoggingSection) {
     const std::string yaml = R"(
 camera: {device_id: 0, target_fps: 60, width: 640, height: 480, exposure_us: 5000}
-laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5}
+laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5, psd_power_min: 2500.0, psd_purity_min: 0.5, min_cluster_size_px: 4, max_cluster_size_px: 6000, grace_period_cycles: 2}
 safe_for_control: {age_max_ms: 50, laser_settled_speed_m_per_s: 0.05, alignment_tolerance_m: 0.02, min_unsafe_dwell_ms: 200}
 ball: {radius_m: 0.03, expected_radius_px_min: 10, expected_radius_px_max: 80, min_circularity: 0.7, detection_blur_kernel: 5, brightness_threshold: 200}
 zmq: {bind_address: "tcp://*:5556"}
@@ -287,7 +319,7 @@ TEST_F(ConfigTest, ThrowsOnInvalidLogLevel) {
     // "verbose" is not a member of the spdlog level set.
     const std::string yaml = R"(
 camera: {device_id: 0, target_fps: 60, width: 640, height: 480, exposure_us: 5000}
-laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5}
+laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5, psd_power_min: 2500.0, psd_purity_min: 0.5, min_cluster_size_px: 4, max_cluster_size_px: 6000, grace_period_cycles: 2}
 safe_for_control: {age_max_ms: 50, laser_settled_speed_m_per_s: 0.05, alignment_tolerance_m: 0.02, min_unsafe_dwell_ms: 200}
 ball: {radius_m: 0.03, expected_radius_px_min: 10, expected_radius_px_max: 80, min_circularity: 0.7, detection_blur_kernel: 5, brightness_threshold: 200}
 zmq: {bind_address: "tcp://*:5556"}
@@ -314,7 +346,7 @@ TEST_F(ConfigTest, ThrowsOnNonPositiveMaxFileSize) {
     for (const char* size : {"0", "-5", "300"}) {
         const std::string yaml = std::string(R"(
 camera: {device_id: 0, target_fps: 60, width: 640, height: 480, exposure_us: 5000}
-laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5}
+laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5, psd_power_min: 2500.0, psd_purity_min: 0.5, min_cluster_size_px: 4, max_cluster_size_px: 6000, grace_period_cycles: 2}
 safe_for_control: {age_max_ms: 50, laser_settled_speed_m_per_s: 0.05, alignment_tolerance_m: 0.02, min_unsafe_dwell_ms: 200}
 ball: {radius_m: 0.03, expected_radius_px_min: 10, expected_radius_px_max: 80, min_circularity: 0.7, detection_blur_kernel: 5, brightness_threshold: 200}
 zmq: {bind_address: "tcp://*:5556"}
@@ -334,7 +366,7 @@ logging: {level: warn, output_dir: "/tmp/tracking_core/", max_file_size_mb: )") 
 TEST_F(ConfigTest, ThrowsOnEmptyLogOutputDir) {
     const std::string yaml = R"(
 camera: {device_id: 0, target_fps: 60, width: 640, height: 480, exposure_us: 5000}
-laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5}
+laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5, psd_power_min: 2500.0, psd_purity_min: 0.5, min_cluster_size_px: 4, max_cluster_size_px: 6000, grace_period_cycles: 2}
 safe_for_control: {age_max_ms: 50, laser_settled_speed_m_per_s: 0.05, alignment_tolerance_m: 0.02, min_unsafe_dwell_ms: 200}
 ball: {radius_m: 0.03, expected_radius_px_min: 10, expected_radius_px_max: 80, min_circularity: 0.7, detection_blur_kernel: 5, brightness_threshold: 200}
 zmq: {bind_address: "tcp://*:5556"}
@@ -354,7 +386,7 @@ TEST_F(ConfigTest, ThrowsOnBadRingBufferCapacity) {
     for (const char* cap : {"0", "-2", "100"}) {
         const std::string yaml = std::string(R"(
 camera: {device_id: 0, target_fps: 60, width: 640, height: 480, exposure_us: 5000}
-laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5}
+laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5, psd_power_min: 2500.0, psd_purity_min: 0.5, min_cluster_size_px: 4, max_cluster_size_px: 6000, grace_period_cycles: 2}
 safe_for_control: {age_max_ms: 50, laser_settled_speed_m_per_s: 0.05, alignment_tolerance_m: 0.02, min_unsafe_dwell_ms: 200}
 ball: {radius_m: 0.03, expected_radius_px_min: 10, expected_radius_px_max: 80, min_circularity: 0.7, detection_blur_kernel: 5, brightness_threshold: 200}
 zmq: {bind_address: "tcp://*:5556"}
@@ -381,7 +413,7 @@ TEST_F(ConfigTest, ThrowsOnBadCalibrationFields) {
     for (const char* calib : bad_calibs) {
         const std::string yaml = std::string(R"(
 camera: {device_id: 0, target_fps: 60, width: 640, height: 480, exposure_us: 5000}
-laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5}
+laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5, psd_power_min: 2500.0, psd_purity_min: 0.5, min_cluster_size_px: 4, max_cluster_size_px: 6000, grace_period_cycles: 2}
 safe_for_control: {age_max_ms: 50, laser_settled_speed_m_per_s: 0.05, alignment_tolerance_m: 0.02, min_unsafe_dwell_ms: 200}
 ball: {radius_m: 0.03, expected_radius_px_min: 10, expected_radius_px_max: 80, min_circularity: 0.7, detection_blur_kernel: 5, brightness_threshold: 200}
 zmq: {bind_address: "tcp://*:5556"}
@@ -409,7 +441,7 @@ TEST_F(ConfigTest, ThrowsOnBadBallDetectorFields) {
     for (const char* ball : bad_balls) {
         const std::string yaml = std::string(R"(
 camera: {device_id: 0, target_fps: 60, width: 640, height: 480, exposure_us: 5000}
-laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5}
+laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5, psd_power_min: 2500.0, psd_purity_min: 0.5, min_cluster_size_px: 4, max_cluster_size_px: 6000, grace_period_cycles: 2}
 safe_for_control: {age_max_ms: 50, laser_settled_speed_m_per_s: 0.05, alignment_tolerance_m: 0.02, min_unsafe_dwell_ms: 200}
 )") + ball + R"(
 zmq: {bind_address: "tcp://*:5556"}
@@ -428,7 +460,7 @@ frame_quality: {underexposed_threshold: 20, overexposed_threshold: 240, blur_thr
 TEST_F(ConfigTest, ThrowsOnInvertedExposureThresholds) {
     const std::string yaml = R"(
 camera: {device_id: 0, target_fps: 60, width: 640, height: 480, exposure_us: 5000}
-laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5}
+laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5, psd_power_min: 2500.0, psd_purity_min: 0.5, min_cluster_size_px: 4, max_cluster_size_px: 6000, grace_period_cycles: 2}
 safe_for_control: {age_max_ms: 50, laser_settled_speed_m_per_s: 0.05, alignment_tolerance_m: 0.02, min_unsafe_dwell_ms: 200}
 ball: {radius_m: 0.03, expected_radius_px_min: 10, expected_radius_px_max: 80, min_circularity: 0.7, detection_blur_kernel: 5, brightness_threshold: 200}
 zmq: {bind_address: "tcp://*:5556"}
@@ -448,7 +480,7 @@ TEST_F(ConfigTest, ThrowsOnCaptureThreadPriorityOutOfRange) {
     for (const char* prio : {"0", "100"}) {
         const std::string yaml = std::string(R"(
 camera: {device_id: 0, target_fps: 60, width: 640, height: 480, exposure_us: 5000}
-laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5}
+laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5, psd_power_min: 2500.0, psd_purity_min: 0.5, min_cluster_size_px: 4, max_cluster_size_px: 6000, grace_period_cycles: 2}
 safe_for_control: {age_max_ms: 50, laser_settled_speed_m_per_s: 0.05, alignment_tolerance_m: 0.02, min_unsafe_dwell_ms: 200}
 ball: {radius_m: 0.03, expected_radius_px_min: 10, expected_radius_px_max: 80, min_circularity: 0.7, detection_blur_kernel: 5, brightness_threshold: 200}
 zmq: {bind_address: "tcp://*:5556"}
@@ -466,7 +498,7 @@ pipeline: {ring_buffer_capacity: 4, capture_cpu_core: 2, capture_thread_priority
 TEST_F(ConfigTest, ThrowsOnNonPositiveFrameDimensions) {
     const std::string yaml = R"(
 camera: {device_id: 0, target_fps: 60, width: 0, height: 480, exposure_us: 5000}
-laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5}
+laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5, psd_power_min: 2500.0, psd_purity_min: 0.5, min_cluster_size_px: 4, max_cluster_size_px: 6000, grace_period_cycles: 2}
 safe_for_control: {age_max_ms: 50, laser_settled_speed_m_per_s: 0.05, alignment_tolerance_m: 0.02, min_unsafe_dwell_ms: 200}
 ball: {radius_m: 0.03, expected_radius_px_min: 10, expected_radius_px_max: 80, min_circularity: 0.7, detection_blur_kernel: 5, brightness_threshold: 200}
 zmq: {bind_address: "tcp://*:5556"}
@@ -493,7 +525,7 @@ TEST_F(ConfigTest, ThrowsOnBadTrackFields) {
     for (const char* track : bad_tracks) {
         const std::string yaml = std::string(R"(
 camera: {device_id: 0, target_fps: 60, width: 640, height: 480, exposure_us: 5000}
-laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5}
+laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5, psd_power_min: 2500.0, psd_purity_min: 0.5, min_cluster_size_px: 4, max_cluster_size_px: 6000, grace_period_cycles: 2}
 safe_for_control: {age_max_ms: 50, laser_settled_speed_m_per_s: 0.05, alignment_tolerance_m: 0.02, min_unsafe_dwell_ms: 200}
 ball: {radius_m: 0.03, expected_radius_px_min: 10, expected_radius_px_max: 80, min_circularity: 0.7, detection_blur_kernel: 5, brightness_threshold: 200}
 zmq: {bind_address: "tcp://*:5556"}
@@ -517,7 +549,7 @@ TEST_F(ConfigTest, ThrowsOnBadGatingFields) {
     for (const char* gating : bad_gatings) {
         const std::string yaml = std::string(R"(
 camera: {device_id: 0, target_fps: 60, width: 640, height: 480, exposure_us: 5000}
-laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5}
+laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5, psd_power_min: 2500.0, psd_purity_min: 0.5, min_cluster_size_px: 4, max_cluster_size_px: 6000, grace_period_cycles: 2}
 safe_for_control: {age_max_ms: 50, laser_settled_speed_m_per_s: 0.05, alignment_tolerance_m: 0.02, min_unsafe_dwell_ms: 200}
 ball: {radius_m: 0.03, expected_radius_px_min: 10, expected_radius_px_max: 80, min_circularity: 0.7, detection_blur_kernel: 5, brightness_threshold: 200}
 zmq: {bind_address: "tcp://*:5556"}
@@ -530,6 +562,80 @@ frame_quality: {underexposed_threshold: 20, overexposed_threshold: 240, blur_thr
 )";
         EXPECT_THROW(tracking::Config::load(write_temp(yaml)), tracking::ConfigError) << gating;
     }
+}
+
+// ─── TRK-009 modulation-detector config (KTD-8) ──────────────────────────────
+
+TEST_F(ConfigTest, AcceptsValidLaserDetectorFields) {
+    const std::string laser =
+        "laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5, "
+        "psd_power_min: 2500.0, psd_purity_min: 0.5, min_cluster_size_px: 4, "
+        "max_cluster_size_px: 6000, grace_period_cycles: 2}";
+    EXPECT_NO_THROW(tracking::Config::load(write_temp(YamlWithCameraLaser(kCamera60, laser))));
+}
+
+TEST_F(ConfigTest, ThrowsWhenLaserDetectorFieldMissing) {
+    // psd_power_min omitted — the walk must fail on the absent required field.
+    const std::string laser =
+        "laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5, "
+        "psd_purity_min: 0.5, min_cluster_size_px: 4, max_cluster_size_px: 6000, "
+        "grace_period_cycles: 2}";
+    EXPECT_THROW(tracking::Config::load(write_temp(YamlWithCameraLaser(kCamera60, laser))),
+                 tracking::ConfigError);
+}
+
+TEST_F(ConfigTest, RejectsPurityFloorAtOrBelowStepPurity) {
+    // KTD-2 structural floor: <= 0.4 would reopen luminance-step admission
+    // (worst-case step scores 1/3). 0.40 exactly must be rejected; 0.41 accepted.
+    const char* fmt = "laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5, "
+                      "psd_power_min: 2500.0, psd_purity_min: %s, min_cluster_size_px: 4, "
+                      "max_cluster_size_px: 6000, grace_period_cycles: 2}";
+    char buf[256];
+    std::snprintf(buf, sizeof(buf), fmt, "0.40");
+    EXPECT_THROW(tracking::Config::load(write_temp(YamlWithCameraLaser(kCamera60, buf))),
+                 tracking::ConfigError);
+    std::snprintf(buf, sizeof(buf), fmt, "0.41");
+    EXPECT_NO_THROW(tracking::Config::load(write_temp(YamlWithCameraLaser(kCamera60, buf))));
+}
+
+TEST_F(ConfigTest, RejectsGracePeriodBelowTwoCycles) {
+    const std::string laser =
+        "laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5, "
+        "psd_power_min: 2500.0, psd_purity_min: 0.5, min_cluster_size_px: 4, "
+        "max_cluster_size_px: 6000, grace_period_cycles: 1}";
+    EXPECT_THROW(tracking::Config::load(write_temp(YamlWithCameraLaser(kCamera60, laser))),
+                 tracking::ConfigError);
+}
+
+TEST_F(ConfigTest, RejectsNonPositiveClusterAreaOrdering) {
+    const std::string laser =
+        "laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5, "
+        "psd_power_min: 2500.0, psd_purity_min: 0.5, min_cluster_size_px: 6000, "
+        "max_cluster_size_px: 6000, grace_period_cycles: 2}";  // max not > min
+    EXPECT_THROW(tracking::Config::load(write_temp(YamlWithCameraLaser(kCamera60, laser))),
+                 tracking::ConfigError);
+}
+
+TEST_F(ConfigTest, RejectsNonIntegralCorrelationWindow) {
+    // 2 * 60 / 16 = 7.5 — not an integer number of frames per two periods.
+    const std::string laser =
+        "laser: {modulation_frequency_hz: 16.0, modulation_duty_cycle: 0.5, "
+        "psd_power_min: 2500.0, psd_purity_min: 0.5, min_cluster_size_px: 4, "
+        "max_cluster_size_px: 6000, grace_period_cycles: 2}";
+    EXPECT_THROW(tracking::Config::load(write_temp(YamlWithCameraLaser(kCamera60, laser))),
+                 tracking::ConfigError);
+}
+
+TEST_F(ConfigTest, RejectsCorrelationWindowBelowEight) {
+    // 30 fps / 15 Hz -> window 4 (< 8): the KTD-1 step-equivalence floor.
+    const char* camera30 =
+        "camera: {device_id: 0, target_fps: 30, width: 640, height: 480, exposure_us: 5000}";
+    const std::string laser =
+        "laser: {modulation_frequency_hz: 15.0, modulation_duty_cycle: 0.5, "
+        "psd_power_min: 2500.0, psd_purity_min: 0.5, min_cluster_size_px: 4, "
+        "max_cluster_size_px: 6000, grace_period_cycles: 2}";
+    EXPECT_THROW(tracking::Config::load(write_temp(YamlWithCameraLaser(camera30, laser))),
+                 tracking::ConfigError);
 }
 
 #ifdef TRACKING_CORE_CONFIG_TEMPLATE

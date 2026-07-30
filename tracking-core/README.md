@@ -118,3 +118,4 @@ pip install -r requirements.txt
 | `tracking_core_lib` | Static library | All pipeline sources (detector, tracker, etc.) |
 | `tracking_core` | Executable | Main application (links tracking_core_lib) |
 | `tracking_core_tests` | Executable | GTest unit tests (links tracking_core_lib) |
+| `psd_strategy_bench` | Executable | TRK-009a PSD strategy benchmark (`benchmarks/`). Not part of ctest — run manually, in Release on the Pi 5 only (dev-host timings are not evidence); decision + numbers recorded in the TRK-009 ticket Log |

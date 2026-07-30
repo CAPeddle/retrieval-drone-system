@@ -75,3 +75,95 @@ After core startup, the detector ignores observations until 2 full modulation cy
 - ADR-008 (LaserController Adapter) — owns the serial link that programmes the laser MCU with this modulation pattern.
 - ADR-009 (Active Calibration Refinement) — depends on this modulation infrastructure.
 - ADR-007 (`safe_for_control` Predicate) — consumes detector output and applies geometric tests.
+
+---
+
+## Amendment (accepted 2026-07-23) — two-period detection window
+
+> **Status: ACCEPTED (2026-07-23), user sign-off recorded.** Proposed by the
+> TRK-009 implementation (plan `docs/plans/2026-07-21-001`, unit U9) and accepted
+> by the user. This amendment **supersedes the "Detection window: 4 frames" line
+> in the Decision above**; per the append-only ADR convention the original text is
+> left in place and this section is authoritative for the window length and its
+> consequences. The reaction-bound question this amendment raised has been decided
+> (see "Reaction-bound decision" below).
+
+**What changes.** The **detection window is two full modulation periods (8 frames
+at 60 fps / 15 Hz), not one (4 frames).** Everything else in the Decision is
+unchanged.
+
+**Why the 4-frame window was insufficient (the load-bearing reason).** A 4-point
+DFT cannot distinguish one modulation period from a single luminance step: the
+sequences `[0,0,a,a]` and one square-wave period have identical power at the
+modulation bin and identical (zero) power at the adjacent bin. Any moving edge or
+light-switching transient therefore produces the same bin response as the laser,
+and such a transient survives exactly `confirm_threshold` sliding windows — a
+structural false-SAFE path. Over an 8-frame window the modulation sits at bin 2
+(two periods), and the worst-case luminance step (edge runs of 2 or 6 ON samples)
+carries bin power `2a²` against the true signal's `8a²` — a **6 dB separation**.
+Because a bright step can still exceed a dim laser's absolute power floor, step
+rejection is carried **jointly** by that separation and a **spectral-purity gate**:
+under the two-sided convention `purity = 2·|X₂|² / (N·(Σx² − (Σx)²/N))` a pure
+on-frequency signal scores 1.0 and the worst-case step scores 1/3, so a purity
+floor above 1/3 (config-enforced structural minimum > 0.4) rejects steps the power
+floor alone would admit.
+
+**Latency consequences.**
+- **First-detection latency ~133 ms** (8 frames at 60 fps), doubled from the
+  original 67 ms. This exactly equals the existing 2-cycle grace period, and the
+  grace period and the correlation-window fill are now **one mechanism** (a single
+  contiguous-admitted-frame counter drives both).
+- **Worst-case flip-to-false after the laser departs ~117 ms (derived).** Residual
+  window power sustains fresh-timestamped detections at the old position for up to
+  4 frames (~67 ms) after departure; the predicate then goes false via the laser
+  `age_max_ms` clause (50 ms). The consumer-side transport-staleness rule does
+  **not** cover this tail — it checks transport freshness, and these detections are
+  transport-fresh with stale content — so the age clause is what closes it.
+
+**Integral-bin constraint (accepted).** The window length derives as
+`2 · target_fps / modulation_frequency_hz` and must be an exact integer ≥ 8
+(config-validated). This **forecloses the "consider 14 Hz or 16 Hz" aliasing
+fallback** noted in the Risks above: `2·60/14 = 8.57` and `2·60/16 = 7.5` are
+non-integral, so neither is representable without a non-integer-bin correlator
+(Goertzel-class), which is out of scope for v0.3. Accepted as a constraint of this
+amendment; if empirical SNR later forces a non-harmonic ratio, that is a new ADR.
+
+**Residual exposure (recorded, alongside the two-modulated-lasers constraint).** A
+single ambient source that aliases *exactly* onto the modulation bin — e.g. a
+45 Hz PWM source sampled at 60 fps aliases to 15 Hz — **is detected** by design;
+temporal correlation cannot distinguish it from the laser. This is a known,
+accepted residual for v0.3 (the same class as the "two identical modulated
+pointers" constraint), surfaced by the detector's on-bin-interferer test as
+expected behaviour rather than a failure.
+
+**Reaction-bound decision (2026-07-23).** The derived worst-case flip-to-false is
+~117 ms, above the 100 ms total reaction budget referenced in the Consequences.
+**Decision: accept ~117 ms as the provisional v0.3 bound** (the replay gate, R13,
+asserts flip-to-false within a 120 ms derived bound), and **defer any tightening
+to the threshold re-provenance after the operator's modulated-laser recording
+session.** Rationale:
+
+- The 117 ms is a *derived* worst case from *provisional* thresholds (no real
+  modulated-laser footage exists yet); the real stale-tail length and the right
+  purity floor are unmeasured. Committing to ≤100 ms now ships a tighter guessed
+  purity floor and a 100 ms gate that could fail on real footage and force a change
+  anyway. The 120 ms gate is honest and passable today.
+- In v0.3 nothing actuates (the D8 hardware-actuation gate is not built), so the
+  17 ms delta has no physical consequence yet — this chooses the provisional
+  default, and deferring costs only a replay-gate re-run if the bound is later
+  tightened.
+- The worst case is the narrow "settled laser instantly vanishes (off/occluded)"
+  scenario; a laser *moving* to an unsafe location trips clause 7 (settled-speed)
+  far sooner, and a laser that is off has no beam to be unsafe about.
+
+**If tightening is chosen later, prefer the purity-floor route.** Raising
+`psd_purity_min` above 5/8 shortens the stale tail and is **laser-only, a pure
+config change, fully reversible, and touches no ADR-007 clause.** Reducing the age
+clause is entangled: ADR-007's `AGE_MAX_MS` is a **single shared constant used by
+both clause 5 (laser) and clause 6 (ball)**, so lowering it also tightens the ball
+freshness gate; tightening the laser age *alone* would require splitting
+`AGE_MAX_MS` into laser/ball thresholds — an ADR-007 clause change, not a config
+tweak. The recording session becomes a measure-and-maybe-tighten step, not a
+tighten-now step. This deferral holds unless an external requirement mandates a
+demonstrated ≤100 ms reaction at v0.3 sign-off regardless of no actuation, in which
+case tighten the purity floor and treat the session as validate-or-loosen.

@@ -29,6 +29,7 @@
 #include <chrono>
 #include <cmath>
 #include <cstdio>
+#include <cstdlib>
 #include <string>
 #include <vector>
 
@@ -72,6 +73,10 @@ struct Scratch {
 struct DetectResult {
     int clusters = 0;
     bool detected_at_truth = false;
+    // Raw thresholded-mask pixel count, filled by the caller AFTER detect()
+    // (untimed): rejection verdicts must evidence the spectral gates, not the
+    // cluster-area cap silently absorbing a mass false-positive.
+    int mask_px = 0;
 };
 
 // Consumes each timed detect() result so the optimiser cannot elide the call.
@@ -221,16 +226,43 @@ StrategyReport run_strategy(const std::vector<Scenario>& scenarios, bool prefilt
     std::vector<double> all_samples;
     for (const Scenario& sc : scenarios) {
         const int num = static_cast<int>(sc.frames.size());
+        if (num < 8) {
+            std::fprintf(stderr, "scenario %s has %d frames; the 8-frame window needs >= 8\n",
+                         sc.name.c_str(), num);
+            std::abort();
+        }
         const int last_start = num - 8;
 
-        // Correctness on the steady-state window.
+        // Correctness (untimed). Positives are judged on the steady-state
+        // (last) window. Negatives must hold in EVERY window — as the window
+        // slides across a step transition the step occupies every in-window
+        // offset, so this is the step-at-every-offset check — and the raw
+        // mask must stay empty in each (mask_px), so the cluster-area cap
+        // cannot silently absorb a mass false-positive.
         std::array<const cv::Mat*, 8> win;
-        for (int n = 0; n < 8; ++n) {
-            win[n] = &sc.frames[last_start + n].image;
+        DetectResult verdict;
+        if (sc.positive) {
+            for (int n = 0; n < 8; ++n) {
+                win[n] = &sc.frames[last_start + n].image;
+            }
+            verdict = detect(win, prefilter, sc.truth, s);
+            verdict.mask_px = cv::countNonZero(s.mask);
+        } else {
+            for (int start = 0; start <= last_start; ++start) {
+                for (int n = 0; n < 8; ++n) {
+                    win[n] = &sc.frames[start + n].image;
+                }
+                const DetectResult r = detect(win, prefilter, sc.truth, s);
+                verdict.clusters = std::max(verdict.clusters, r.clusters);
+                verdict.detected_at_truth =
+                    verdict.detected_at_truth || r.detected_at_truth;
+                verdict.mask_px = std::max(verdict.mask_px, cv::countNonZero(s.mask));
+            }
         }
-        rep.correctness.push_back(detect(win, prefilter, sc.truth, s));
+        rep.correctness.push_back(verdict);
 
-        // Timing across every window, repeated.
+        // Timing across every window, repeated. (Timed region is detect() only;
+        // the mask_px counting above stays outside it.)
         std::vector<double> samples;
         samples.reserve(static_cast<std::size_t>((last_start + 1) * repeats));
         for (int r = 0; r < repeats; ++r) {
@@ -256,31 +288,41 @@ StrategyReport run_strategy(const std::vector<Scenario>& scenarios, bool prefilt
 void print_table(const char* label, const std::vector<Scenario>& scenarios,
                  const StrategyReport& rep) {
     std::printf("\n== Strategy %s ==\n", label);
-    std::printf("%-16s %-9s %8s %8s %10s %10s\n", "scenario", "expect",
-                "clusters", "at_dot", "mean_us", "p99_us");
+    std::printf("%-16s %-9s %8s %8s %8s %10s %10s\n", "scenario", "expect",
+                "clusters", "at_dot", "mask_px", "mean_us", "p99_us");
     for (std::size_t i = 0; i < scenarios.size(); ++i) {
-        std::printf("%-16s %-9s %8d %8s %10.1f %10.1f\n", scenarios[i].name.c_str(),
+        std::printf("%-16s %-9s %8d %8s %8d %10.1f %10.1f\n", scenarios[i].name.c_str(),
                     scenarios[i].positive ? "detect" : "reject",
                     rep.correctness[i].clusters,
                     rep.correctness[i].detected_at_truth ? "yes" : "no",
+                    rep.correctness[i].mask_px,
                     rep.timing[i].mean_us, rep.timing[i].p99_us);
     }
-    std::printf("%-16s %-9s %8s %8s %10.1f %10.1f\n", "OVERALL", "", "", "",
+    std::printf("%-16s %-9s %8s %8s %8s %10.1f %10.1f\n", "OVERALL", "", "", "", "",
                 rep.overall.mean_us, rep.overall.p99_us);
 }
 
-// A scenario is "detected" by a strategy when it produces a truth-located
-// cluster (positive) — the KTD-4 admissibility set is exactly the positives A
-// detects. Negatives must reject; a strategy that clusters on a negative is
-// flagged (a correctness failure independent of the A-vs-B choice).
+// Positive: exactly one cluster, located at the ground truth — a spurious extra
+// cluster (e.g. on the bright_clutter blob) is a failure, matching the shipped
+// detector's fail-closed multi-cluster contract (KTD-6). Negative: no clusters
+// AND an empty raw mask across every window, so the area cap cannot be what
+// carries the rejection.
 bool detected(const DetectResult& r, bool positive) {
-    return positive ? r.detected_at_truth : (r.clusters == 0);
+    return positive ? (r.detected_at_truth && r.clusters == 1)
+                    : (r.clusters == 0 && r.mask_px == 0);
 }
 
 }  // namespace
 
 int main() {
     std::printf("PSD strategy benchmark (TRK-009a / U2)\n");
+#ifdef NDEBUG
+    std::printf("build: Release-class (NDEBUG) — timings are evidence-grade when run "
+                "on the Pi 5\n");
+#else
+    std::printf("build: DEBUG — timings are NOT evidence; rebuild Release before "
+                "recording numbers\n");
+#endif
     std::printf("window=8 frames (two periods), power_min=%.0f, purity_min=%.2f, "
                 "prefilter=%.0f (all PROVISIONAL)\n",
                 kPowerMin, kPurityMin, kBrightnessPrefilter);

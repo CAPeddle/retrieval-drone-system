@@ -74,6 +74,27 @@ TEST(ReplaySourceTest, PacingHoldsConfiguredRate) {
     EXPECT_LT(elapsed.count(), 2000);
 }
 
+TEST(ReplaySourceTest, ConsumeWrapTrueOnceAfterLoopRestart) {
+    // R4/U5: the first frame of a new pass carries the wrap marker exactly once.
+    tracking::ReplaySource::Options options;
+    options.loop = true;
+    tracking::ReplaySource source(write_clip("wrapmark"), options);
+    ASSERT_TRUE(source.is_open());
+    cv::Mat frame;
+    // First pass: no wrap on any frame.
+    for (int i = 0; i < kFrames; ++i) {
+        ASSERT_TRUE(source.grab(frame)) << "frame " << i;
+        EXPECT_FALSE(source.consume_wrap()) << "unexpected wrap on frame " << i;
+    }
+    // The next grab loops back to the start -> wrap fires once, then clears.
+    ASSERT_TRUE(source.grab(frame));
+    EXPECT_TRUE(source.consume_wrap());
+    EXPECT_FALSE(source.consume_wrap());  // consumed exactly once
+    // A subsequent in-pass grab does not wrap.
+    ASSERT_TRUE(source.grab(frame));
+    EXPECT_FALSE(source.consume_wrap());
+}
+
 TEST(ReplaySourceTest, MissingFileReportsClosed) {
     tracking::ReplaySource source("/nonexistent/trk031.avi");
     EXPECT_FALSE(source.is_open());

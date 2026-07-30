@@ -55,3 +55,25 @@ First contact between the Pi 5 and a real camera. ADR-011 selects the Raspberry 
   **G1 verdict: PASSES on frame rate, but the measurement surfaces a conflict with ADR-011 D4 that G1's wording did not anticipate.** The 1536×864 mode exists and admits both 60 and 120 fps (120.13 fps ceiling) as G1 requires. However the mode is a **centre crop, not the full array**: its crop rectangle is `3072x1728` taken from the `4608x2592` array (offset `(768,432)`; 768+3072 = 3840 and 4608−3840 = 768, so exactly centred), i.e. **2/3 of the sensor linearly**. The 102° H / 67° V figures in ADR-011 D2 are full-array numbers.
 
   Derived — *not* measured, and superseded by the G2 photograph — the effective field of view in D4's chosen mode is `2·atan(0.6667·tan(51°)) ≈ 79° H` and `2·atan(0.6667·tan(33.5°)) ≈ 48° V`, against the 102°×67° D2 assumed. **D2 rejected CM3 Standard at 66° H on coverage; 79° sits nearer that rejected figure than the assumed 102°.** Only `2304x1296` reads the full array, and it caps at **56.03 fps — below the v0.3 ≥60 fps ship gate**. No mode offers full field of view at 60 fps. Raised for decision rather than resolved here; see the ADR-011 D4 note. **U3 (the G2 coverage photograph) is now the gating measurement** and must be shot in the 1536×864 mode, since that is the mode whose coverage is in doubt.
+
+- 2026-07-30 (later): **first light on the Pi 5, and the crop ratio measured rather than inferred.** Operator placed the blue ball on the floor beside a white 30 cm ruler and aimed both cameras at it. **This is NOT the G2 measurement** — the camera was aimed by hand, not mounted at the ADR-010 pose (70–100 cm, 30–60° tilt), and no camera-to-target distance was measured, so no absolute field-of-view or coverage claim is made here. U3 still stands open.
+
+  What *is* valid from it is pose-independent, because both captures came from an unmoved camera. `rpicam-still` was run once per mode (libcamera log confirms the intended sensor format was selected in each case), and the pair correlated with a throwaway OpenCV probe:
+
+  ```
+  small: 1536x864   large: 2304x1296
+  pixel-count width ratio large/small = 1.5000
+  BEST match: scale=0.995  score=0.9973
+    => horizontal FoV ratio large/small = 1.508
+  centre-crop(large)==small correlation = 0.9877
+  ```
+
+  Best-match scale ≈ 1.0 means the two modes deliver the **same angular resolution per output pixel** (both 2×2 binned), and the 0.9877 centre-crop correlation means the 1536×864 frame **is** the centre of the full-array frame. The measured 1.508 FoV ratio confirms the 2/3-linear crop read off the mode table. The ~79° H figure in the ADR now rests only on the published 102° full-array number, not on any inference about the crop.
+
+  Incidental observations, none of them gate measurements:
+  - **The camera is mounted inverted** — the captured scene is rotated ~180°. Needs confirming against the physical mount, and a decision on whether rotation is corrected in `LibcameraSource` (TRK-032) or carried in the extrinsics (ADR-004/010). Flagging it now because a 180° error is easy to miss in calibration and silently mirrors coordinate signs.
+  - Pi 5 exposure was well-behaved at default AE; the ball reads as a distinctly dark, saturated blue region against the light wood floor, which is encouraging for the `brightness_threshold` re-derivation in U7 — but that must be measured on locked exposure, not read off an AE-auto still.
+  - **The Pi 3B / OV5647 was captured for comparison in the same scene and came out severely underexposed**, with the ruler clipped at the frame edge and the ball outside the frame entirely. Aim was rough, so this is illustrative, not a coverage verdict on the old rig. The exposure gap is worth a second look under matched settings before it is attributed to sensor sensitivity.
+  - OV5647 mode table for the record: `640x480 [62.50 fps - (16,0)/2560x1920]`, `1296x972 [46.34 fps - full]`, `1920x1080 [32.81 fps - (348,434)/1928x1080]`, `2592x1944 [15.63 fps - full]`. Note the old rig's 640×480 mode reads essentially the full array at 62.5 fps — the full-FoV-at-60 fps tension is specific to the IMX708 mode set, not a universal constraint.
+
+  Evidence stills are deliberately **not committed**: the frames show a person and the room interior. They are retained outside the repo; if this bring-up needs durable evidence under the §4 recording requirement, the shot must be re-taken framing only the floor target.

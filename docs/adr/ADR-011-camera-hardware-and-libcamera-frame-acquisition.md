@@ -96,6 +96,8 @@ If G4 shows a position-dependent correlation gap that per-row alignment does not
 
 Derived from the crop ratio (and therefore *not* a substitute for the G2 photograph): D4's mode yields roughly **79° H × 48° V**. D2 rejected CM3 Standard at 66° H on coverage grounds, so the operating field of view sits nearer the rejected figure than the assumed one. **No available mode delivers the full field of view at 60 fps.** This is recorded here as an open question against D4, not resolved — D4's Decision text is unchanged pending the G2 measurement and an explicit decision. G2 is now the gating measurement and must be photographed **in the 1536×864 mode**, since that is the mode whose coverage is in doubt.
 
+**Crop ratio empirically confirmed 2026-07-30 (TRK-034; pose-independent, so it stands regardless of G2).** Two stills of one scene were captured from an unmoved camera, one per mode, and correlated. A central patch of the 1536×864 frame was located in the 2304×1296 frame by multi-scale template matching: best match at **scale 0.995, correlation 0.9973**, giving a measured **horizontal field-of-view ratio of 1.508** between the modes. Centre-cropping the 2304×1296 frame to 1536×864 and correlating it against the native 1536×864 capture scores **0.9877** — the two are the same view. This confirms both halves of the reading: the modes share angular resolution per output pixel (both 2×2 binned, scale ≈ 1.0), and the 1536×864 mode's field of view is exactly 2/3 of full-array horizontally. The ~79° H figure is therefore no longer an inference from datasheet geometry; only its dependence on the published 102° full-array figure remains unverified.
+
 ## Consequences
 
 **Positive**

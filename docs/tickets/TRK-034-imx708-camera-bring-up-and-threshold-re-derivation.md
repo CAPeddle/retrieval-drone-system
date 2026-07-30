@@ -42,3 +42,16 @@ First contact between the Pi 5 and a real camera. ADR-011 selects the Raspberry 
 ## Log
 
 - 2026-07-26: created. Status: backlog. Blocked on hardware purchase (ADR-011 D1). Discharges ADR-011 gates G1, G2, G5, G6 and the first half of G4.
+- 2026-07-30: **hardware acquired and fitted by the operator; U1 complete, U2 measured. The purchase blocker is discharged** (status left `backlog` — transition batched with the TRK-009 Phase C board close-out). Camera enumerates on the Pi 5 as `imx708_wide_noir` at `/base/axi/pcie@1000120000/rp1/i2c@88000/imx708@1a`, module ID `0x0382`, bound by `rp1-cfe` as `/dev/video0`. Sensor name confirms the NoIR **Wide** variant that ADR-011 D1 specifies.
+
+  **U2 — `rpicam-hello --list-cameras`, verbatim:**
+  ```
+  0 : imx708_wide_noir [4608x2592 10-bit RGGB] (/base/axi/pcie@1000120000/rp1/i2c@88000/imx708@1a)
+      Modes: 'SRGGB10_CSI2P' : 1536x864 [120.13 fps - (768, 432)/3072x1728 crop]
+                               2304x1296 [56.03 fps - (0, 0)/4608x2592 crop]
+                               4608x2592 [14.35 fps - (0, 0)/4608x2592 crop]
+  ```
+
+  **G1 verdict: PASSES on frame rate, but the measurement surfaces a conflict with ADR-011 D4 that G1's wording did not anticipate.** The 1536×864 mode exists and admits both 60 and 120 fps (120.13 fps ceiling) as G1 requires. However the mode is a **centre crop, not the full array**: its crop rectangle is `3072x1728` taken from the `4608x2592` array (offset `(768,432)`; 768+3072 = 3840 and 4608−3840 = 768, so exactly centred), i.e. **2/3 of the sensor linearly**. The 102° H / 67° V figures in ADR-011 D2 are full-array numbers.
+
+  Derived — *not* measured, and superseded by the G2 photograph — the effective field of view in D4's chosen mode is `2·atan(0.6667·tan(51°)) ≈ 79° H` and `2·atan(0.6667·tan(33.5°)) ≈ 48° V`, against the 102°×67° D2 assumed. **D2 rejected CM3 Standard at 66° H on coverage; 79° sits nearer that rejected figure than the assumed 102°.** Only `2304x1296` reads the full array, and it caps at **56.03 fps — below the v0.3 ≥60 fps ship gate**. No mode offers full field of view at 60 fps. Raised for decision rather than resolved here; see the ADR-011 D4 note. **U3 (the G2 coverage photograph) is now the gating measurement** and must be shot in the 1536×864 mode, since that is the mode whose coverage is in doubt.
